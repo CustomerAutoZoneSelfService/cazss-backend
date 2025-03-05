@@ -1,0 +1,56 @@
+name: validate_branch
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate_branch:
+    name: validate_branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Validate branch name
+        run: |
+          # Determine the branch name based on the event type
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            branch_name="${GITHUB_REF#refs/heads/}"
+          elif [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            branch_name="${GITHUB_HEAD_REF}"
+          else
+            echo "Unsupported event: ${GITHUB_EVENT_NAME}"
+            exit 1
+          fi
+          echo "Branch name: $branch_name"
+          
+          # Define regex patterns
+          feature_regex="^[A-Z]+-[0-9]+(teams-([1-9]|10)(,teams-([1-9]|10))*)$"
+          developer_regex="^a[0-9]{8}$"
+          predefined_regex="^(main|dev|team-(10|[1-9])-(main|dev))$"
+          
+          # Validate branch name based on event type
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            if [[ "$branch_name" =~ $developer_regex ]]; then
+              echo "Error: Developer branches are not allowed to be pushed."
+              exit 1
+            elif [[ "$branch_name" =~ $feature_regex ]] || [[ "$branch_name" =~ $predefined_regex ]]; then
+              echo "Valid branch name for push event."
+            else
+              echo "Error: Invalid branch name for push event."
+              exit 1
+            fi
+          elif [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            if [[ "$branch_name" =~ $feature_regex ]] || [[ "$branch_name" =~ $developer_regex ]] || [[ "$branch_name" =~ $predefined_regex ]]; then
+              echo "Valid branch name for pull request event."
+            else
+              echo "Error: Invalid branch name for pull request event."
+              exit 1
+            fi
+          fi
+        shell: bash
