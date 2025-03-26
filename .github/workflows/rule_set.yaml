@@ -1,12 +1,12 @@
-name: validate_branch
+name: rule_set
 
 on:
   push:
     branches:
-      - '*'
+      - "*"
   pull_request:
     branches:
-      - '*'
+      - "*"
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -28,12 +28,12 @@ jobs:
             exit 1
           fi
           echo "Branch name: $branch_name"
-          
+
           # Define regex patterns
           feature_regex="^[A-Z]+-[0-9]+(teams-([1-9]|10)(,teams-([1-9]|10))*)$"
           developer_regex="^a[0-9]{8}$"
           predefined_regex="^(main|dev|team-(10|[1-9])-(main|dev))$"
-          
+
           # Validate branch name based on event type
           if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
             if [[ "$branch_name" =~ $developer_regex ]]; then
@@ -52,5 +52,36 @@ jobs:
               echo "Error: Invalid branch name for pull request event."
               exit 1
             fi
+          fi
+        shell: bash
+
+  validate_commits:
+    name: validate_commits
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Fetch all commits
+        run: git fetch --prune --unshallow
+
+      - name: Validate commit messages
+        run: |
+          valid_commit_regex='^(refactor|feature|feat|bugfix|docs|chore|bug|hotfix): .+\([A-Z]+-[0-9]+\) *$'
+          echo "Using regex: $valid_commit_regex"
+          commits=$(git log --no-merges --pretty=format:"%s")
+          invalid_commits=()
+          while IFS= read -r commit_message; do
+            if ! [[ "$commit_message" =~ $valid_commit_regex ]]; then
+              invalid_commits+=("$commit_message")
+              echo "Invalid commit message: $commit_message"
+            fi
+          done <<< "$commits"
+          if [ ${#invalid_commits[@]} -gt 0 ]; then
+            echo "Invalid commit messages found, please amend or rebase your branch."
+            printf '%s\n' "${invalid_commits[@]}"
+            exit 1
+          else
+            echo "All commit messages are valid."
           fi
         shell: bash
