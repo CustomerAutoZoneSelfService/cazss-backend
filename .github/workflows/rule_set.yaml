@@ -30,7 +30,7 @@ jobs:
           echo "Branch name: $branch_name"
 
           # Define regex patterns
-          feature_regex="^[A-Z]+-[0-9]+(teams-([1-9]|10)(,teams-([1-9]|10))*)$"
+          feature_regex="^[A-Z]+-[0-9]+_teams(10|[1-9])(,(10|[1-9]))*$"
           developer_regex="^a[0-9]{8}$"
           predefined_regex="^(main|dev|team-(10|[1-9])-(main|dev))$"
 
