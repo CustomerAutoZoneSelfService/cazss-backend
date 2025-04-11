@@ -33,8 +33,7 @@ public class RequestVaraibleEntity {
     public RequestVaraibleEntity() {
     }
 
-    public RequestVaraibleEntity(Integer requestVariableId, EndpointsEntity endpoint, RequestVariableTypeEnum type, String keyName, String defaultValue, Boolean customizable, String description) {
-        this.requestVariableId = requestVariableId;
+    public RequestVaraibleEntity(EndpointsEntity endpoint, RequestVariableTypeEnum type, String keyName, String defaultValue, Boolean customizable, String description) {
         this.endpoint = endpoint;
         this.type = type;
         this.keyName = keyName;

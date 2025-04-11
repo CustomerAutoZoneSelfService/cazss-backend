@@ -2,6 +2,8 @@ package com.autozone.cazss_backend.entity;
 
 import jakarta.persistence.*;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "Categories", schema = "cazss")
 public class CategoryEntity {
@@ -16,8 +18,7 @@ public class CategoryEntity {
     @Column(nullable = false)
     private String color;
 
-    public CategoryEntity(Integer categoryId, String name, String color) {
-        this.categoryId = categoryId;
+    public CategoryEntity(String name, String color) {
         this.name = name;
         this.color = color;
     }
@@ -47,5 +48,16 @@ public class CategoryEntity {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CategoryEntity that)) return false;
+        return Objects.equals(categoryId, that.categoryId) && Objects.equals(name, that.name) && Objects.equals(color, that.color);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(categoryId, name, color);
     }
 }

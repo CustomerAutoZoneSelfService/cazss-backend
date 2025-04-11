@@ -3,6 +3,8 @@ package com.autozone.cazss_backend.entity;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import jakarta.persistence.*;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "Endpoints", schema = "cazss")
 public class EndpointsEntity {
@@ -35,8 +37,11 @@ public class EndpointsEntity {
     @Column(nullable = false, length = 2048)
     private String url;
 
-    public EndpointsEntity(Integer endpointId, CategoryEntity category, UserEntity user, Boolean active, String name, String description, EndpointMethodEnum method, String url) {
-        this.endpointId = endpointId;
+    // Add bidirectional relationship
+    @OneToOne(mappedBy = "endpoint", cascade = CascadeType.ALL, orphanRemoval = true)
+    private RequestBodyEntity requestBody;
+
+    public EndpointsEntity(CategoryEntity category, UserEntity user, Boolean active, String name, String description, EndpointMethodEnum method, String url) {
         this.category = category;
         this.user = user;
         this.active = active;
@@ -111,5 +116,24 @@ public class EndpointsEntity {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public RequestBodyEntity getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(RequestBodyEntity requestBody) {
+        this.requestBody = requestBody;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof EndpointsEntity that)) return false;
+        return Objects.equals(endpointId, that.endpointId) && Objects.equals(category, that.category) && Objects.equals(user, that.user) && Objects.equals(active, that.active) && Objects.equals(name, that.name) && Objects.equals(description, that.description) && method == that.method && Objects.equals(url, that.url);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(endpointId, category, user, active, name, description, method, url);
     }
 }
