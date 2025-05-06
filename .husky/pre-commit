@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if git diff --cached --name-only | grep '^.husky/'; then
+  echo "You are trying to commit changes to the .husky directory."
+  echo "This directory is not meant to be altered. Please unstage changes to the file."
+  exit 1
+fi

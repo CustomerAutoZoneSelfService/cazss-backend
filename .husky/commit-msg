@@ -1,0 +1,13 @@
+#!/bin/bash
+
+commit_message_file="$1"
+commit_message=$(cat "$commit_message_file")
+valid_commit_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)$'
+
+if [[ ! "$commit_message" =~ $valid_commit_regex ]]; then
+  echo "Error: Commit message must match agreed on format."
+  echo "Example. refactor: your commit summary (TI-12, TI-23)"
+  exit 1
+fi
+
+exit 0
