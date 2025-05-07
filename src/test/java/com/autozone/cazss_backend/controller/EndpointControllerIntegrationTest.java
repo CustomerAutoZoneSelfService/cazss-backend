@@ -1,6 +1,6 @@
 package com.autozone.cazss_backend.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.autozone.cazss_backend.entity.EndpointsEntity;
@@ -34,7 +34,7 @@ public class EndpointControllerIntegrationTest {
     endpoint.setName("Test Service");
     endpoint.setDescription("This is a test endpoint");
     endpoint.setActive(true);
-    endpoint.setMethod(EndpointMethodEnum.POST);
+    endpoint.setMethod(EndpointMethodEnum.GET);
     endpoint.setUrl("/test/url");
 
     savedEndpoint = endpointsRepository.save(endpoint);
@@ -43,27 +43,32 @@ public class EndpointControllerIntegrationTest {
   @Test
   public void testGetServiceById() throws Exception {
     mockMvc
-        .perform(post("/services/getServiceById/{id}", savedEndpoint.getEndpointId()))
+        .perform(get("/services/{id}", savedEndpoint.getEndpointId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("Test Service"))
         .andExpect(jsonPath("$.description").value("This is a test endpoint"))
         .andExpect(jsonPath("$.active").value(true))
-        .andExpect(jsonPath("$.method").value("POST"))
+        .andExpect(jsonPath("$.method").value("GET"))
         .andExpect(jsonPath("$.url").value("/test/url"));
   }
 
   @Test
-  public void testHandleEndpointNotFound() throws Exception {
+  void testGetServiceById_NotFound() throws Exception {
     mockMvc
-        .perform(post("/services/getServiceById/{id}", 9999)) // ID that doesn't exist
+        .perform(get("/services/{id}", 999999))
         .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.error").value("Endpoint with ID 9999 not found"));
+        .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+        .andExpect(jsonPath("$.message").value("Endpoint not found with id: 999999"))
+        .andExpect(jsonPath("$.details").value("The requested resource was not found"))
+        .andExpect(jsonPath("$.timestamp").exists())
+        .andExpect(jsonPath("$.traceId").isString())
+        .andExpect(jsonPath("$.traceId").isNotEmpty());
   }
 
   @Test
   public void testGetAllServices() throws Exception {
     mockMvc
-        .perform(post("/services/getAllServices").contentType(MediaType.APPLICATION_JSON))
+        .perform(get("/services").contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].name").value("Test Service"))
         .andExpect(jsonPath("$[0].description").value("This is a test endpoint"))

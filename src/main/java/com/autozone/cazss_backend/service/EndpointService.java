@@ -2,6 +2,7 @@ package com.autozone.cazss_backend.service;
 
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
 import com.autozone.cazss_backend.exceptions.ValidationException;
 import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
 import com.autozone.cazss_backend.model.StatusModel;
@@ -52,10 +53,11 @@ public class EndpointService {
   }
 
   public ServiceInfoDTO getServiceById(Integer id) {
+    System.out.println("ENTERING GET SERVICE BY ID");
     EndpointsEntity endpoint =
         endpointsRepository
             .findByEndpointId(id)
-            .orElseThrow(() -> new RuntimeException("Endpoint not found with id: " + id));
+            .orElseThrow(() -> new ServiceNotFoundException("Endpoint not found with id: " + id));
 
     ServiceInfoDTO serviceInformation =
         new ServiceInfoDTO(

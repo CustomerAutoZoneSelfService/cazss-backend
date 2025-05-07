@@ -23,7 +23,7 @@ public class ResponsePatternEntity {
   @Column(nullable = false)
   private String description;
 
-  @Column(name = "parent_id", nullable = false)
+  @Column(name = "parent_id", nullable = true)
   private Integer parentId;
 
   @Column(name = "is_leaf", nullable = false)
@@ -36,12 +36,16 @@ public class ResponsePatternEntity {
       ResponseEntity response,
       String pattern,
       String name,
-      String description) {
+      String description,
+      Integer parentId,
+      Boolean isLeaf) {
     this.responsePatternId = responsePatternId;
     this.response = response;
     this.pattern = pattern;
     this.name = name;
     this.description = description;
+    this.parentId = parentId;
+    this.isLeaf = isLeaf;
   }
 
   public Integer getResponsePatternId() {
