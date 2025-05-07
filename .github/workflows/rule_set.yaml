@@ -11,47 +11,43 @@ on:
 
 jobs:
   validate_branch:
-    name: validate_branch
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Validate branch name
-        run: |
-          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
-            branch_name="${GITHUB_REF#refs/heads/}"
-          elif [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
-            branch_name="${GITHUB_HEAD_REF}"
-          else
-            echo "Unsupported event: ${GITHUB_EVENT_NAME}"
-            exit 1
-          fi
-          echo "Branch name: $branch_name"
+  name: validate_branch
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-          # Updated branch name patterns
-          team_regex="^team-[0-9]+-(main|dev)$"
-          developer_regex="^[A-Z]+-[0-9]+$"
-          predefined_regex="^(main|dev)$"
+    - name: Validate branch name
+      run: |
+        echo "Event: ${GITHUB_EVENT_NAME}"
 
-          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
-            if [[ "$branch_name" =~ $developer_regex ]]; then
-              echo "Error: Developer branches are not allowed to be pushed."
-              exit 1
-            elif [[ "$branch_name" =~ $team_regex ]] || [[ "$branch_name" =~ $predefined_regex ]]; then
-              echo "Valid branch name for push event."
-            else
-              echo "Error: Invalid branch name for push event."
-              exit 1
-            fi
-          elif [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
-            if [[ "$branch_name" =~ $developer_regex ]] || [[ "$branch_name" =~ $team_regex ]] || [[ "$branch_name" =~ $predefined_regex ]]; then
-              echo "Valid branch name for pull request event."
-            else
-              echo "Error: Invalid branch name for pull request event."
-              exit 1
-            fi
-          fi
-        shell: bash
+        if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+          branch_name="${GITHUB_REF#refs/heads/}"
+        elif [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+          branch_name="${GITHUB_HEAD_REF}"
+        else
+          echo "Unsupported event: ${GITHUB_EVENT_NAME}"
+          exit 1
+        fi
+
+        team_regex="^team-[0-9]+-(main|dev)$"
+        developer_regex="^[A-Z]+-[0-9]+$"
+        predefined_regex="^(main|dev)$"
+
+        if [[ "$branch_name" =~ $team_regex ]] || \
+           [[ "$branch_name" =~ $developer_regex ]] || \
+           [[ "$branch_name" =~ $predefined_regex ]]; then
+          echo "Valid branch name."
+        else
+          echo "Error: Invalid branch name '$branch_name'"
+          echo ""
+          echo "Branch name must match one of the following patterns:"
+          echo "  • team-[number]-(main|dev)     (e.g., team-3-main, team-4-dev)"
+          echo "  • [UPPERCASE]-[number]         (e.g., SCRUM-123, CB-456)"
+          echo "  • main or dev                  (main, dev)"
+          exit 1
+        fi
+      shell: bash
 
   validate_commits:
     name: validate_commits

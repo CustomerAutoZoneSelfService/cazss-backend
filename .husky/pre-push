@@ -9,7 +9,6 @@ branch_name=$(git rev-parse --abbrev-ref HEAD)
 
 # Define patterns
 team_branch_regex="^team-[0-9]+-(main|dev)$"
-developer_branch_regex="^[A-Z]+-[0-9]+$"
 predefined_branch_regex="^(main|dev)$"
 
 # Run tests only on main/dev/team branches (not developer branches)
