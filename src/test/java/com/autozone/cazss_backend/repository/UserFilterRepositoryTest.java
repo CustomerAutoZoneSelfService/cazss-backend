@@ -48,6 +48,8 @@ public class UserFilterRepositoryTest {
     responsePattern.setName("Test Pattern");
     responsePattern.setDescription("Test Pattern Description");
     responsePattern.setPattern("ValidPattern123");
+    responsePattern.setIsLeaf(false);
+    responsePattern.setParentId(47);
     responsePattern = responsePatternRepository.save(responsePattern);
   }
 

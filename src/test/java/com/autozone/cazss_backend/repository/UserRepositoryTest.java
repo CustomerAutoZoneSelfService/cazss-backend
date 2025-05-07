@@ -21,7 +21,8 @@ public class UserRepositoryTest {
   @Test
   public void givenUserRepository_whenSaveAndRetreiveUser_thenOK() {
     UserEntity user =
-        userRepository.save(new UserEntity("johndoe@autozone.com", true, UserRoleEnum.USER));
+        userRepository.save(
+            new UserEntity("userRepoTestUser@autozone.com", true, UserRoleEnum.USER));
 
     Optional<UserEntity> foundUserOptional = userRepository.findById(user.getUserId());
 
@@ -35,9 +36,9 @@ public class UserRepositoryTest {
   @Test
   public void givenUserRepository_whenUpdateUser_thenOK() {
     UserEntity user =
-        userRepository.save(new UserEntity("janedoe@autozone.com", true, UserRoleEnum.USER));
+        userRepository.save(new UserEntity("oldUserEmail@autozone.com", true, UserRoleEnum.USER));
 
-    user.setEmail("newemail@autozone.com");
+    user.setEmail("newUserEmail@autozone.com");
     user.setActive(false);
 
     UserEntity updatedUser = userRepository.save(user);
@@ -47,7 +48,7 @@ public class UserRepositoryTest {
     assertTrue(foundUserOptional.isPresent(), "Updated user should be found");
 
     UserEntity foundUser = foundUserOptional.get();
-    assertEquals("newemail@autozone.com", foundUser.getEmail());
+    assertEquals("newUserEmail@autozone.com", foundUser.getEmail());
     assertFalse(foundUser.getActive());
   }
 

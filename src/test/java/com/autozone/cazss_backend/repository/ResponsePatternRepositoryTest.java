@@ -53,6 +53,8 @@ public class ResponsePatternRepositoryTest {
     pattern.setPattern("$.data.items[*].name");
     pattern.setName("Item Name Pattern " + uniqueSuffix);
     pattern.setDescription("Extracts item names from response");
+    pattern.setIsLeaf(false);
+    pattern.setParentId(98);
 
     return responsePatternRepository.save(pattern);
   }

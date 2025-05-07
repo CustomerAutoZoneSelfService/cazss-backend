@@ -14,7 +14,9 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.*;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("dev")
 public class ValidationServiceTest {
 
   @Mock private EndpointsRepository endpointsRepository;
