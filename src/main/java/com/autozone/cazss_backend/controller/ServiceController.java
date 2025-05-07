@@ -18,11 +18,23 @@ public class ServiceController {
 
   @Autowired EndpointService endpointService;
 
+  /**
+   * /services
+   *
+   * @return List<ServiceDTO> which contains endpoint id, name and description
+   */
   @GetMapping("")
   public ResponseEntity<List<ServiceDTO>> getAllServices() {
     return ResponseEntity.status(200).body(endpointService.getAllServices());
   }
 
+  /**
+   * /services/{id}/execute Executes a registered AutoZone service with the received variables
+   *
+   * @param id
+   * @param serviceInfoRequestModel
+   * @return EndpointServiceDTO which status and response of the azClient request
+   */
   @PostMapping("/{id}/execute")
   public ResponseEntity<EndpointServiceDTO> executeService(
       @PathVariable Integer id, @RequestBody ServiceInfoRequestModel serviceInfoRequestModel) {
@@ -30,6 +42,12 @@ public class ServiceController {
         .body(endpointService.executeService(id, serviceInfoRequestModel));
   }
 
+  /**
+   * /services/{id}
+   *
+   * @param id
+   * @return ServiceInfoDTO which contains all of the register info from the endpoint
+   */
   @GetMapping("/{id}")
   public ResponseEntity<ServiceInfoDTO> getServiceById(@PathVariable Integer id) {
     ServiceInfoDTO serviceData = endpointService.getServiceById(id);
