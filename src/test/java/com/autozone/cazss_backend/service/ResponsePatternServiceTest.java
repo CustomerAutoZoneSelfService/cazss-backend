@@ -14,7 +14,9 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("dev")
 public class ResponsePatternServiceTest {
 
   @Mock private ResponsePatternRepository responsePatternRepository;

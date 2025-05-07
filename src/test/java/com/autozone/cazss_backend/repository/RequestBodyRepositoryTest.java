@@ -26,14 +26,15 @@ public class RequestBodyRepositoryTest {
   public void givenRequestBodyRepository_whenSaveAndRetreiveRequestBody_thenOK() {
     // Creamos e insertamos un endpoint para que exista
     EndpointsEntity endpoint = new EndpointsEntity();
-    endpoint.setName("EndpointOne");
+    endpoint.setName("RequestBodyTestEndpoint");
     endpoint.setDescription("Test endpoint for request body tests"); // Asignamos una descripción
     endpoint.setMethod(EndpointMethodEnum.GET);
     endpoint.setUrl("https://example.com/api/endpointOne");
     endpoint.setActive(true);
     endpointsRepository.save(endpoint);
 
-    Optional<EndpointsEntity> endpointOptional = endpointsRepository.findByName("EndpointOne");
+    Optional<EndpointsEntity> endpointOptional =
+        endpointsRepository.findByName("RequestBodyTestEndpoint");
     assertTrue(endpointOptional.isPresent(), "Endpoint should be present");
 
     EndpointsEntity savedEndpoint = endpointOptional.get();

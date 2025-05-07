@@ -1,7 +1,7 @@
 #!/bin/bash
 
 commit_message_file="$1"
-commit_message=$(cat "$commit_message_file")
+commit_message=$(head -n 1 "$commit_message_file") # Read only the first line
 valid_commit_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)$'
 
 if [[ ! "$commit_message" =~ $valid_commit_regex ]]; then

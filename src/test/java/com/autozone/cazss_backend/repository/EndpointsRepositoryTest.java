@@ -9,7 +9,6 @@ import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,29 +21,26 @@ public class EndpointsRepositoryTest {
 
   @Autowired EndpointsRepository endpointsRepository;
 
-  @BeforeEach
-  public void setup() {
-    // Limpiamos todo antes de cada test para evitar datos duplicados o conflictos
-    endpointsRepository.deleteAll();
-    userRepository.deleteAll();
-    categoryRepository.deleteAll();
+  public void setUpData() {
+    categoryRepository.save(new CategoryEntity("TEST01", "#FFFFFF"));
+    categoryRepository.save(new CategoryEntity("TEST02", "#000000"));
 
-    // Crear categorías
-    categoryRepository.save(new CategoryEntity("TEST", "#FFFFFF"));
-    categoryRepository.save(new CategoryEntity("TEST2", "#000000"));
-
-    // Crear usuarios
-    userRepository.save(new UserEntity("johndoe@autozone.com", true, UserRoleEnum.ADMIN));
-    userRepository.save(new UserEntity("newemail@autozone.com", true, UserRoleEnum.ADMIN));
+    userRepository.save(
+        new UserEntity("endpointRepoTestUser01@autozone.com", true, UserRoleEnum.ADMIN));
+    userRepository.save(
+        new UserEntity("endpointRepoTestUser02@autozone.com", true, UserRoleEnum.ADMIN));
   }
 
   @Test
   public void givenEndpointRepository_whenSaveAndRetreiveEndpoint_thenOK() {
-    Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST");
+    setUpData();
+
+    Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST01");
     assertTrue(categoryOptional.isPresent(), "Category should be present");
     CategoryEntity category = categoryOptional.get();
 
-    Optional<UserEntity> userOptional = userRepository.findByEmail("johndoe@autozone.com");
+    Optional<UserEntity> userOptional =
+        userRepository.findByEmail("endpointRepoTestUser01@autozone.com");
     assertTrue(userOptional.isPresent(), "User should be present");
     UserEntity user = userOptional.get();
 
@@ -70,11 +66,12 @@ public class EndpointsRepositoryTest {
 
   @Test
   public void givenEndpointRepository_whenUpdateEndpoint_thenOK() {
-    Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST2");
+    Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST02");
     assertTrue(categoryOptional.isPresent(), "Category should be present");
     CategoryEntity category = categoryOptional.get();
 
-    Optional<UserEntity> userOptional = userRepository.findByEmail("newemail@autozone.com");
+    Optional<UserEntity> userOptional =
+        userRepository.findByEmail("endpointRepoTestUser02@autozone.com");
     assertTrue(userOptional.isPresent(), "User should be present");
     UserEntity user = userOptional.get();
 
@@ -114,11 +111,12 @@ public class EndpointsRepositoryTest {
 
   @Test
   public void givenEndpointRepository_whenDeleteEndpoint_thenOK() {
-    Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST2");
+    Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST02");
     assertTrue(categoryOptional.isPresent(), "Category should be present");
     CategoryEntity category = categoryOptional.get();
 
-    Optional<UserEntity> userOptional = userRepository.findByEmail("newemail@autozone.com");
+    Optional<UserEntity> userOptional =
+        userRepository.findByEmail("endpointRepoTestUser01@autozone.com");
     assertTrue(userOptional.isPresent(), "User should be present");
     UserEntity user = userOptional.get();
 
