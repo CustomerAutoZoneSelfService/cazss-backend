@@ -6,7 +6,7 @@ import com.autozone.cazss_backend.entity.*;
 import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,7 +30,6 @@ public class AuthenticationStrategyAttributeRepositoryTest {
   private EndpointsEntity endpoint;
   private AuthenticationStrategyEntity authStrategy;
 
-  @BeforeEach
   public void setUp() {
     // Crear un correo electrónico único para evitar duplicidad
     String email = "test" + System.currentTimeMillis() + "@example.com";
@@ -67,7 +66,10 @@ public class AuthenticationStrategyAttributeRepositoryTest {
   }
 
   @Test
+  @Transactional
   public void givenAuthenticationStrategyAttributeRepository_whenSavedAndRetrieved_thenOK() {
+    setUp();
+
     // Crear atributo de estrategia de autenticación
     AuthenticationStrategyAttributeEntity attribute = new AuthenticationStrategyAttributeEntity();
     attribute.setAuthStrategy(authStrategy);
