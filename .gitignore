@@ -38,4 +38,4 @@ env-test.properties
 
 ### Custom Validation ###
 .github/*
-.husky/*
+#.husky/*

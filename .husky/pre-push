@@ -1,17 +1,4 @@
 #!/bin/bash
 
-# Format and checkstyle
-mvn fmt:format
-mvn checkstyle:check
-
-# Get current branch name
-branch_name=$(git rev-parse --abbrev-ref HEAD)
-
-# Define patterns
-team_branch_regex="^team-[0-9]+-(main|dev)$"
-predefined_branch_regex="^(main|dev)$"
-
-# Run tests only on main/dev/team branches (not developer branches)
-if [[ $branch_name =~ $team_branch_regex ]] || [[ $branch_name =~ $predefined_branch_regex ]]; then
-  mvn test
-fi
+# Run tests
+mvn test
