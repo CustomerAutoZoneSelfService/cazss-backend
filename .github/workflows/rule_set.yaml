@@ -82,3 +82,19 @@ jobs:
             echo "All commit messages are valid."
           fi
         shell: bash
+  
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'  # Or 'zulu', 'adopt', etc.
+          java-version: '21'       # Set to your project's Java version
+
+      - name: Run Maven tests
+        run: mvn clean test
