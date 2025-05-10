@@ -14,8 +14,9 @@ public class CategoryRepositoryTest {
   @Autowired CategoryRepository categoryRepository;
 
   @Test
-  public void givenCategoryRepository_whenSaveAndRetreiveCategory_thenOK() {
-    CategoryEntity category = categoryRepository.save(new CategoryEntity("TEST", "#FFFFF"));
+  public void givenCategoryRepository_whenSaveAndRetrieveCategory_thenOK() {
+    CategoryEntity category =
+        categoryRepository.save(new CategoryEntity("TEST_CATEGORY_NORMAL", "#FFFFF"));
 
     Optional<CategoryEntity> foundCategoryOptional =
         categoryRepository.findById(category.getCategoryId());
