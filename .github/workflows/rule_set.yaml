@@ -1,9 +1,6 @@
 name: rule_set
 
 on:
-  push:
-    branches:
-      - "*"
   pull_request:
     branches:
       - "*"

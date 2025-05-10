@@ -16,13 +16,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(classes = CazssBackendApplication.class)
+@Transactional
 public class AuthenticationStrategyRepositoryTest {
   @Autowired EndpointsRepository endpointsRepository;
 
   @Autowired AuthenticationStrategyRepository authenticationStrategyRepository;
 
   @Test
-  @Transactional
   public void
       givenAuthenticationStrategyRepository_whenSaveAndRetrieveAuthenticationStrategy_thenOK() {
     // Crear el endpoint manualmente
