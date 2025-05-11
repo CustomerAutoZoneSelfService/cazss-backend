@@ -27,7 +27,7 @@ public class AuthenticationStrategyRepositoryTest {
       givenAuthenticationStrategyRepository_whenSaveAndRetrieveAuthenticationStrategy_thenOK() {
     // Crear el endpoint manualmente
     EndpointsEntity endpoint = new EndpointsEntity();
-    endpoint.setName("EndpointOne");
+    endpoint.setName("EndpointOneAuthRepoTest");
     endpoint.setDescription("Test endpoint description");
     endpoint.setMethod(EndpointMethodEnum.GET);
     endpoint.setUrl("http://localhost/test");
@@ -35,7 +35,8 @@ public class AuthenticationStrategyRepositoryTest {
 
     endpointsRepository.save(endpoint);
 
-    Optional<EndpointsEntity> endpointOptional = endpointsRepository.findByName("EndpointOne");
+    Optional<EndpointsEntity> endpointOptional =
+        endpointsRepository.findByName("EndpointOneAuthRepoTest");
     assertTrue(endpointOptional.isPresent(), "Endpoint should be present");
 
     EndpointsEntity savedEndpoint = endpointOptional.get();
