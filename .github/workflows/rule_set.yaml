@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - "*"
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited, closed]
 
 jobs:
   validate_branch:
@@ -96,3 +96,58 @@ jobs:
 
       - name: Run Maven tests
         run: mvn clean test
+
+  validate_pr_title:
+    name: validate_pr_title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        run: |
+          title="${{ github.event.pull_request.title }}"
+          echo "PR title: $title"
+
+          valid_title_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)$'
+
+          if [[ ! "$title" =~ $valid_title_regex ]]; then
+            echo "Invalid PR title. Must match pattern: $valid_title_regex"
+            exit 1
+          else
+            echo "PR title is valid."
+          fi
+        shell: bash
+
+  validate_merge_commit:
+    name: Validate Merge Commit Message
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Get Merge Commit Message
+        id: get_message
+        run: |
+          MERGE_COMMIT_SHA="${GITHUB_SHA}"
+          MERGE_MESSAGE=$(git log --format=%B -n 1 "${MERGE_COMMIT_SHA}")
+          echo "merge_message<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$MERGE_MESSAGE" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Merge Commit Message
+        run: |
+          merge_message="${{ steps.get_message.outputs.merge_message }}"
+          cleaned_message=$(echo "$merge_message" | sed -E 's/ \(#\d+\)$//')
+
+          valid_commit_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)$'
+
+          echo "Validating merge commit message: '$cleaned_message'"
+          if [[ "$cleaned_message" =~ $valid_commit_regex ]]; then
+            echo "Merge commit message is valid."
+          else
+            echo "Error: Merge commit message does not match the required format."
+            echo "Expected format: $valid_commit_regex"
+            exit 1
+          fi
+        shell: bash
