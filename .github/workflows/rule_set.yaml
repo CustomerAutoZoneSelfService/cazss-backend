@@ -5,8 +5,11 @@ on:
     branches:
       - "*"
     types: [opened, synchronize, reopened]
-  merge_group:
-    types: [opened, reopened, synchronize]
+  push:
+    branches:
+      # match the temporary merge group branches:
+      - 'merge_group/**'
+      - 'gh-merge-queue/**'
 
 jobs:
   validate_branch:
