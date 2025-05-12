@@ -97,25 +97,6 @@ jobs:
       - name: Run Maven tests
         run: mvn clean test
 
-  validate_pr_title:
-    name: validate_pr_title
-    runs-on: ubuntu-latest
-    steps:
-      - name: Validate PR title
-        run: |
-          title="${{ github.event.pull_request.title }}"
-          echo "PR title: $title"
-
-          valid_title_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)$'
-
-          if [[ ! "$title" =~ $valid_title_regex ]]; then
-            echo "Invalid PR title. Must match pattern: $valid_title_regex"
-            exit 1
-          else
-            echo "PR title is valid."
-          fi
-        shell: bash
-
   validate_merge_commit:
     name: validate_merge_commit
     runs-on: ubuntu-latest
