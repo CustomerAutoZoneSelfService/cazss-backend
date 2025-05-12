@@ -27,7 +27,7 @@ jobs:
             exit 1
           fi
 
-          team_regex="^team-[0-9]+-(main|dev)$"
+          team_regex="^team-[0-9]+-(stable)$"
           developer_regex="^[A-Z]+-[0-9]+$"
           predefined_regex="^(main|dev)$"
 
@@ -39,7 +39,7 @@ jobs:
             echo "Error: Invalid branch name '$branch_name'"
             echo ""
             echo "Branch name must match one of the following patterns:"
-            echo "  • team-[number]-(main|dev)     (e.g., team-3-main, team-4-dev)"
+            echo "  • team-[number]-(stable)     (e.g., team-3-stable, team-4-stable)"
             echo "  • [UPPERCASE]-[number]         (e.g., SCRUM-123, CB-456)"
             echo "  • main or dev                  (main, dev)"
             exit 1
