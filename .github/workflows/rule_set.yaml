@@ -93,6 +93,13 @@ jobs:
         with:
           distribution: "temurin" # Or 'zulu', 'adopt', etc.
           java-version: "21" # Set to your project's Java version
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
-      - name: Run Maven tests
-        run: mvn clean test
+      - name: Grant execution permission for mvnw
+        run: chmod +x ./mvnw
+
+      - name: Run tests
+        run: ./mvnw test
