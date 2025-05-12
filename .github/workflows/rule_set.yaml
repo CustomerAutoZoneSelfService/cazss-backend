@@ -5,6 +5,8 @@ on:
     branches:
       - "*"
     types: [opened, synchronize, reopened]
+  merge_group:
+    types: [opened, reopened, synchronize]
 
 jobs:
   validate_branch:
