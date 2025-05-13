@@ -4,12 +4,11 @@ on:
   pull_request:
     branches:
       - "*"
-    types: [opened, synchronize, reopened]
-  push:
+    types: [opened, synchronize, reopened, edited, enqueued]
+  merge_group:
     branches:
-      # match the temporary merge group branches:
-      - 'merge_group/**'
-      - 'gh-merge-queue/**'
+      - "*"
+    types: [checks_requested]
 
 jobs:
   validate_branch:
@@ -95,8 +94,8 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: "temurin" # Or 'zulu', 'adopt', etc.
-          java-version: "21" # Set to your project's Java version
+          distribution: "temurin"
+          java-version: "21"
 
       - name: Run Maven tests
         run: mvn clean test
