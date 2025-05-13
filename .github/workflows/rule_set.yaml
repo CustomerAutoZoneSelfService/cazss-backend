@@ -5,10 +5,15 @@ on:
     branches:
       - "*"
     types: [opened, synchronize, reopened, edited, enqueued]
+  merge_group:
+    branches:
+      - "*"
+    types: [checks_requested]
 
 jobs:
   validate_branch:
     name: validate_branch
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -98,6 +103,7 @@ jobs:
 
   validate_pr_title:
     name: validate_pr_title
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR title
