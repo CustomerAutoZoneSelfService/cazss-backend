@@ -64,7 +64,7 @@ jobs:
       - name: Validate commit messages
         run: |
           # Commit types (case-insensitive)
-          valid_commit_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)$'
+          valid_commit_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)( \(#\d+\))?$'
           echo "Using regex: $valid_commit_regex"
 
           commits=$(git log --no-merges --pretty=format:"%s")
