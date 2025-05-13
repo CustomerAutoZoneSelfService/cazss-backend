@@ -64,7 +64,7 @@ jobs:
       - name: Validate commit messages
         run: |
           # Commit types (case-insensitive)
-          valid_commit_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)( \(#\d+\))?$'
+          valid_commit_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)( \(#[0-9]+\))?$'
           echo "Using regex: $valid_commit_regex"
 
           commits=$(git log --no-merges --pretty=format:"%s")
@@ -98,8 +98,16 @@ jobs:
           distribution: "temurin"
           java-version: "21"
 
-      - name: Run Maven tests
-        run: mvn clean test
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
+      - name: Grant execution permission for mvnw
+        run: chmod +x ./mvnw
+
+      - name: Run tests
+        run: ./mvnw test
 
   validate_pr_title:
     name: validate_pr_title
