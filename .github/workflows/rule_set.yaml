@@ -4,11 +4,16 @@ on:
   pull_request:
     branches:
       - "*"
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited, enqueued]
+  merge_group:
+    branches:
+      - "*"
+    types: [checks_requested]
 
 jobs:
   validate_branch:
     name: validate_branch
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -59,7 +64,7 @@ jobs:
       - name: Validate commit messages
         run: |
           # Commit types (case-insensitive)
-          valid_commit_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)$'
+          valid_commit_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)( \(#[0-9]+\))?$'
           echo "Using regex: $valid_commit_regex"
 
           commits=$(git log --no-merges --pretty=format:"%s")
@@ -83,7 +88,6 @@ jobs:
   validate_tests:
     name: validate_tests
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -91,8 +95,36 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: "temurin" # Or 'zulu', 'adopt', etc.
-          java-version: "21" # Set to your project's Java version
+          distribution: "temurin"
+          java-version: "21"
 
-      - name: Run Maven tests
-        run: mvn clean test
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
+      - name: Grant execution permission for mvnw
+        run: chmod +x ./mvnw
+
+      - name: Run tests
+        run: ./mvnw test
+
+  validate_pr_title:
+    name: validate_pr_title
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        run: |
+          title="${{ github.event.pull_request.title }}"
+          echo "PR title: $title"
+
+          valid_title_regex='^([Rr]efactor|[Ff]eature|[Ff]eat|[Bb]ugfix|[Dd]ocs|[Cc]hore|[Bb]ug|[Hh]otfix): .+ \([A-Z]+-[0-9]+(, *[A-Z]+-[0-9]+)*\)$'
+
+          if [[ ! "$title" =~ $valid_title_regex ]]; then
+            echo "Invalid PR title. Must match pattern: $valid_title_regex"
+            exit 1
+          else
+            echo "PR title is valid."
+          fi
+        shell: bash
