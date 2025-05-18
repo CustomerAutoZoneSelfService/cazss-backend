@@ -9,5 +9,7 @@ public interface HistoryProjection {
 
   String getEndpointName();
 
+  String getEndpointDescription();
+
   LocalDateTime getCreatedAt();
 }

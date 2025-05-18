@@ -13,10 +13,26 @@ public interface HistoryRepository extends JpaRepository<HistoryEntity, Integer>
         h.historyId AS historyId,
         u.email AS email,
         e.name AS endpointName,
+        e.name AS endpointDescription,
         h.createdAt AS createdAt
       FROM HistoryEntity h
       JOIN h.user u
       JOIN h.endpoint e
       """)
   List<HistoryProjection> findAllProjected();
+
+  @Query(
+      """
+      SELECT
+        h.historyId AS historyId,
+        u.email AS email,
+        e.name AS endpointName,
+        e.name AS endpointDescription,
+        h.createdAt AS createdAt
+      FROM HistoryEntity h
+      JOIN h.user u
+      JOIN h.endpoint e
+      WHERE u.userId = :id
+      """)
+  List<HistoryProjection> findByUserId(Integer id);
 }
