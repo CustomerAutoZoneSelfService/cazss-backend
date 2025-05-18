@@ -1,17 +1,13 @@
 package com.autozone.cazss_backend.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
-import com.autozone.cazss_backend.DTO.HistoryDTO;
-import com.autozone.cazss_backend.entity.CategoryEntity;
-import com.autozone.cazss_backend.entity.EndpointsEntity;
-import com.autozone.cazss_backend.entity.HistoryEntity;
-import com.autozone.cazss_backend.entity.UserEntity;
-import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
-import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import com.autozone.cazss_backend.projections.HistoryProjection;
 import com.autozone.cazss_backend.repository.HistoryRepository;
-import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,43 +27,22 @@ public class HistoryServiceTest {
   @Test
   void getAllHistory() {
     // GIVEN
-    UserEntity user = new UserEntity();
-    user.setEmail("test@autozone.com");
-    user.setActive(true);
-    user.setRole(UserRoleEnum.ADMIN);
+    HistoryProjection history1 = mock(HistoryProjection.class);
+    HistoryProjection history2 = mock(HistoryProjection.class);
+    List<HistoryProjection> mockHistoryList = List.of(history1, history2);
 
-    CategoryEntity category = new CategoryEntity();
-    category.setName("TEST");
-    category.setColor("#FFFFFF");
-
-    EndpointsEntity endpoint = new EndpointsEntity();
-    endpoint.setCategory(category);
-    endpoint.setUser(user);
-    endpoint.setActive(true);
-    endpoint.setName("TEST NAME");
-    endpoint.setDescription("TEST DESC");
-    endpoint.setMethod(EndpointMethodEnum.GET);
-    endpoint.setUrl("localhost/TEST");
-
-    HistoryEntity history = new HistoryEntity();
-    history.setHistoryId(1);
-    history.setUser(user);
-    history.setEndpoint(endpoint);
-    history.setStatusCode(200);
-    history.setCreatedAt(LocalDateTime.now());
-    history.setHistoryData(null);
-
-    given(historyRepository.findAll()).willReturn(List.of(history));
+    given(historyRepository.findAllProjected()).willReturn(mockHistoryList);
 
     // WHEN
-    List<HistoryDTO> actualHistory = historyService.getAllHistory();
+    List<HistoryProjection> result = historyService.getAllHistory();
 
-    // THEN
-    assertEquals(history.getHistoryId(), actualHistory.get(0).getHistoryId());
-    assertEquals(history.getEndpoint().getName(), actualHistory.get(0).getEndpoint().getName());
-    assertEquals(
-        history.getEndpoint().getDescription(),
-        actualHistory.get(0).getEndpoint().getDescription());
-    assertEquals(history.getCreatedAt(), actualHistory.get(0).getCreatedAt());
+    // Assert
+    assertNotNull(result);
+    assertEquals(2, result.size());
+    assertTrue(result.contains(history1));
+    assertTrue(result.contains(history2));
+
+    // Verify repository interaction
+    org.mockito.Mockito.verify(historyRepository).findAllProjected();
   }
 }

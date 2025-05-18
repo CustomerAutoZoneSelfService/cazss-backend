@@ -1,6 +1,6 @@
 package com.autozone.cazss_backend.controller;
 
-import com.autozone.cazss_backend.DTO.HistoryDTO;
+import com.autozone.cazss_backend.projections.HistoryProjection;
 import com.autozone.cazss_backend.service.HistoryService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ public class HistoryController {
    * @return List<HistoryDTO> which contains information about History logs
    */
   @GetMapping("/history")
-  public ResponseEntity<List<HistoryDTO>> getAllHistory() {
+  public ResponseEntity<List<HistoryProjection>> getAllHistory() {
     return ResponseEntity.status(200).body(historyService.getAllHistory());
   }
 }
