@@ -13,7 +13,7 @@ public interface HistoryRepository extends JpaRepository<HistoryEntity, Integer>
         h.historyId AS historyId,
         u.email AS email,
         e.name AS endpointName,
-        e.name AS endpointDescription,
+        e.description AS endpointDescription,
         h.createdAt AS createdAt
       FROM HistoryEntity h
       JOIN h.user u
@@ -27,7 +27,7 @@ public interface HistoryRepository extends JpaRepository<HistoryEntity, Integer>
         h.historyId AS historyId,
         u.email AS email,
         e.name AS endpointName,
-        e.name AS endpointDescription,
+        e.description AS endpointDescription,
         h.createdAt AS createdAt
       FROM HistoryEntity h
       JOIN h.user u
