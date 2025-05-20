@@ -2,6 +2,7 @@ package com.autozone.cazss_backend.service;
 
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
 import com.autozone.cazss_backend.exceptions.ValidationException;
 import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
@@ -157,7 +158,24 @@ public class EndpointService {
     } else {
       logger.warn("Empty or null response description for endpoint {}", serviceInfo.getId());
     }
-
     return new EndpointServiceDTO(status, parsedResponse);
+  }
+
+  public ServiceDTO createService(CreateServiceRequestDTO requestDTO) {
+    EndpointsEntity entity = new EndpointsEntity();
+    entity.setName(requestDTO.getName());
+    entity.setDescription(requestDTO.getDescription());
+    entity.setActive(true); // default to active
+    entity.setMethod(EndpointMethodEnum.POST);
+    entity.setUrl("/custom/url/" + UUID.randomUUID()); // example URL
+
+    EndpointsEntity saved = endpointsRepository.save(entity);
+
+    ServiceDTO dto = new ServiceDTO();
+    dto.setEndpointId(saved.getEndpointId());
+    dto.setName(saved.getName());
+    dto.setDescription(saved.getDescription());
+
+    return dto;
   }
 }

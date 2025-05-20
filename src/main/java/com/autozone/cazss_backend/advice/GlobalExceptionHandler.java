@@ -82,7 +82,7 @@ public class GlobalExceptionHandler {
         new ErrorResponseTemplate(
             "INTERNAL_ERROR",
             "Unexpected error occurred",
-            "xdperro", // xddog
+            ex.getMessage(), // use actual error message
             LocalDateTime.now(),
             UUID.randomUUID().toString());
 
