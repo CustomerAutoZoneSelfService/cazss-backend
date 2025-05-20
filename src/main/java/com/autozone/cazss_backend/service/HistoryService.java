@@ -1,6 +1,11 @@
 package com.autozone.cazss_backend.service;
 
 import com.autozone.cazss_backend.DTO.HistoryDTO;
+import com.autozone.cazss_backend.DTO.HistoryDataDTO;
+import com.autozone.cazss_backend.DTO.HistoryDetailedDTO;
+import com.autozone.cazss_backend.DTO.ServiceDTO;
+import com.autozone.cazss_backend.exceptions.HistoryNotFoundException;
+import com.autozone.cazss_backend.projections.HistoryDetailedProjection;
 import com.autozone.cazss_backend.projections.HistoryProjection;
 import com.autozone.cazss_backend.repository.HistoryRepository;
 import java.util.List;
@@ -40,5 +45,29 @@ public class HistoryService {
                     entity.getEndpointDescription(),
                     entity.getCreatedAt()))
         .toList();
+  }
+
+  public HistoryDetailedDTO getHistoryById(Integer id) {
+    HistoryDetailedProjection historyRequest =
+        historyRepository
+            .findHistoryRequestByHistoryId(id)
+            .orElseThrow(() -> new HistoryNotFoundException("History not found with id: " + id));
+    System.out.println(historyRequest);
+    HistoryDetailedProjection historyResponse =
+        historyRepository
+            .findHistoryResponseByHistoryId(id)
+            .orElseThrow(() -> new HistoryNotFoundException("History not found with id: " + id));
+
+    ServiceDTO endpoint =
+        new ServiceDTO(
+            historyRequest.getEndpointId(),
+            historyRequest.getName(),
+            historyRequest.getDescription());
+
+    HistoryDataDTO historyData =
+        new HistoryDataDTO(historyRequest.getContent(), historyResponse.getContent());
+
+    return new HistoryDetailedDTO(
+        historyRequest.getHistoryId(), historyRequest.getStatusCode(), endpoint, historyData);
   }
 }

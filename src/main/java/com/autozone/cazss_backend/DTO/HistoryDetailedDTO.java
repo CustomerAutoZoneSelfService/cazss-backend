@@ -1,33 +1,18 @@
 package com.autozone.cazss_backend.DTO;
 
-import com.autozone.cazss_backend.entity.EndpointsEntity;
-import com.autozone.cazss_backend.entity.HistoryDataEntity;
-import com.autozone.cazss_backend.entity.UserEntity;
-import java.time.LocalDateTime;
-import java.util.List;
-
 public class HistoryDetailedDTO {
   private Integer historyId;
-  private UserEntity userId;
-  private EndpointsEntity endpointId;
   private Integer statusCode;
-  private LocalDateTime createdAt;
-  private List<HistoryDataEntity> historyData;
+  private ServiceDTO endpoint;
+  private HistoryDataDTO historyData;
 
   public HistoryDetailedDTO() {}
 
   public HistoryDetailedDTO(
-      Integer historyId,
-      UserEntity userId,
-      EndpointsEntity endpointId,
-      Integer statusCode,
-      LocalDateTime createdAt,
-      List<HistoryDataEntity> historyData) {
+      Integer historyId, Integer statusCode, ServiceDTO endpoint, HistoryDataDTO historyData) {
     this.historyId = historyId;
-    this.userId = userId;
-    this.endpointId = endpointId;
     this.statusCode = statusCode;
-    this.createdAt = createdAt;
+    this.endpoint = endpoint;
     this.historyData = historyData;
   }
 
@@ -39,22 +24,6 @@ public class HistoryDetailedDTO {
     this.historyId = historyId;
   }
 
-  public UserEntity getUserId() {
-    return userId;
-  }
-
-  public void setUserId(UserEntity userId) {
-    this.userId = userId;
-  }
-
-  public EndpointsEntity getEndpointId() {
-    return endpointId;
-  }
-
-  public void setEndpointId(EndpointsEntity endpointId) {
-    this.endpointId = endpointId;
-  }
-
   public Integer getStatusCode() {
     return statusCode;
   }
@@ -63,19 +32,19 @@ public class HistoryDetailedDTO {
     this.statusCode = statusCode;
   }
 
-  public LocalDateTime getCreatedAt() {
-    return createdAt;
+  public ServiceDTO getEndpoint() {
+    return endpoint;
   }
 
-  public void setCreatedAt(LocalDateTime createdAt) {
-    this.createdAt = createdAt;
+  public void setEndpoint(ServiceDTO endpoint) {
+    this.endpoint = endpoint;
   }
 
-  public List<HistoryDataEntity> getHistoryData() {
+  public HistoryDataDTO getHistoryData() {
     return historyData;
   }
 
-  public void setHistoryData(List<HistoryDataEntity> historyData) {
+  public void setHistoryData(HistoryDataDTO historyData) {
     this.historyData = historyData;
   }
 }
