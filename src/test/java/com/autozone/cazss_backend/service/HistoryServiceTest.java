@@ -1,13 +1,21 @@
 package com.autozone.cazss_backend.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.autozone.cazss_backend.DTO.HistoryDTO;
+import com.autozone.cazss_backend.DTO.HistoryDetailedDTO;
+import com.autozone.cazss_backend.exceptions.HistoryNotFoundException;
+import com.autozone.cazss_backend.projections.HistoryDetailedProjection;
 import com.autozone.cazss_backend.projections.HistoryProjection;
 import com.autozone.cazss_backend.repository.HistoryRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -152,4 +160,36 @@ public class HistoryServiceTest {
     assertEquals(history1.getEndpointName(), result1.getEndpointName());
     assertEquals(history1.getCreatedAt(), result1.getCreatedAt());
   }
+
+  @Test
+  void getHistoryById_shouldReturnHistoryDetailedDTO_WhenIdIsValid() {
+    // Arrange
+    Integer historyId = 1;
+
+    HistoryDetailedProjection requestProjection = mock(HistoryDetailedProjection.class);
+    HistoryDetailedProjection responseProjection = mock(HistoryDetailedProjection.class);
+
+    when(requestProjection.getContent()).thenReturn("{\"id\":1}");
+    when(responseProjection.getContent()).thenReturn("{\"ok\":true}");
+
+    when(historyRepository.findHistoryRequestByHistoryId(historyId)).thenReturn(Optional.of(requestProjection));
+    when(historyRepository.findHistoryResponseByHistoryId(historyId)).thenReturn(Optional.of(responseProjection));
+
+    // Act
+    HistoryDetailedDTO result = historyService.getHistoryById(historyId);
+
+    // Assert
+    assertNotNull(result);
+    assertNotNull(result.getHistoryData());
+    assertEquals("{\"id\":1}", result.getHistoryData().getRequest());
+    assertEquals("{\"ok\":true}", result.getHistoryData().getResponse());
+}
+  
+  @Test
+  void getHistoryById_shouldThrowHistoryNotFoundException_WhenIdIsInvalid() {
+    Integer invalidId = 999;
+
+    when(historyRepository.findHistoryRequestByHistoryId(invalidId)).thenReturn(Optional.empty());
+
+    assertThrows(HistoryNotFoundException.class, () -> historyService.getHistoryById(invalidId));
 }
