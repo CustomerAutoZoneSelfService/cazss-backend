@@ -22,6 +22,8 @@ public class EndpointService {
 
   @Autowired private EndpointsRepository endpointsRepository;
 
+  @Autowired private UserRepository userRepository;
+
   @Autowired private RequestVariableRepository requestVariableRepository;
 
   @Autowired private ResponseRepository responseRepository;
@@ -37,6 +39,8 @@ public class EndpointService {
   @Autowired private RequestValidatorUtil requestValidatorUtil;
 
   @Autowired private ResponsePatternService responsePatternService;
+
+  @Autowired private HistoryService historyService;
 
   public List<ServiceDTO> getAllServices() {
     List<EndpointsEntity> entities = endpointsRepository.findAll();
@@ -157,6 +161,18 @@ public class EndpointService {
     } else {
       logger.warn("Empty or null response description for endpoint {}", serviceInfo.getId());
     }
+
+    // SAVE IN HISTORY
+    UserEntity user =
+        userRepository.getReferenceById(5); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
+    EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
+    historyService.addHistory(
+        user,
+        endpoint,
+        status.getCode(),
+        serviceInfoRequestModel.toString(),
+        parsedResponse.toString());
+    // SAVE IN HISTORY - END
 
     return new EndpointServiceDTO(status, parsedResponse);
   }
