@@ -172,8 +172,10 @@ public class HistoryServiceTest {
     when(requestProjection.getContent()).thenReturn("{\"id\":1}");
     when(responseProjection.getContent()).thenReturn("{\"ok\":true}");
 
-    when(historyRepository.findHistoryRequestByHistoryId(historyId)).thenReturn(Optional.of(requestProjection));
-    when(historyRepository.findHistoryResponseByHistoryId(historyId)).thenReturn(Optional.of(responseProjection));
+    when(historyRepository.findHistoryRequestByHistoryId(historyId))
+        .thenReturn(Optional.of(requestProjection));
+    when(historyRepository.findHistoryResponseByHistoryId(historyId))
+        .thenReturn(Optional.of(responseProjection));
 
     // Act
     HistoryDetailedDTO result = historyService.getHistoryById(historyId);
@@ -183,8 +185,8 @@ public class HistoryServiceTest {
     assertNotNull(result.getHistoryData());
     assertEquals("{\"id\":1}", result.getHistoryData().getRequest());
     assertEquals("{\"ok\":true}", result.getHistoryData().getResponse());
-}
-  
+  }
+
   @Test
   void getHistoryById_shouldThrowHistoryNotFoundException_WhenIdIsInvalid() {
     Integer invalidId = 999;
@@ -192,4 +194,5 @@ public class HistoryServiceTest {
     when(historyRepository.findHistoryRequestByHistoryId(invalidId)).thenReturn(Optional.empty());
 
     assertThrows(HistoryNotFoundException.class, () -> historyService.getHistoryById(invalidId));
+  }
 }
