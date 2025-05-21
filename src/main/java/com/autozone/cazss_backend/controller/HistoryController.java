@@ -23,6 +23,8 @@ public class HistoryController {
    * /services/history
    *
    * @return List<HistoryDTO> which contains information about History logs
+   * @param Integer userId, to return the history logs filtered by user. No userId provided returns
+   *     every history log.
    */
   @GetMapping("/history")
   public ResponseEntity<List<HistoryDTO>> getAllHistory(@RequestParam Optional<Integer> userId) {
