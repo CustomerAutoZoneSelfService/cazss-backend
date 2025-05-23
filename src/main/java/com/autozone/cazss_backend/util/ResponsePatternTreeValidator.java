@@ -85,7 +85,7 @@ public class ResponsePatternTreeValidator {
     int id = node.getResponsePatternId();
     List<CreateResponsePatternDTO> children = tree.getOrDefault(id, List.of());
 
-    node.setLeaf(children.isEmpty());
+    node.setIsLeaf(children.isEmpty());
 
     for (CreateResponsePatternDTO child : children) {
       dfsSetIsLeaf(child, tree);

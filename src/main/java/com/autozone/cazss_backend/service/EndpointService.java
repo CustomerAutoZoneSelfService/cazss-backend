@@ -120,7 +120,7 @@ public class EndpointService {
 
   @Transactional
   public ServiceDTO createCompleteService(CreateServiceDTO serviceDTO) {
-    logger.info("Creating {} service: {}", serviceDTO.getName(), serviceDTO);
+    logger.debug("Creating {} service: {}", serviceDTO.getName(), serviceDTO);
 
     // Category
     CategoryEntity category =
@@ -166,6 +166,8 @@ public class EndpointService {
           "Created response with id {} for endpoint id {}",
           responseEntity.getResponseId(),
           endpoint.getEndpointId());
+
+      logger.debug("{}", resDTO.getPatterns());
 
       // Response patterns
       responsePatternService.addPatterns(responseEntity.getResponseId(), resDTO.getPatterns());

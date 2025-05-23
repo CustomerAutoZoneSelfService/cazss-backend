@@ -75,7 +75,7 @@ public class ResponsePatternService {
       dto.setParentId(entity.getParentId());
       dto.setName(entity.getName());
       dto.setDescription(entity.getDescription());
-      dto.setLeaf(entity.getIsLeaf());
+      dto.setIsLeaf(entity.getIsLeaf());
       dtoList.add(dto);
     }
 
@@ -158,7 +158,7 @@ public class ResponsePatternService {
       entity.setName(node.getName());
       entity.setDescription(node.getDescription());
       entity.setPattern(node.getPattern());
-      entity.setIsLeaf(node.getLeaf());
+      entity.setIsLeaf(node.getIsLeaf());
       entity.setParentId(parentId);
       entity.setResponse(responseEntity);
 
@@ -171,7 +171,7 @@ public class ResponsePatternService {
       savedDTO.setName(saved.getName());
       savedDTO.setDescription(saved.getDescription());
       savedDTO.setPattern(node.getPattern());
-      savedDTO.setLeaf(saved.getIsLeaf());
+      savedDTO.setIsLeaf(saved.getIsLeaf());
 
       result.add(savedDTO);
 
@@ -209,7 +209,7 @@ public class ResponsePatternService {
       entity.setName(node.getName());
       entity.setDescription(node.getDescription());
       entity.setPattern(node.getPattern());
-      entity.setIsLeaf(node.getLeaf());
+      entity.setIsLeaf(node.getIsLeaf());
       entity.setParentId(parentId);
       entity.setResponse(responseEntity);
 
@@ -226,7 +226,7 @@ public class ResponsePatternService {
       entity.setName(node.getName());
       entity.setDescription(node.getDescription());
       entity.setPattern(node.getPattern());
-      entity.setIsLeaf(node.getLeaf());
+      entity.setIsLeaf(node.getIsLeaf());
       entity.setParentId(parentId);
 
       responsePatternRepository.save(entity);
@@ -242,7 +242,7 @@ public class ResponsePatternService {
     savedDTO.setName(entity.getName());
     savedDTO.setDescription(entity.getDescription());
     savedDTO.setPattern(entity.getPattern());
-    savedDTO.setLeaf(entity.getIsLeaf());
+    savedDTO.setIsLeaf(entity.getIsLeaf());
     result.add(savedDTO);
 
     // Traverse children
@@ -273,7 +273,7 @@ public class ResponsePatternService {
     entity.setName(node.getName());
     entity.setDescription(node.getDescription());
     entity.setPattern(node.getPattern());
-    entity.setIsLeaf(node.getLeaf());
+    entity.setIsLeaf(node.getIsLeaf());
     entity.setParentId(parentId);
     entity.setResponse(responseEntity);
 
@@ -286,7 +286,7 @@ public class ResponsePatternService {
     savedDTO.setName(saved.getName());
     savedDTO.setDescription(saved.getDescription());
     savedDTO.setPattern(node.getPattern());
-    savedDTO.setLeaf(saved.getIsLeaf());
+    savedDTO.setIsLeaf(saved.getIsLeaf());
 
     result.add(savedDTO);
 
@@ -300,11 +300,17 @@ public class ResponsePatternService {
       Integer responseId, List<CreateResponsePatternDTO> responsePatterns) {
     logger.debug("Entering addPatterns by response id");
 
+    if (responsePatterns.isEmpty()) {
+      return new ArrayList<CreateResponsePatternDTO>();
+    }
+
     List<ResponsePatternEntity> existing =
         Optional.ofNullable(responsePatternRepository.findByResponse_ResponseId(responseId))
             .orElse(Collections.emptyList());
 
     responsePatterns.addAll(parseToDTO(existing));
+
+    logger.debug("{}", responsePatterns);
     if (!ResponsePatternTreeValidator.isValid(responsePatterns)) {
       throw new IllegalArgumentException("Invalid response pattern tree");
     }
@@ -315,8 +321,12 @@ public class ResponsePatternService {
   }
 
   public List<CreateResponsePatternDTO> updatePatterns(
-      Integer responseId, List<CreateResponsePatternDTO> updates) {
+      Integer responseId, List<CreateResponsePatternDTO> responsePatterns) {
     logger.debug("Starting partial tree update for response {}", responseId);
+
+    if (responsePatterns.isEmpty()) {
+      return new ArrayList<CreateResponsePatternDTO>();
+    }
 
     // Fetch full tree from DB and convert to DTOs
     List<ResponsePatternEntity> existing =
@@ -325,7 +335,7 @@ public class ResponsePatternService {
 
     // Merge updates into fullTree (replacing same-ID nodes)
     Map<Integer, CreateResponsePatternDTO> updateMap =
-        updates.stream()
+        responsePatterns.stream()
             .collect(
                 Collectors.toMap(
                     CreateResponsePatternDTO::getResponsePatternId, Function.identity()));
@@ -340,7 +350,7 @@ public class ResponsePatternService {
     }
 
     // Add completely new nodes
-    updates.stream().filter(dto -> dto.getResponsePatternId() < 0).forEach(merged::add);
+    responsePatterns.stream().filter(dto -> dto.getResponsePatternId() < 0).forEach(merged::add);
 
     // Validate full merged tree
     if (!ResponsePatternTreeValidator.isValid(merged)) {

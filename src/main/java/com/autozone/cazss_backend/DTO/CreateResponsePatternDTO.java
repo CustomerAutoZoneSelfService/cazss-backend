@@ -48,11 +48,11 @@ public class CreateResponsePatternDTO {
     this.pattern = pattern;
   }
 
-  public Boolean getLeaf() {
+  public Boolean getIsLeaf() {
     return isLeaf;
   }
 
-  public void setLeaf(Boolean leaf) {
+  public void setIsLeaf(Boolean leaf) {
     isLeaf = leaf;
   }
 
