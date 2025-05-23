@@ -8,6 +8,7 @@ import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
 import com.autozone.cazss_backend.model.StatusModel;
 import com.autozone.cazss_backend.repository.*;
 import com.autozone.cazss_backend.util.*;
+import jakarta.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -20,105 +21,183 @@ import org.springframework.stereotype.Service;
 public class EndpointService {
   private static final Logger logger = LoggerFactory.getLogger(EndpointService.class);
 
-  @Autowired private EndpointsRepository endpointsRepository;
+  @Autowired
+  private EndpointsRepository endpointsRepository;
 
-  @Autowired private UserRepository userRepository;
+  @Autowired
+  private UserRepository userRepository;
 
-  @Autowired private RequestVariableRepository requestVariableRepository;
+  @Autowired
+  private RequestVariableRepository requestVariableRepository;
 
-  @Autowired private ResponseRepository responseRepository;
+  @Autowired
+  private ResponseRepository responseRepository;
 
-  @Autowired private ResponsePatternRepository responsePatternRepository;
+  @Autowired
+  private ResponsePatternRepository responsePatternRepository;
 
-  @Autowired private RequestBodyRepository requestBodyRepository;
+  @Autowired
+  private RequestBodyRepository requestBodyRepository;
 
-  @Autowired private AZClient azClient;
+  @Autowired
+  private AZClient azClient;
 
-  @Autowired private TemplateFiller templateFiller;
+  @Autowired
+  private TemplateFiller templateFiller;
 
-  @Autowired private RequestValidatorUtil requestValidatorUtil;
+  @Autowired
+  private RequestValidatorUtil requestValidatorUtil;
 
-  @Autowired private ResponsePatternService responsePatternService;
+  @Autowired
+  private ResponsePatternService responsePatternService;
 
-  @Autowired private HistoryService historyService;
+  @Autowired
+  private HistoryService historyService;
+
+  @Autowired
+  private RequestBodyService requestBodyService;
+
+  @Autowired
+  private RequestVariableService requestVariableService;
+
+  @Autowired
+  private ResponseService responseService;
+
+  @Autowired
+  private CategoryRepository categoryRepository;
 
   public List<ServiceDTO> getAllServices() {
-    List<EndpointsEntity> entities = endpointsRepository.findAll();
-    return entities.stream()
-        .map(
-            entity -> {
-              ServiceDTO serviceDTO = new ServiceDTO();
-              serviceDTO.setEndpointId(entity.getEndpointId());
-              serviceDTO.setName(entity.getName());
-              serviceDTO.setDescription(entity.getDescription());
-              return serviceDTO;
-            })
-        .collect(Collectors.toList());
+    return endpointsRepository.findAllServiceDTOs();
   }
 
   public ServiceInfoDTO getServiceById(Integer id) {
     System.out.println("ENTERING GET SERVICE BY ID");
-    EndpointsEntity endpoint =
-        endpointsRepository
-            .findByEndpointId(id)
-            .orElseThrow(() -> new ServiceNotFoundException("Endpoint not found with id: " + id));
+    EndpointsEntity endpoint = endpointsRepository
+        .findByEndpointId(id)
+        .orElseThrow(() -> new ServiceNotFoundException("Endpoint not found with id: " + id));
 
-    ServiceInfoDTO serviceInformation =
-        new ServiceInfoDTO(
-            endpoint.getName(),
-            endpoint.getDescription(),
-            endpoint.getActive(),
-            endpoint.getMethod(),
-            endpoint.getUrl());
+    ServiceInfoDTO serviceInformation = new ServiceInfoDTO(
+        endpoint.getName(),
+        endpoint.getDescription(),
+        endpoint.getActive(),
+        endpoint.getMethod(),
+        endpoint.getUrl());
 
     serviceInformation.setId(endpoint.getEndpointId());
 
-    List<RequestVariableEntity> requestVariables =
-        requestVariableRepository.findByEndpoint_EndpointId(endpoint.getEndpointId());
+    List<RequestVariableEntity> requestVariables = requestVariableRepository
+        .findByEndpoint_EndpointId(endpoint.getEndpointId());
     serviceInformation.setVariables(
         requestVariables.stream()
             .map(
-                requestVaraibleEntity ->
-                    new RequestVariableDTO(
-                        requestVaraibleEntity.getRequestVariableId(),
-                        requestVaraibleEntity.getType(),
-                        requestVaraibleEntity.getKeyName(),
-                        requestVaraibleEntity.getDefaultValue(),
-                        requestVaraibleEntity.getCustomizable(),
-                        requestVaraibleEntity.getDescription()))
+                requestVaraibleEntity -> new RequestVariableDTO(
+                    requestVaraibleEntity.getRequestVariableId(),
+                    requestVaraibleEntity.getType(),
+                    requestVaraibleEntity.getKeyName(),
+                    requestVaraibleEntity.getDefaultValue(),
+                    requestVaraibleEntity.getCustomizable(),
+                    requestVaraibleEntity.getDescription()))
             .collect(Collectors.toList()));
 
-    List<ResponseEntity> responses =
-        responseRepository.findByEndpoint_EndpointId(endpoint.getEndpointId());
+    List<ResponseEntity> responses = responseRepository.findByEndpoint_EndpointId(endpoint.getEndpointId());
     serviceInformation.setResponses(
         responses.stream()
             .map(
-                responseEntity ->
-                    new ServiceResponseDTO(
-                        responseEntity.getStatusCode(), responseEntity.getDescription()))
+                responseEntity -> new ServiceResponseDTO(
+                    responseEntity.getStatusCode(), responseEntity.getDescription()))
             .collect(Collectors.toList()));
 
-    Set<Integer> responseIds =
-        responses.stream().map(ResponseEntity::getResponseId).collect(Collectors.toSet());
+    Set<Integer> responseIds = responses.stream().map(ResponseEntity::getResponseId).collect(Collectors.toSet());
 
-    List<ResponsePatternEntity> responsePatterns =
-        responsePatternRepository.findByResponse_ResponseIdIn(responseIds);
+    List<ResponsePatternEntity> responsePatterns = responsePatternRepository.findByResponse_ResponseIdIn(responseIds);
     serviceInformation.setFilters(
         responsePatterns.stream()
             .map(
-                responsePatternEntity ->
-                    new FilterDTO(
-                        responsePatternEntity.getResponsePatternId(),
-                        responsePatternEntity.getPattern(),
-                        responsePatternEntity.getName(),
-                        responsePatternEntity.getDescription()))
+                responsePatternEntity -> new FilterDTO(
+                    responsePatternEntity.getResponsePatternId(),
+                    responsePatternEntity.getPattern(),
+                    responsePatternEntity.getName(),
+                    responsePatternEntity.getDescription()))
             .collect(Collectors.toList()));
 
-    RequestBodyEntity requestBody =
-        requestBodyRepository.findByEndpoint_EndpointId(id).orElse(null);
+    RequestBodyEntity requestBody = requestBodyRepository.findByEndpoint_EndpointId(id).orElse(null);
     serviceInformation.setTemplate(requestBody != null ? requestBody.getTemplate() : "");
 
     return serviceInformation;
+  }
+
+  @Transactional
+  public ServiceDTO createCompleteService(CreateServiceDTO serviceDTO) {
+    logger.debug("Creating {} service: {}", serviceDTO.getName(), serviceDTO);
+
+    // Category
+    CategoryEntity category = categoryRepository
+        .findById(serviceDTO.getCategoryId())
+        .orElseThrow(
+            () -> new ServiceNotFoundException(
+                "Category not found with id " + serviceDTO.getCategoryId()));
+
+    // User
+    Integer placeholderUserId = 90; // Placeholder
+    UserEntity user = userRepository
+        .findById(placeholderUserId)
+        .orElseThrow(
+            () -> new ServiceNotFoundException("User not found with id " + placeholderUserId));
+
+    // Endpoint
+    EndpointsEntity endpoint = createService(category, user, serviceDTO);
+    logger.debug("Created endpoint with id {}", endpoint.getEndpointId());
+
+    // Request body
+    if (serviceDTO.getTemplate() != null) {
+      requestBodyService.createRequestBody(endpoint, serviceDTO.getTemplate());
+      logger.debug("Created request body for endpoint id {}", endpoint.getEndpointId());
+    }
+
+    // Request variables
+    if (serviceDTO.getRequestVariables() != null) {
+      for (CreateRequestVariableDTO requestVariableDTO : serviceDTO.getRequestVariables())
+        requestVariableService.createRequestVariable(endpoint, requestVariableDTO);
+      logger.debug(
+          "Created {} request variable(s) for endpoint id {}",
+          serviceDTO.getRequestVariables().size(),
+          endpoint.getEndpointId());
+    }
+
+    // Responses
+    for (CreateResponseDTO resDTO : serviceDTO.getResponses()) {
+      ResponseEntity responseEntity = responseService.createResponse(endpoint, resDTO);
+      logger.debug(
+          "Created response with id {} for endpoint id {}",
+          responseEntity.getResponseId(),
+          endpoint.getEndpointId());
+
+      logger.debug("{}", resDTO.getPatterns());
+
+      // Response patterns
+      responsePatternService.addPatterns(responseEntity.getResponseId(), resDTO.getPatterns());
+    }
+    logger.debug(
+        "Created {} responses for endpoint id {}",
+        serviceDTO.getResponses().size(),
+        endpoint.getEndpointId());
+
+    // Result
+    return new ServiceDTO(endpoint.getEndpointId(), endpoint.getName(), endpoint.getDescription());
+  }
+
+  private EndpointsEntity createService(
+      CategoryEntity category, UserEntity user, CreateServiceDTO serviceDTO) {
+    EndpointsEntity endpoint = new EndpointsEntity();
+    endpoint.setCategory(category);
+    endpoint.setUser(user);
+    endpoint.setActive(serviceDTO.getActive());
+    endpoint.setName(serviceDTO.getName());
+    endpoint.setDescription(serviceDTO.getDescription());
+    endpoint.setMethod(serviceDTO.getMethod());
+    endpoint.setUrl(serviceDTO.getUrl());
+
+    return endpointsRepository.save(endpoint);
   }
 
   // Method to execute the service based on the request model
@@ -129,8 +208,8 @@ public class EndpointService {
 
     // Validate request using RequestValidatorUtil
     logger.debug("Iniciando validación del request...");
-    RequestValidatorUtil.ValidationResponse validationResponse =
-        requestValidatorUtil.validateRequest(serviceInfoRequestModel, id);
+    RequestValidatorUtil.ValidationResponse validationResponse = requestValidatorUtil
+        .validateRequest(serviceInfoRequestModel, id);
     logger.debug("Resultado de la validación: {}", validationResponse);
     if (!"true".equals(validationResponse.getStatus())) {
       logger.error("Validación fallida: {}", validationResponse.getErrores());
@@ -140,8 +219,7 @@ public class EndpointService {
     ServiceInfoDTO serviceInfo = getServiceById(id);
     logger.debug("Información del servicio obtenida: {}", serviceInfo);
 
-    String template =
-        templateFiller.returnFilledTemplate(serviceInfoRequestModel.getBody(), serviceInfo.getId());
+    String template = templateFiller.returnFilledTemplate(serviceInfoRequestModel.getBody(), serviceInfo.getId());
 
     serviceInfo.setTemplate(template);
 
@@ -155,16 +233,14 @@ public class EndpointService {
     // regexparser Lou/edgar
     Map<String, List<String>> parsedResponse = new HashMap<>();
     if (serviceResponse.getResponse() != null && !serviceResponse.getResponse().trim().isEmpty()) {
-      parsedResponse =
-          responsePatternService.getMatchesForEndpoint(
-              serviceInfo.getId(), serviceResponse.getResponse());
+      parsedResponse = responsePatternService.getMatchesForEndpoint(
+          serviceInfo.getId(), serviceResponse.getResponse());
     } else {
       logger.warn("Empty or null response description for endpoint {}", serviceInfo.getId());
     }
 
     // SAVE IN HISTORY
-    UserEntity user =
-        userRepository.getReferenceById(5); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
+    UserEntity user = userRepository.getReferenceById(5); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
     EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
     historyService.addHistory(
         user,
