@@ -1,5 +1,6 @@
 package com.autozone.cazss_backend.controller;
 
+import com.autozone.cazss_backend.DTO.CreateServiceDTO;
 import com.autozone.cazss_backend.DTO.EndpointServiceDTO;
 import com.autozone.cazss_backend.DTO.ServiceDTO;
 import com.autozone.cazss_backend.DTO.ServiceInfoDTO;
@@ -26,6 +27,17 @@ public class ServiceController {
   @GetMapping("")
   public ResponseEntity<List<ServiceDTO>> getAllServices() {
     return ResponseEntity.status(200).body(endpointService.getAllServices());
+  }
+
+  /**
+   * /services Creates a new endpoint
+   *
+   * @param service Contains the complete server DTO
+   * @return Returns the endpoint id, name, and description
+   */
+  @PostMapping("")
+  public ResponseEntity<ServiceDTO> createNewService (@RequestBody CreateServiceDTO service) {
+    return new ResponseEntity<>(endpointService.createCompleteService(service), HttpStatus.CREATED);
   }
 
   /**
