@@ -9,6 +9,7 @@ import com.autozone.cazss_backend.repository.RequestVariableRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,9 @@ public class RequestVariableService {
         existingVariables.stream()
             .collect(Collectors.toMap(RequestVariableEntity::getKeyName, v -> v));
 
+    Set<String> incomingKeys =
+        dtos.stream().map(CreateRequestVariableDTO::getKey).collect(Collectors.toSet());
+
     for (CreateRequestVariableDTO dto : dtos) {
       RequestVariableEntity existing = existingMap.get(dto.getKey());
       if (existing != null) {
@@ -55,6 +59,12 @@ public class RequestVariableService {
         requestVariableRepository.save(existing);
       } else {
         createRequestVariable(endpoint, dto);
+      }
+    }
+
+    for (RequestVariableEntity existingVar : existingVariables) {
+      if (!incomingKeys.contains(existingVar.getKeyName())) {
+        requestVariableRepository.delete(existingVar);
       }
     }
   }
