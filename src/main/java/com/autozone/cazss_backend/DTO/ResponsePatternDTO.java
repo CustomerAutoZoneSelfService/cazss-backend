@@ -8,22 +8,22 @@ public class ResponsePatternDTO {
 
   private Integer responsePatternId;
 
-  @NotNull(message = "responseId es obligatorio")
+  @NotNull(message = "responseId is required")
   private Integer responseId;
 
-  @NotBlank(message = "pattern no debe estar vacio")
-  @Size(max = 1024, message = "pattern no debe exceder 1024 caracteres")
+  @NotBlank(message = "pattern shouldn't be blank")
+  @Size(max = 1024, message = "pattern must not exceed 1024 characters")
   private String pattern;
 
-  @NotBlank(message = "name no debe estar vacio")
+  @NotBlank(message = "name shouldn't be blank")
   private String name;
 
-  @NotBlank(message = "description no debe estar vacio")
+  @NotBlank(message = "description shouldn't be blank")
   private String description;
 
   private Integer parentId;
 
-  @NotNull(message = "isLeaf debe especificarse")
+  @NotNull(message = "isLeaf is required")
   private Boolean isLeaf;
 
   public ResponsePatternDTO() {}
@@ -82,5 +82,18 @@ public class ResponsePatternDTO {
 
   public void setIsLeaf(Boolean isLeaf) {
     this.isLeaf = isLeaf;
+  }
+
+  @Override
+  public String toString() {
+    return "ResponsePatternDTO{" +
+                "responseId=" + responseId +
+                ", responsePatternid='" + responsePatternId + '\'' +
+                ", pattern='" + pattern + '\'' +
+                ", name=" + name +
+                ", description='" + description + '\'' +
+                ", parentId" + parentId + '\'' +
+                ", isLeaf" + isLeaf + '\'' +
+                '}';
   }
 }
