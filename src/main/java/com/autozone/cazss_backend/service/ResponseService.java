@@ -8,6 +8,8 @@ import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.ResponseRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,10 +35,19 @@ public class ResponseService {
             .orElseThrow(
                 () -> new ServiceNotFoundException("Endpoint not found with id: " + endpointId));
 
-    responseRepository.deleteByEndpoint_EndpointId(endpointId);
+    List<ResponseEntity> existingResponses =
+        responseRepository.findByEndpoint_EndpointId(endpointId);
+    Map<Integer, ResponseEntity> existingMap =
+        existingResponses.stream().collect(Collectors.toMap(ResponseEntity::getStatusCode, r -> r));
 
     for (CreateResponseDTO dto : dtos) {
-      createResponse(endpoint, dto);
+      ResponseEntity existing = existingMap.get(dto.getStatusCode());
+      if (existing != null) {
+        existing.setDescription(dto.getDescription());
+        responseRepository.save(existing);
+      } else {
+        createResponse(endpoint, dto);
+      }
     }
   }
 }

@@ -8,6 +8,8 @@ import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.RequestVariableRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,10 +39,23 @@ public class RequestVariableService {
             .orElseThrow(
                 () -> new ServiceNotFoundException("Endpoint not found with id: " + endpointId));
 
-    requestVariableRepository.deleteByEndpoint_EndpointId(endpointId);
+    List<RequestVariableEntity> existingVariables =
+        requestVariableRepository.findByEndpoint_EndpointId(endpointId);
+    Map<String, RequestVariableEntity> existingMap =
+        existingVariables.stream()
+            .collect(Collectors.toMap(RequestVariableEntity::getKeyName, v -> v));
 
     for (CreateRequestVariableDTO dto : dtos) {
-      createRequestVariable(endpoint, dto);
+      RequestVariableEntity existing = existingMap.get(dto.getKey());
+      if (existing != null) {
+        existing.setType(dto.getType());
+        existing.setDefaultValue(dto.getDefaultValue());
+        existing.setCustomizable(dto.getCustomizable());
+        existing.setDescription(dto.getDescription());
+        requestVariableRepository.save(existing);
+      } else {
+        createRequestVariable(endpoint, dto);
+      }
     }
   }
 }
