@@ -5,6 +5,7 @@ public class CreateResponsePatternDTO {
   private Integer parentId;
   private String name;
   private String description;
+  private String pattern;
   private Boolean isLeaf;
 
   public Integer getResponsePatternId() {
@@ -39,11 +40,19 @@ public class CreateResponsePatternDTO {
     this.description = description;
   }
 
-  public Boolean getLeaf() {
+  public String getPattern() {
+    return pattern;
+  }
+
+  public void setPattern(String pattern) {
+    this.pattern = pattern;
+  }
+
+  public Boolean getIsLeaf() {
     return isLeaf;
   }
 
-  public void setLeaf(Boolean leaf) {
+  public void setIsLeaf(Boolean leaf) {
     isLeaf = leaf;
   }
 

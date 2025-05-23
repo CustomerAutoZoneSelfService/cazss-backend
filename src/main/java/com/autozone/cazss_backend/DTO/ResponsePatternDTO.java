@@ -86,14 +86,26 @@ public class ResponsePatternDTO {
 
   @Override
   public String toString() {
-    return "ResponsePatternDTO{" +
-                "responseId=" + responseId +
-                ", responsePatternid='" + responsePatternId + '\'' +
-                ", pattern='" + pattern + '\'' +
-                ", name=" + name +
-                ", description='" + description + '\'' +
-                ", parentId" + parentId + '\'' +
-                ", isLeaf" + isLeaf + '\'' +
-                '}';
+    return "ResponsePatternDTO{"
+        + "responseId="
+        + responseId
+        + ", responsePatternid='"
+        + responsePatternId
+        + '\''
+        + ", pattern='"
+        + pattern
+        + '\''
+        + ", name="
+        + name
+        + ", description='"
+        + description
+        + '\''
+        + ", parentId"
+        + parentId
+        + '\''
+        + ", isLeaf"
+        + isLeaf
+        + '\''
+        + '}';
   }
 }

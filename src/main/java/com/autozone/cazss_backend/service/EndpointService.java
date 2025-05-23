@@ -120,7 +120,7 @@ public class EndpointService {
 
   @Transactional
   public ServiceDTO createCompleteService(CreateServiceDTO serviceDTO) {
-    logger.info("Creating {} service: {}", serviceDTO.getName(), serviceDTO);
+    logger.debug("Creating {} service: {}", serviceDTO.getName(), serviceDTO);
 
     // Category
     CategoryEntity category =
@@ -167,10 +167,10 @@ public class EndpointService {
           responseEntity.getResponseId(),
           endpoint.getEndpointId());
 
+      logger.debug("{}", resDTO.getPatterns());
+
       // Response patterns
-      for (CreateResponsePatternDTO responsePatternDTO : resDTO.getPatterns()) {
-        // todo @LouArc
-      }
+      responsePatternService.addPatterns(responseEntity.getResponseId(), resDTO.getPatterns());
     }
     logger.debug(
         "Created {} responses for endpoint id {}",
