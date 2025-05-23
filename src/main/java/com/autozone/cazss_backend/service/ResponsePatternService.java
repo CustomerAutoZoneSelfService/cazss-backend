@@ -60,6 +60,12 @@ public class ResponsePatternService {
     return regexParser.getResponsePatternMatches(patterns, inputString);
   }
 
+  /**
+   * Transforms a list of entities to a list of models used in response pattern services
+   *
+   * @param entitiesList
+   * @return
+   */
   public List<CreateResponsePatternDTO> parseToDTO(List<ResponsePatternEntity> entitiesList) {
     List<CreateResponsePatternDTO> dtoList = new ArrayList<>();
 
@@ -76,6 +82,14 @@ public class ResponsePatternService {
     return dtoList;
   }
 
+  /**
+   * Inserts new response patterns in the data base connecting to the old ones, whilst maintaining
+   * the tree structure
+   *
+   * @param tree
+   * @param responseId
+   * @return
+   */
   public List<CreateResponsePatternDTO> insertTree(
       Map<Integer, List<CreateResponsePatternDTO>> tree, Integer responseId) {
 
@@ -95,6 +109,14 @@ public class ResponsePatternService {
     return result;
   }
 
+  /**
+   * Replaces certain nodes in the data base with the new ones, whilst maintaining the tree
+   * structure
+   *
+   * @param tree
+   * @param responseId
+   * @return
+   */
   public List<CreateResponsePatternDTO> replaceTree(
       Map<Integer, List<CreateResponsePatternDTO>> tree, Integer responseId) {
 
@@ -296,12 +318,12 @@ public class ResponsePatternService {
       Integer responseId, List<CreateResponsePatternDTO> updates) {
     logger.debug("Starting partial tree update for response {}", responseId);
 
-    // Step 1: Fetch full tree from DB and convert to DTOs
+    // Fetch full tree from DB and convert to DTOs
     List<ResponsePatternEntity> existing =
         responsePatternRepository.findByResponse_ResponseId(responseId);
     List<CreateResponsePatternDTO> fullTree = parseToDTO(existing);
 
-    // Step 2: Merge updates into fullTree (replacing same-ID nodes)
+    // Merge updates into fullTree (replacing same-ID nodes)
     Map<Integer, CreateResponsePatternDTO> updateMap =
         updates.stream()
             .collect(
@@ -317,15 +339,15 @@ public class ResponsePatternService {
       }
     }
 
-    // Also add completely new (negative ID) nodes
+    // Add completely new nodes
     updates.stream().filter(dto -> dto.getResponsePatternId() < 0).forEach(merged::add);
 
-    // Step 3: Validate the full merged tree
+    // Validate full merged tree
     if (!ResponsePatternTreeValidator.isValid(merged)) {
       throw new IllegalArgumentException("Invalid tree after merging updates");
     }
 
-    // Step 4: Group into tree and apply changes
+    // Group into tree and apply changes
     Map<Integer, List<CreateResponsePatternDTO>> tree =
         ResponsePatternTreeValidator.healAndGroupByParent(merged);
     ResponseEntity responseEntity =
