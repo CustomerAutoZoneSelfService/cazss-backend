@@ -56,17 +56,7 @@ public class EndpointService {
   private CategoryRepository categoryRepository;
 
   public List<ServiceDTO> getAllServices() {
-    List<EndpointsEntity> entities = endpointsRepository.findAll();
-    return entities.stream()
-        .map(
-            entity -> {
-              ServiceDTO serviceDTO = new ServiceDTO();
-              serviceDTO.setEndpointId(entity.getEndpointId());
-              serviceDTO.setName(entity.getName());
-              serviceDTO.setDescription(entity.getDescription());
-              return serviceDTO;
-            })
-        .collect(Collectors.toList());
+    return endpointsRepository.findAllServiceDTOs();
   }
 
   public ServiceInfoDTO getServiceById(Integer id) {
