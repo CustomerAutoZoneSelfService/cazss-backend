@@ -4,6 +4,7 @@ import com.autozone.cazss_backend.exceptions.AZClientException;
 import com.autozone.cazss_backend.exceptions.CustomException;
 import com.autozone.cazss_backend.exceptions.ErrorResponseTemplate;
 import com.autozone.cazss_backend.exceptions.ValidationException;
+import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -58,6 +60,21 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
   }
 
+  @ExceptionHandler(ConstraintViolationException.class) // Excepción de bad request
+  public ResponseEntity<Object> handleMethodArgumentNotValid(
+      final ConstraintViolationException ex) {
+    // Obtener el mensaje de error de validación
+    ErrorResponseTemplate error =
+        new ErrorResponseTemplate(
+            "VALIDATION_ERROR",
+            "Please check your arguments.",
+            ex.getMessage(),
+            LocalDateTime.now(),
+            UUID.randomUUID().toString());
+
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
   @ExceptionHandler(MethodArgumentNotValidException.class) // Excepción de bad request
   public ResponseEntity<Object> handleMethodArgumentNotValid(
       final MethodArgumentNotValidException ex) {
@@ -75,10 +92,25 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler(Exception.class)
-  public ResponseEntity<Object> handleGeneralException(final Exception ex) {
-    ex.printStackTrace(); // ⬅️ TEMPORARY for console logging
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class) // Excepción de bad request
+  public ResponseEntity<Object> handleMethodArgumentNotValid(
+      final MethodArgumentTypeMismatchException ex) {
+    System.out.println("");
+    // Crear el objeto ErrorResponse
+    ErrorResponseTemplate error =
+        new ErrorResponseTemplate(
+            "VALIDATION_ERROR",
+            "Offending character: " + ex.getValue().toString(),
+            "Detalles del error de validación",
+            LocalDateTime.now(),
+            UUID.randomUUID().toString());
 
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(Exception.class) // Excepción general
+  public ResponseEntity<Object> handleGeneralException(final Exception ex) {
+    // Crear el objeto ErrorResponse
     ErrorResponseTemplate error =
         new ErrorResponseTemplate(
             "INTERNAL_ERROR",

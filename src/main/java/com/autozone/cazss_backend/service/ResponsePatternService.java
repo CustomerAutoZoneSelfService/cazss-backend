@@ -1,6 +1,8 @@
 package com.autozone.cazss_backend.service;
 
+import com.autozone.cazss_backend.DTO.ResponsePatternDTO;
 import com.autozone.cazss_backend.entity.ResponsePatternEntity;
+import com.autozone.cazss_backend.projections.ResponsePatternProjection;
 import com.autozone.cazss_backend.repository.ResponsePatternRepository;
 import com.autozone.cazss_backend.util.RegexParser;
 import java.util.HashMap;
@@ -40,5 +42,24 @@ public class ResponsePatternService {
     }
 
     return regexParser.getResponsePatternMatches(patterns, inputString);
+  }
+
+  public List<ResponsePatternDTO> getResponsePatternById(Integer responseId) {
+
+    List<ResponsePatternProjection> patterns =
+        responsePatternRepository.findByResponseId(responseId);
+
+    return patterns.stream()
+        .map(
+            pattern ->
+                new ResponsePatternDTO(
+                    pattern.getResponsePatternId(),
+                    pattern.getResponseId(),
+                    pattern.getPattern(),
+                    pattern.getName(),
+                    pattern.getDescription(),
+                    pattern.getParentId(),
+                    pattern.getIsLeaf()))
+        .toList();
   }
 }

@@ -28,6 +28,23 @@ public class ResponsePatternDTO {
 
   public ResponsePatternDTO() {}
 
+  public ResponsePatternDTO(
+      Integer responsePatternId,
+      Integer responseId,
+      String pattern,
+      String name,
+      String description,
+      Integer parentId,
+      Boolean isLeaf) {
+    this.responsePatternId = responsePatternId;
+    this.responseId = responseId;
+    this.pattern = pattern;
+    this.name = name;
+    this.description = description;
+    this.parentId = parentId;
+    this.isLeaf = isLeaf;
+  }
+
   public Integer getResponsePatternId() {
     return responsePatternId;
   }
@@ -86,14 +103,26 @@ public class ResponsePatternDTO {
 
   @Override
   public String toString() {
-    return "ResponsePatternDTO{" +
-                "responseId=" + responseId +
-                ", responsePatternid='" + responsePatternId + '\'' +
-                ", pattern='" + pattern + '\'' +
-                ", name=" + name +
-                ", description='" + description + '\'' +
-                ", parentId" + parentId + '\'' +
-                ", isLeaf" + isLeaf + '\'' +
-                '}';
+    return "ResponsePatternDTO{"
+        + "responseId="
+        + responseId
+        + ", responsePatternid='"
+        + responsePatternId
+        + '\''
+        + ", pattern='"
+        + pattern
+        + '\''
+        + ", name="
+        + name
+        + ", description='"
+        + description
+        + '\''
+        + ", parentId"
+        + parentId
+        + '\''
+        + ", isLeaf"
+        + isLeaf
+        + '\''
+        + '}';
   }
 }
