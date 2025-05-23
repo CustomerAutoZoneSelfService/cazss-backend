@@ -7,7 +7,6 @@ import com.autozone.cazss_backend.repository.ResponsePatternRepository;
 import com.autozone.cazss_backend.repository.ResponseRepository;
 import com.autozone.cazss_backend.util.RegexParser;
 import com.autozone.cazss_backend.util.ResponsePatternTreeValidator;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,7 +15,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,7 +31,8 @@ public class ResponsePatternService {
   private static final Logger logger = LoggerFactory.getLogger(ResponsePatternService.class);
 
   public ResponsePatternService(
-      ResponsePatternRepository responsePatternRepository, RegexParser regexParser,
+      ResponsePatternRepository responsePatternRepository,
+      RegexParser regexParser,
       ResponseRepository responseRepository) {
     this.responsePatternRepository = responsePatternRepository;
     this.regexParser = regexParser;
@@ -41,19 +40,16 @@ public class ResponsePatternService {
   }
 
   /**
-   * Retrieves the response patterns for a given endpoint ID and parses the input
-   * string to find
+   * Retrieves the response patterns for a given endpoint ID and parses the input string to find
    * matches.
    *
-   * @param endpointId  The ID of the endpoint for which to retrieve response
-   *                    patterns.
-   * @param inputString The input string to parse for matches against the response
-   *                    patterns.
-   * @return A map where the keys are pattern names and the values are lists of
-   *         matched strings.
+   * @param endpointId The ID of the endpoint for which to retrieve response patterns.
+   * @param inputString The input string to parse for matches against the response patterns.
+   * @return A map where the keys are pattern names and the values are lists of matched strings.
    */
   public Map<String, List<String>> getMatchesForEndpoint(Integer endpointId, String inputString) {
-    List<ResponsePatternEntity> patterns = responsePatternRepository.findByResponse_ResponseId(endpointId);
+    List<ResponsePatternEntity> patterns =
+        responsePatternRepository.findByResponse_ResponseId(endpointId);
 
     if (patterns == null || patterns.isEmpty()) {
       Map<String, List<String>> fallback = new HashMap<>();
@@ -81,13 +77,15 @@ public class ResponsePatternService {
   }
 
   public List<CreateResponsePatternDTO> insertTree(
-      Map<Integer, List<CreateResponsePatternDTO>> tree,
-      Integer responseId) {
+      Map<Integer, List<CreateResponsePatternDTO>> tree, Integer responseId) {
 
     CreateResponsePatternDTO root = tree.get(null).get(0);
 
-    ResponseEntity responseEntity = responseRepository.findById(responseId)
-        .orElseThrow(() -> new IllegalArgumentException("Response ID " + responseId + " not found"));
+    ResponseEntity responseEntity =
+        responseRepository
+            .findById(responseId)
+            .orElseThrow(
+                () -> new IllegalArgumentException("Response ID " + responseId + " not found"));
 
     Map<Integer, Integer> idMap = new HashMap<>(); // oldId to newId
     List<CreateResponsePatternDTO> result = new ArrayList<>();
@@ -98,13 +96,15 @@ public class ResponsePatternService {
   }
 
   public List<CreateResponsePatternDTO> replaceTree(
-      Map<Integer, List<CreateResponsePatternDTO>> tree,
-      Integer responseId) {
+      Map<Integer, List<CreateResponsePatternDTO>> tree, Integer responseId) {
 
     CreateResponsePatternDTO root = tree.get(null).get(0);
 
-    ResponseEntity responseEntity = responseRepository.findById(responseId)
-        .orElseThrow(() -> new IllegalArgumentException("Response ID " + responseId + " not found"));
+    ResponseEntity responseEntity =
+        responseRepository
+            .findById(responseId)
+            .orElseThrow(
+                () -> new IllegalArgumentException("Response ID " + responseId + " not found"));
 
     Map<Integer, Integer> idMap = new HashMap<>(); // oldId to newId
     List<CreateResponsePatternDTO> result = new ArrayList<>();
@@ -156,7 +156,8 @@ public class ResponsePatternService {
       originalId = saved.getResponsePatternId();
     }
     // Traverse children
-    for (CreateResponsePatternDTO child : tree.getOrDefault(node.getResponsePatternId(), Collections.emptyList())) {
+    for (CreateResponsePatternDTO child :
+        tree.getOrDefault(node.getResponsePatternId(), Collections.emptyList())) {
       child.setParentId(originalId);
       dfsInsert(child, tree, responseId, idMap, responseEntity, result);
     }
@@ -194,8 +195,11 @@ public class ResponsePatternService {
       idMap.put(originalId, entity.getResponsePatternId());
     } else if (updatesMap.containsKey(originalId)) {
       // Update only if in the updates list
-      entity = responsePatternRepository.findById(originalId)
-          .orElseThrow(() -> new IllegalArgumentException("Pattern ID " + originalId + " not found"));
+      entity =
+          responsePatternRepository
+              .findById(originalId)
+              .orElseThrow(
+                  () -> new IllegalArgumentException("Pattern ID " + originalId + " not found"));
 
       entity.setName(node.getName());
       entity.setDescription(node.getDescription());
@@ -270,34 +274,39 @@ public class ResponsePatternService {
     }
   }
 
-  public List<CreateResponsePatternDTO> addPatterns(Integer responseId,
-      List<CreateResponsePatternDTO> responsePatterns) {
+  public List<CreateResponsePatternDTO> addPatterns(
+      Integer responseId, List<CreateResponsePatternDTO> responsePatterns) {
     logger.debug("Entering addPatterns by response id");
 
-    List<ResponsePatternEntity> existing = Optional
-        .ofNullable(responsePatternRepository.findByResponse_ResponseId(responseId))
-        .orElse(Collections.emptyList());
+    List<ResponsePatternEntity> existing =
+        Optional.ofNullable(responsePatternRepository.findByResponse_ResponseId(responseId))
+            .orElse(Collections.emptyList());
 
     responsePatterns.addAll(parseToDTO(existing));
     if (!ResponsePatternTreeValidator.isValid(responsePatterns)) {
       throw new IllegalArgumentException("Invalid response pattern tree");
     }
-    Map<Integer, List<CreateResponsePatternDTO>> tree = ResponsePatternTreeValidator
-        .healAndGroupByParent(responsePatterns);
+    Map<Integer, List<CreateResponsePatternDTO>> tree =
+        ResponsePatternTreeValidator.healAndGroupByParent(responsePatterns);
 
     return insertTree(tree, responseId);
   }
 
-  public List<CreateResponsePatternDTO> updatePatterns(Integer responseId, List<CreateResponsePatternDTO> updates) {
+  public List<CreateResponsePatternDTO> updatePatterns(
+      Integer responseId, List<CreateResponsePatternDTO> updates) {
     logger.debug("Starting partial tree update for response {}", responseId);
 
     // Step 1: Fetch full tree from DB and convert to DTOs
-    List<ResponsePatternEntity> existing = responsePatternRepository.findByResponse_ResponseId(responseId);
+    List<ResponsePatternEntity> existing =
+        responsePatternRepository.findByResponse_ResponseId(responseId);
     List<CreateResponsePatternDTO> fullTree = parseToDTO(existing);
 
     // Step 2: Merge updates into fullTree (replacing same-ID nodes)
-    Map<Integer, CreateResponsePatternDTO> updateMap = updates.stream()
-        .collect(Collectors.toMap(CreateResponsePatternDTO::getResponsePatternId, Function.identity()));
+    Map<Integer, CreateResponsePatternDTO> updateMap =
+        updates.stream()
+            .collect(
+                Collectors.toMap(
+                    CreateResponsePatternDTO::getResponsePatternId, Function.identity()));
 
     List<CreateResponsePatternDTO> merged = new ArrayList<>();
     for (CreateResponsePatternDTO node : fullTree) {
@@ -309,9 +318,7 @@ public class ResponsePatternService {
     }
 
     // Also add completely new (negative ID) nodes
-    updates.stream()
-        .filter(dto -> dto.getResponsePatternId() < 0)
-        .forEach(merged::add);
+    updates.stream().filter(dto -> dto.getResponsePatternId() < 0).forEach(merged::add);
 
     // Step 3: Validate the full merged tree
     if (!ResponsePatternTreeValidator.isValid(merged)) {
@@ -319,9 +326,13 @@ public class ResponsePatternService {
     }
 
     // Step 4: Group into tree and apply changes
-    Map<Integer, List<CreateResponsePatternDTO>> tree = ResponsePatternTreeValidator.healAndGroupByParent(merged);
-    ResponseEntity responseEntity = responseRepository.findById(responseId)
-        .orElseThrow(() -> new IllegalArgumentException("Response ID " + responseId + " not found"));
+    Map<Integer, List<CreateResponsePatternDTO>> tree =
+        ResponsePatternTreeValidator.healAndGroupByParent(merged);
+    ResponseEntity responseEntity =
+        responseRepository
+            .findById(responseId)
+            .orElseThrow(
+                () -> new IllegalArgumentException("Response ID " + responseId + " not found"));
 
     Map<Integer, Integer> idMap = new HashMap<>();
     List<CreateResponsePatternDTO> result = new ArrayList<>();
@@ -333,20 +344,20 @@ public class ResponsePatternService {
     return result;
   }
 
-  public List<CreateResponsePatternDTO> replacePatterns(Integer responseId,
-      List<CreateResponsePatternDTO> responsePatterns) {
+  public List<CreateResponsePatternDTO> replacePatterns(
+      Integer responseId, List<CreateResponsePatternDTO> responsePatterns) {
     logger.debug("Entering replacePatterns by response id");
 
-    List<ResponsePatternEntity> existing = Optional
-        .ofNullable(responsePatternRepository.findByResponse_ResponseId(responseId))
-        .orElse(Collections.emptyList());
+    List<ResponsePatternEntity> existing =
+        Optional.ofNullable(responsePatternRepository.findByResponse_ResponseId(responseId))
+            .orElse(Collections.emptyList());
     responsePatternRepository.deleteAll(existing);
 
     if (!ResponsePatternTreeValidator.isValid(responsePatterns)) {
       throw new IllegalArgumentException("Invalid response pattern tree");
     }
-    Map<Integer, List<CreateResponsePatternDTO>> tree = ResponsePatternTreeValidator
-        .healAndGroupByParent(responsePatterns);
+    Map<Integer, List<CreateResponsePatternDTO>> tree =
+        ResponsePatternTreeValidator.healAndGroupByParent(responsePatterns);
 
     return replaceTree(tree, responseId);
   }
