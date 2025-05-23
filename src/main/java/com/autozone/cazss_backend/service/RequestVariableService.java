@@ -7,6 +7,7 @@ import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
 import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.RequestVariableRepository;
 import jakarta.transaction.Transactional;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +35,13 @@ public class RequestVariableService {
 
   @Transactional
   public void updateRequestVariables(Integer endpointId, List<CreateRequestVariableDTO> dtos) {
+    Set<String> keySet = new HashSet<>();
+    for (CreateRequestVariableDTO dto : dtos) {
+      if (!keySet.add(dto.getKey())) {
+        throw new IllegalArgumentException("Duplicate request variable key: " + dto.getKey());
+      }
+    }
+
     EndpointsEntity endpoint =
         endpointsRepository
             .findById(endpointId)

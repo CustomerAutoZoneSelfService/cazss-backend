@@ -7,6 +7,7 @@ import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
 import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.ResponseRepository;
 import jakarta.transaction.Transactional;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +31,13 @@ public class ResponseService {
 
   @Transactional
   public void updateResponses(Integer endpointId, List<CreateResponseDTO> dtos) {
+    Set<Integer> codeSet = new HashSet<>();
+    for (CreateResponseDTO dto : dtos) {
+      if (!codeSet.add(dto.getStatusCode())) {
+        throw new IllegalArgumentException("Duplicate response statusCode: " + dto.getStatusCode());
+      }
+    }
+
     EndpointsEntity endpoint =
         endpointsRepository
             .findById(endpointId)
