@@ -1,10 +1,15 @@
 package com.autozone.cazss_backend.controller;
 
+import com.autozone.cazss_backend.DTO.CreateRequestVariableDTO;
+import com.autozone.cazss_backend.DTO.CreateResponseDTO;
+import com.autozone.cazss_backend.DTO.CreateServiceDTO;
 import com.autozone.cazss_backend.DTO.EndpointServiceDTO;
 import com.autozone.cazss_backend.DTO.ServiceDTO;
 import com.autozone.cazss_backend.DTO.ServiceInfoDTO;
 import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
 import com.autozone.cazss_backend.service.EndpointService;
+import com.autozone.cazss_backend.service.RequestVariableService;
+import com.autozone.cazss_backend.service.ResponseService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +23,10 @@ public class ServiceController {
 
   @Autowired EndpointService endpointService;
 
+  @Autowired private RequestVariableService requestVariableService;
+
+  @Autowired private ResponseService responseService;
+
   /**
    * /services
    *
@@ -26,6 +35,17 @@ public class ServiceController {
   @GetMapping("")
   public ResponseEntity<List<ServiceDTO>> getAllServices() {
     return ResponseEntity.status(200).body(endpointService.getAllServices());
+  }
+
+  /**
+   * /services Creates a new endpoint
+   *
+   * @param service Contains the complete server DTO
+   * @return Returns the endpoint id, name, and description
+   */
+  @PostMapping("")
+  public ResponseEntity<ServiceDTO> createNewService(@RequestBody CreateServiceDTO service) {
+    return new ResponseEntity<>(endpointService.createCompleteService(service), HttpStatus.CREATED);
   }
 
   /**
@@ -52,5 +72,19 @@ public class ServiceController {
   public ResponseEntity<ServiceInfoDTO> getServiceById(@PathVariable Integer id) {
     ServiceInfoDTO serviceData = endpointService.getServiceById(id);
     return new ResponseEntity<>(serviceData, HttpStatus.OK);
+  }
+
+  @PutMapping("/{id}/request-variables")
+  public ResponseEntity<Void> updateRequestVariables(
+      @PathVariable Integer id, @RequestBody List<CreateRequestVariableDTO> requestVariableDTOs) {
+    requestVariableService.updateRequestVariables(id, requestVariableDTOs);
+    return ResponseEntity.ok().build();
+  }
+
+  @PutMapping("/{id}/responses")
+  public ResponseEntity<Void> updateResponses(
+      @PathVariable Integer id, @RequestBody List<CreateResponseDTO> responseDTOs) {
+    responseService.updateResponses(id, responseDTOs);
+    return ResponseEntity.ok().build();
   }
 }
