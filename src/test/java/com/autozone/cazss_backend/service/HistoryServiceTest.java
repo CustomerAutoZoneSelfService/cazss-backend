@@ -3,15 +3,23 @@ package com.autozone.cazss_backend.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.autozone.cazss_backend.DTO.HistoryDTO;
 import com.autozone.cazss_backend.DTO.HistoryDetailedDTO;
+import com.autozone.cazss_backend.entity.EndpointsEntity;
+import com.autozone.cazss_backend.entity.HistoryDataEntity;
+import com.autozone.cazss_backend.entity.HistoryEntity;
+import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.exceptions.HistoryNotFoundException;
 import com.autozone.cazss_backend.projections.HistoryDetailedProjection;
 import com.autozone.cazss_backend.projections.HistoryProjection;
+import com.autozone.cazss_backend.repository.HistoryDataRepository;
 import com.autozone.cazss_backend.repository.HistoryRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +36,7 @@ import org.springframework.test.context.ActiveProfiles;
 public class HistoryServiceTest {
 
   @Mock private HistoryRepository historyRepository;
+  @Mock private HistoryDataRepository historyDataRepository;
 
   @InjectMocks private HistoryService historyService;
 
@@ -194,5 +203,27 @@ public class HistoryServiceTest {
     when(historyRepository.findHistoryRequestByHistoryId(invalidId)).thenReturn(Optional.empty());
 
     assertThrows(HistoryNotFoundException.class, () -> historyService.getHistoryById(invalidId));
+  }
+
+  @Test
+  void testAddHistory_createsHistoryAndData() {
+    UserEntity mockUser = new UserEntity();
+    EndpointsEntity mockEndpoint = new EndpointsEntity();
+
+    Integer statusCode = 200;
+    String request = "{\"action\":\"test\"}";
+    String response = "{\"result\":\"ok\"}";
+
+    HistoryEntity savedHistory = new HistoryEntity();
+    savedHistory.setUser(mockUser);
+    savedHistory.setEndpoint(mockEndpoint);
+    savedHistory.setStatusCode(statusCode);
+    savedHistory.setCreatedAt(LocalDateTime.now());
+
+    when(historyRepository.save(any(HistoryEntity.class))).thenReturn(savedHistory);
+
+    historyService.addHistory(mockUser, mockEndpoint, statusCode, request, response);
+    verify(historyRepository).save(any(HistoryEntity.class));
+    verify(historyDataRepository, times(2)).save(any(HistoryDataEntity.class));
   }
 }
