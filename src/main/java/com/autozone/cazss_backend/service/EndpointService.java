@@ -23,6 +23,8 @@ public class EndpointService {
 
   @Autowired private EndpointsRepository endpointsRepository;
 
+  @Autowired private UserRepository userRepository;
+
   @Autowired private RequestVariableRepository requestVariableRepository;
 
   @Autowired private ResponseRepository responseRepository;
@@ -39,13 +41,13 @@ public class EndpointService {
 
   @Autowired private ResponsePatternService responsePatternService;
 
+  @Autowired private HistoryService historyService;
+
   @Autowired private RequestBodyService requestBodyService;
 
   @Autowired private RequestVariableService requestVariableService;
 
   @Autowired private ResponseService responseService;
-
-  @Autowired private UserRepository userRepository;
 
   @Autowired private CategoryRepository categoryRepository;
 
@@ -223,18 +225,33 @@ public class EndpointService {
     ServiceResponseDTO serviceResponse = azClient.callService(serviceInfo, serviceInfoRequestModel);
 
     int code = serviceResponse.getStatusCode();
-    String description = HttpStatus.valueOf(code).getReasonPhrase(); // OK, Bad Request, etc
+
+    Optional<ResponseEntity> resRepo = responseRepository.findByEndpointIdAndStatusCode(id, code);
+
+    String description = resRepo.isPresent() ? resRepo.get().getDescription() : HttpStatus.valueOf(code).getReasonPhrase(); // OK, Bad Request, etc
     StatusModel status = new StatusModel(code, description);
 
     // regexparser Lou/edgar
     Map<String, List<String>> parsedResponse = new HashMap<>();
-    if (serviceResponse.getResponse() != null && !serviceResponse.getResponse().trim().isEmpty()) {
+    if (serviceResponse.getResponse() != null && !serviceResponse.getResponse().trim().isEmpty() && resRepo.isPresent()) {
       parsedResponse =
           responsePatternService.getMatchesForEndpoint(
-              serviceInfo.getId(), serviceResponse.getResponse());
+              resRepo.get().getResponseId(), serviceResponse.getResponse());
     } else {
       logger.warn("Empty or null response description for endpoint {}", serviceInfo.getId());
     }
+
+    // SAVE IN HISTORY
+    UserEntity user =
+        userRepository.getReferenceById(5); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
+    EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
+    historyService.addHistory(
+        user,
+        endpoint,
+        status.getCode(),
+        serviceInfoRequestModel.toString(),
+        parsedResponse.toString());
+    // SAVE IN HISTORY - END
 
     return new EndpointServiceDTO(status, parsedResponse);
   }
