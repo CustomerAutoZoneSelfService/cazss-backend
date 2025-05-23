@@ -40,16 +40,16 @@ public class ResponsePatternService {
   }
 
   /**
-   * Retrieves the response patterns for a given endpoint ID and parses the input string to find
+   * Retrieves the response patterns for a given response ID and parses the input string to find
    * matches.
    *
-   * @param endpointId The ID of the endpoint for which to retrieve response patterns.
+   * @param responseId The ID of the response for which to retrieve response patterns.
    * @param inputString The input string to parse for matches against the response patterns.
    * @return A map where the keys are pattern names and the values are lists of matched strings.
    */
-  public Map<String, List<String>> getMatchesForEndpoint(Integer endpointId, String inputString) {
+  public Map<String, List<String>> getMatchesForEndpoint(Integer responseId, String inputString) {
     List<ResponsePatternEntity> patterns =
-        responsePatternRepository.findByResponse_ResponseId(endpointId);
+        responsePatternRepository.findByResponse_ResponseId(responseId);
 
     if (patterns == null || patterns.isEmpty()) {
       Map<String, List<String>> fallback = new HashMap<>();
