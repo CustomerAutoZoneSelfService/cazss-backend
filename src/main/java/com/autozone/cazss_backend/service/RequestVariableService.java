@@ -14,14 +14,14 @@ public class RequestVariableService {
     private RequestVariableRepository requestVariableRepository;
 
     public RequestVariableEntity createRequestVariable(EndpointsEntity endpoint, CreateRequestVariableDTO requestVariableDTO) {
-        RequestVariableEntity reqVar = new RequestVariableEntity();
-        reqVar.setEndpoint(endpoint);
-        reqVar.setType(requestVariableDTO.getType());
-        reqVar.setKeyName(requestVariableDTO.getKey());
-        reqVar.setDefaultValue(requestVariableDTO.getDefaultValue());
-        reqVar.setCustomizable(requestVariableDTO.getCustomizable());
-        reqVar.setDescription(requestVariableDTO.getDescription());
+        RequestVariableEntity requestVariableEntity = new RequestVariableEntity();
+        requestVariableEntity.setEndpoint(endpoint);
+        requestVariableEntity.setType(requestVariableDTO.getType());
+        requestVariableEntity.setKeyName(requestVariableDTO.getKey());
+        requestVariableEntity.setDefaultValue(requestVariableDTO.getDefaultValue());
+        requestVariableEntity.setCustomizable(requestVariableDTO.getCustomizable());
+        requestVariableEntity.setDescription(requestVariableDTO.getDescription());
 
-        return requestVariableRepository.save(reqVar);
+        return requestVariableRepository.save(requestVariableEntity);
     }
 }

@@ -32,8 +32,8 @@ public class ServiceController {
   /**
    * /services Creates a new endpoint
    *
-   * @param service todo description
-   * @return todo description
+   * @param service Contains the complete server DTO
+   * @return Returns the endpoint id, name, and description
    */
   @PostMapping("")
   public ResponseEntity<ServiceDTO> createNewService (@RequestBody CreateServiceDTO service) {
