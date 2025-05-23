@@ -92,4 +92,29 @@ public class UserFilterService {
 
     userFilterRepository.saveAll(toSave);
   }
+
+  /**
+   * Deletes a user filter based on the user ID and response pattern ID.
+   *
+   * @param userId The ID of the user.
+   * @param responsePatternId The ID of the response pattern.
+   * @throws ValidationException if userId or responsePatternId are null.
+   * @throws ServiceNotFoundException if the user filter does not exist.
+   */
+  @Transactional
+  public void deleteUserFilter(Integer userId, Integer responsePatternId) {
+    if (userId == null || responsePatternId == null) {
+      throw new ValidationException("User ID and Response Pattern ID cannot be null.");
+    }
+
+    UserFilterEntity.UserFilterId userFilterId =
+            new UserFilterEntity.UserFilterId(userId, responsePatternId);
+
+    if (!userFilterRepository.existsById(userFilterId)) {
+      throw new ServiceNotFoundException("User filter not found.");
+    }
+
+    userFilterRepository.deleteById(userFilterId);
+  }
+
 }
