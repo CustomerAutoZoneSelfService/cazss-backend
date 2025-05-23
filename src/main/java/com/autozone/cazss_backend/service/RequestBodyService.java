@@ -9,15 +9,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class RequestBodyService {
-    @Autowired
-    private RequestBodyRepository requestBodyRepository;
+  @Autowired private RequestBodyRepository requestBodyRepository;
 
-    @Transactional
-    public RequestBodyEntity createRequestBody(EndpointsEntity endpoint, String template) {
-        RequestBodyEntity requestBody = new RequestBodyEntity();
-        requestBody.setEndpoint(endpoint);
-        requestBody.setTemplate(template);
+  @Transactional
+  public RequestBodyEntity createRequestBody(EndpointsEntity endpoint, String template) {
+    RequestBodyEntity requestBody = new RequestBodyEntity();
+    requestBody.setEndpoint(endpoint);
+    requestBody.setTemplate(template);
 
-        return requestBodyRepository.save(requestBody);
-    }
+    return requestBodyRepository.save(requestBody);
+  }
 }
