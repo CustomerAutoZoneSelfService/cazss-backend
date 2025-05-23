@@ -38,13 +38,13 @@ public class UserFilterService {
     }
 
     List<UserFilterEntity> entities =
-            userFilterRepository.findByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
-                    userId, endpointId);
+        userFilterRepository.findByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
+            userId, endpointId);
 
     List<UserFilterDTO> userFilterDTOList =
-            entities.stream()
-                    .map(entity -> new UserFilterDTO(entity.getId().getResponsePatternId()))
-                    .collect(Collectors.toList());
+        entities.stream()
+            .map(entity -> new UserFilterDTO(entity.getId().getResponsePatternId()))
+            .collect(Collectors.toList());
 
     return new UserFilterListDTO(userFilterDTOList);
   }
@@ -67,28 +67,28 @@ public class UserFilterService {
 
     // Validate that all patternIds belong to the endpoint
     List<Integer> validPatternIds =
-            userFilterRepository.findByResponsePattern_Response_Endpoint_EndpointId(endpointId).stream()
-                    .map(rp -> rp.getResponsePatternId())
-                    .collect(Collectors.toList());
+        userFilterRepository.findByResponsePattern_Response_Endpoint_EndpointId(endpointId).stream()
+            .map(rp -> rp.getResponsePatternId())
+            .collect(Collectors.toList());
     if (!validPatternIds.containsAll(uniquePatternIds)) {
       throw new ServiceNotFoundException(
-              "Some responsePatternIds do not belong to the given endpoint");
+          "Some responsePatternIds do not belong to the given endpoint");
     }
 
     // Delete old filters
     userFilterRepository.deleteByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
-            userId, endpointId);
+        userId, endpointId);
 
     // Insert new ones
     List<UserFilterEntity> toSave =
-            uniquePatternIds.stream()
-                    .map(
-                            pid -> {
-                              UserFilterEntity entity = new UserFilterEntity();
-                              entity.setId(new UserFilterId(userId, pid));
-                              return entity;
-                            })
-                    .collect(Collectors.toList());
+        uniquePatternIds.stream()
+            .map(
+                pid -> {
+                  UserFilterEntity entity = new UserFilterEntity();
+                  entity.setId(new UserFilterId(userId, pid));
+                  return entity;
+                })
+            .collect(Collectors.toList());
 
     userFilterRepository.saveAll(toSave);
   }
@@ -108,7 +108,7 @@ public class UserFilterService {
     }
 
     UserFilterEntity.UserFilterId userFilterId =
-            new UserFilterEntity.UserFilterId(userId, responsePatternId);
+        new UserFilterEntity.UserFilterId(userId, responsePatternId);
 
     if (!userFilterRepository.existsById(userFilterId)) {
       throw new ServiceNotFoundException("User filter not found.");
@@ -116,5 +116,4 @@ public class UserFilterService {
 
     userFilterRepository.deleteById(userFilterId);
   }
-
 }
