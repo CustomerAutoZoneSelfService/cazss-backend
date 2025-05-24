@@ -44,7 +44,7 @@ public class UserFilterController {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
   }
-
+  
   @PostMapping("/{endpointId}/user-filters")
   public ResponseEntity<String> createUserFilters(
       @PathVariable Integer endpointId, @RequestBody RequestUserFilterDTO request) {
