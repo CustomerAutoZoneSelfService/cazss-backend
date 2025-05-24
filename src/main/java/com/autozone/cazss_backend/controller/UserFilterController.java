@@ -1,5 +1,6 @@
 package com.autozone.cazss_backend.controller;
 
+import com.autozone.cazss_backend.DTO.RequestUserFilterDTO;
 import com.autozone.cazss_backend.DTO.UserFilterListDTO;
 import com.autozone.cazss_backend.entity.EndpointsEntity;
 import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
@@ -41,6 +42,33 @@ public class UserFilterController {
       return ResponseEntity.badRequest().body(e.getMessage());
     } catch (ServiceNotFoundException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+  }
+  
+  @PostMapping("/{endpointId}/user-filters")
+  public ResponseEntity<String> createUserFilters(
+      @PathVariable Integer endpointId, @RequestBody RequestUserFilterDTO request) {
+    try {
+      if (request.getEndpointId() == null || !request.getEndpointId().equals(endpointId)) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body("Endpoint ID in path and body must match.");
+      }
+
+      if (!userFilterService.getUserFiltersByServiceId(endpointId).getUserFilters().isEmpty()) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body("User filters already exist for this endpoint.");
+      }
+
+      userFilterService.createUserFilters(request);
+      return ResponseEntity.status(HttpStatus.CREATED).build();
+
+    } catch (ValidationException e) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    } catch (ServiceNotFoundException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Unexpected error: " + e.getMessage());
     }
   }
 }
