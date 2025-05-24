@@ -44,7 +44,7 @@ public class UserFilterController {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
   }
-  
+
   @PostMapping("/{endpointId}/user-filters")
   public ResponseEntity<String> createUserFilters(
       @PathVariable Integer endpointId, @RequestBody RequestUserFilterDTO request) {
@@ -69,6 +69,19 @@ public class UserFilterController {
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Unexpected error: " + e.getMessage());
+    }
+  }
+
+  @DeleteMapping("/{userId}/user-filters/{responsePatternId}")
+  public ResponseEntity<?> deleteUserFilter(
+      @PathVariable Integer userId, @PathVariable Integer responsePatternId) {
+    try {
+      String message = userFilterService.deleteUserFilter(userId, responsePatternId);
+      return ResponseEntity.ok(message); // HTTP 200 OK with success message
+    } catch (ValidationException e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
+    } catch (ServiceNotFoundException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
   }
 }
