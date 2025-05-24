@@ -93,13 +93,29 @@ public class UserFilterService {
           "Invalid responsePatternIds for endpoint " + endpointId + ": " + invalid);
     }
 
-    // Replace strategy: delete old filters
-    userFilterRepository.deleteByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
-        userId, endpointId);
+    // Obtener filtros existentes para el usuario y endpoint
+    List<UserFilterEntity> existingFilters =
+        userFilterRepository.findByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
+            userId, endpointId);
+    Set<Integer> existingPatternIds =
+        existingFilters.stream()
+            .map(e -> e.getId().getResponsePatternId())
+            .collect(Collectors.toSet());
 
-    // Create new filter entities
-    List<UserFilterEntity> toSave =
+    // Filtrar solo los nuevos patrones que no estén ya asignados
+    Set<Integer> filtersToAdd =
         uniquePatternIds.stream()
+            .filter(id -> !existingPatternIds.contains(id))
+            .collect(Collectors.toSet());
+
+    if (filtersToAdd.isEmpty()) {
+      throw new ValidationException(
+          "All provided responsePatternIds already exist for this endpoint.");
+    }
+
+    // Crear nuevas entidades para los filtros nuevos
+    List<UserFilterEntity> toSave =
+        filtersToAdd.stream()
             .map(
                 pid -> {
                   UserFilterEntity entity = new UserFilterEntity();
