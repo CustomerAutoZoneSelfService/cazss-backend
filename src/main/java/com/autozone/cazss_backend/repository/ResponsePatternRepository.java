@@ -9,4 +9,7 @@ public interface ResponsePatternRepository extends JpaRepository<ResponsePattern
   List<ResponsePatternEntity> findByResponse_ResponseIdIn(Set<Integer> responseIds);
 
   List<ResponsePatternEntity> findByResponse_ResponseId(Integer id);
+
+  // Added to fetch by endpoint
+  List<ResponsePatternEntity> findByResponse_Endpoint_EndpointId(Integer endpointId);
 }

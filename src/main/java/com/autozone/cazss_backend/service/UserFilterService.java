@@ -3,11 +3,15 @@ package com.autozone.cazss_backend.service;
 import com.autozone.cazss_backend.DTO.RequestUserFilterDTO;
 import com.autozone.cazss_backend.DTO.UserFilterDTO;
 import com.autozone.cazss_backend.DTO.UserFilterListDTO;
+import com.autozone.cazss_backend.entity.ResponsePatternEntity;
+import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.entity.UserFilterEntity;
 import com.autozone.cazss_backend.entity.UserFilterEntity.UserFilterId;
 import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
 import com.autozone.cazss_backend.exceptions.ValidationException;
+import com.autozone.cazss_backend.repository.ResponsePatternRepository;
 import com.autozone.cazss_backend.repository.UserFilterRepository;
+import com.autozone.cazss_backend.repository.UserRepository;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,38 +24,43 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserFilterService {
 
   private final UserFilterRepository userFilterRepository;
+  private final ResponsePatternRepository responsePatternRepository;
+  private final UserRepository userRepository;
 
   @Autowired
-  public UserFilterService(UserFilterRepository userFilterRepository) {
+  public UserFilterService(
+      UserFilterRepository userFilterRepository,
+      ResponsePatternRepository responsePatternRepository,
+      UserRepository userRepository) {
     this.userFilterRepository = userFilterRepository;
+    this.responsePatternRepository = responsePatternRepository;
+    this.userRepository = userRepository;
   }
 
   public UserFilterListDTO getUserFiltersByServiceId(Integer endpointId) {
-
-    Integer userId = 1; // Replace with actual user ID retrieval logic
-
-    if (userId == null) {
-      throw new ValidationException("User cannot be null");
-    }
+    Integer userId = 90; // Replace with actual user retrieval
     if (endpointId == null) {
       throw new ValidationException("EndpointId cannot be null");
     }
+    UserEntity user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new ServiceNotFoundException("User not found"));
 
     List<UserFilterEntity> entities =
         userFilterRepository.findByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
             userId, endpointId);
 
-    List<UserFilterDTO> userFilterDTOList =
+    List<UserFilterDTO> dtos =
         entities.stream()
-            .map(entity -> new UserFilterDTO(entity.getId().getResponsePatternId()))
+            .map(e -> new UserFilterDTO(e.getId().getResponsePatternId()))
             .collect(Collectors.toList());
-
-    return new UserFilterListDTO(userFilterDTOList);
+    return new UserFilterListDTO(dtos);
   }
 
   @Transactional
   public void createUserFilters(RequestUserFilterDTO request) {
-    Integer userId = 1; // Hardcoded user for MBI I
+    Integer userId = 90;
     Integer endpointId = request.getEndpointId();
     List<Integer> responsePatternIds = request.getResponsePatternIds();
 
@@ -59,33 +68,52 @@ public class UserFilterService {
       throw new ValidationException("EndpointId and patternIds must be provided");
     }
 
-    // Remove duplicates
     Set<Integer> uniquePatternIds = new HashSet<>(responsePatternIds);
     if (uniquePatternIds.size() != responsePatternIds.size()) {
       throw new ValidationException("Duplicate responsePatternIds are not allowed");
     }
 
-    // Validate that all patternIds belong to the endpoint
+    // Load user reference
+    UserEntity user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new ServiceNotFoundException("User not found"));
+
+    // Fetch valid patterns for endpoint
+    List<ResponsePatternEntity> patterns =
+        responsePatternRepository.findByResponse_Endpoint_EndpointId(endpointId);
     List<Integer> validPatternIds =
-        userFilterRepository.findByResponsePattern_Response_Endpoint_EndpointId(endpointId).stream()
-            .map(rp -> rp.getResponsePatternId())
+        patterns.stream()
+            .map(ResponsePatternEntity::getResponsePatternId)
             .collect(Collectors.toList());
     if (!validPatternIds.containsAll(uniquePatternIds)) {
+      Set<Integer> invalid = new HashSet<>(uniquePatternIds);
+      invalid.removeAll(validPatternIds);
       throw new ServiceNotFoundException(
-          "Some responsePatternIds do not belong to the given endpoint");
+          "Invalid responsePatternIds for endpoint " + endpointId + ": " + invalid);
     }
 
-    // Delete old filters
+    // Replace strategy: delete old filters
     userFilterRepository.deleteByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
         userId, endpointId);
 
-    // Insert new ones
+    // Create new filter entities
     List<UserFilterEntity> toSave =
         uniquePatternIds.stream()
             .map(
                 pid -> {
                   UserFilterEntity entity = new UserFilterEntity();
-                  entity.setId(new UserFilterId(userId, pid));
+                  UserFilterId id = new UserFilterId(userId, pid);
+                  entity.setId(id);
+                  entity.setUser(user);
+                  ResponsePatternEntity pattern =
+                      responsePatternRepository
+                          .findById(pid)
+                          .orElseThrow(
+                              () ->
+                                  new ServiceNotFoundException(
+                                      "ResponsePattern with id " + pid + " not found"));
+                  entity.setResponsePattern(pattern);
                   return entity;
                 })
             .collect(Collectors.toList());
@@ -93,28 +121,15 @@ public class UserFilterService {
     userFilterRepository.saveAll(toSave);
   }
 
-  /**
-   * Deletes a user filter based on the user ID and response pattern ID.
-   *
-   * @param userId The ID of the user.
-   * @param responsePatternId The ID of the response pattern.
-   * @throws ValidationException if userId or responsePatternId are null.
-   * @throws ServiceNotFoundException if the user filter does not exist.
-   */
   @Transactional
-  public String deleteUserFilter(Integer userId, Integer responsePatternId) {
+  public void deleteUserFilter(Integer userId, Integer responsePatternId) {
     if (userId == null || responsePatternId == null) {
       throw new ValidationException("User ID and Response Pattern ID cannot be null.");
     }
-
-    UserFilterEntity.UserFilterId userFilterId =
-        new UserFilterEntity.UserFilterId(userId, responsePatternId);
-
-    if (!userFilterRepository.existsById(userFilterId)) {
+    UserFilterId id = new UserFilterId(userId, responsePatternId);
+    if (!userFilterRepository.existsById(id)) {
       throw new ServiceNotFoundException("User filter not found.");
     }
-
-    userFilterRepository.deleteById(userFilterId);
-    return "User filter deleted successfully.";
+    userFilterRepository.deleteById(id);
   }
 }
