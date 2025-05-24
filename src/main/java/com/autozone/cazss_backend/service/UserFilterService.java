@@ -102,7 +102,7 @@ public class UserFilterService {
    * @throws ServiceNotFoundException if the user filter does not exist.
    */
   @Transactional
-  public void deleteUserFilter(Integer userId, Integer responsePatternId) {
+  public String deleteUserFilter(Integer userId, Integer responsePatternId) {
     if (userId == null || responsePatternId == null) {
       throw new ValidationException("User ID and Response Pattern ID cannot be null.");
     }
@@ -115,5 +115,6 @@ public class UserFilterService {
     }
 
     userFilterRepository.deleteById(userFilterId);
+    return "User filter deleted successfully.";
   }
 }
