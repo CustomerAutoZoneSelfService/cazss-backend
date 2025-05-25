@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface UserFilterRepository
     extends JpaRepository<UserFilterEntity, UserFilterEntity.UserFilterId> {
 
-  // Help from Pedro Ruiz de la Peña in structuring the right queries
   List<UserFilterEntity> findByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
       Integer userId, Integer endpointId);
 
