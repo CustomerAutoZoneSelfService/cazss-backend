@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.given;
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.CategoryEntity;
 import com.autozone.cazss_backend.entity.EndpointsEntity;
+import com.autozone.cazss_backend.entity.ResponseEntity;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.exceptions.ValidationException;
@@ -38,7 +39,6 @@ public class EndpointServiceTest {
   @Mock private TemplateFiller templateFiller;
   @Mock private RequestValidatorUtil requestValidatorUtil;
   @Mock private CategoryRepository categoryRepository;
-  @Mock private UserRepository userRepository;
   @Mock private RequestBodyService requestBodyService;
   @Mock private RequestVariableService requestVariableService;
   @Mock private ResponseService responseService;
