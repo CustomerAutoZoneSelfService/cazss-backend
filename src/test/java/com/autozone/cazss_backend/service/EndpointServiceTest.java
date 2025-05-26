@@ -99,12 +99,12 @@ public class EndpointServiceTest {
         .willReturn(new ServiceResponseDTO(200, "{\"message\":\"ok\"}"));
 
     given(responsePatternService.getMatchesForEndpoint(endpointId, "{\"message\":\"ok\"}"))
-        .willReturn(Map.of("message", List.of("ok")));
+        .willReturn(Map.of(1, List.of("ok")));
 
     EndpointServiceDTO result = endpointService.executeService(endpointId, request);
 
     assertEquals(200, result.getStatus().getCode());
-    assertThat(result.getResponse()).containsKey("message");
+    assertThat(result.getResponse()).containsKey(1);
   }
 
   @Test

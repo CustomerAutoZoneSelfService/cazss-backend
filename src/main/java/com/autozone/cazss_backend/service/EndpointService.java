@@ -219,15 +219,13 @@ public class EndpointService {
 
     serviceInfo.setTemplate(template);
 
-    // azclient
     ServiceResponseDTO serviceResponse = azClient.callService(serviceInfo, serviceInfoRequestModel);
 
     int code = serviceResponse.getStatusCode();
     String description = HttpStatus.valueOf(code).getReasonPhrase(); // OK, Bad Request, etc
     StatusModel status = new StatusModel(code, description);
 
-    // regexparser Lou/edgar
-    Map<String, List<String>> parsedResponse = new HashMap<>();
+    Map<Integer, List<String>> parsedResponse = new HashMap<>();
     if (serviceResponse.getResponse() != null && !serviceResponse.getResponse().trim().isEmpty()) {
       parsedResponse =
           responsePatternService.getMatchesForEndpoint(
