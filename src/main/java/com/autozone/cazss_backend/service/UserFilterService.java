@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** Service class for managing user filters. */
 @Service
 public class UserFilterService {
 
@@ -27,6 +28,13 @@ public class UserFilterService {
   private final ResponsePatternRepository responsePatternRepository;
   private final UserRepository userRepository;
 
+  /**
+   * Constructs a new UserFilterService with the required repositories.
+   *
+   * @param userFilterRepository Repository for user filter data.
+   * @param responsePatternRepository Repository for response pattern data.
+   * @param userRepository Repository for user data.
+   */
   @Autowired
   public UserFilterService(
       UserFilterRepository userFilterRepository,
@@ -37,6 +45,14 @@ public class UserFilterService {
     this.userRepository = userRepository;
   }
 
+  /**
+   * Retrieves all user filters for a given service (endpoint) ID and a hardcoded user ID.
+   *
+   * @param endpointId The ID of the endpoint for which to retrieve filters.
+   * @return A {@link UserFilterListDTO} containing the list of user filters.
+   * @throws ValidationException If the endpointId is null.
+   * @throws ServiceNotFoundException If the user is not found.
+   */
   public UserFilterListDTO getUserFiltersByServiceId(Integer endpointId) {
     Integer userId = 90; // Replace with actual user retrieval
     if (endpointId == null) {
@@ -58,6 +74,17 @@ public class UserFilterService {
     return new UserFilterListDTO(dtos);
   }
 
+  /**
+   * Creates new user filters based on the provided request. This method is transactional and will
+   * roll back in case of errors.
+   *
+   * @param request The {@link RequestUserFilterDTO} containing endpoint ID and response pattern
+   *     IDs.
+   * @throws ValidationException If endpointId or responsePatternIds are null/empty, or if duplicate
+   *     responsePatternIds are provided, or if all provided responsePatternIds already exist.
+   * @throws ServiceNotFoundException If the user or any of the specified response patterns are not
+   *     found, or if any responsePatternIds are invalid for the given endpoint.
+   */
   @Transactional
   public void createUserFilters(RequestUserFilterDTO request) {
     Integer userId = 90;
@@ -93,7 +120,7 @@ public class UserFilterService {
           "Invalid responsePatternIds for endpoint " + endpointId + ": " + invalid);
     }
 
-    // Obtener filtros existentes para el usuario y endpoint
+    // Get existing filters for the user and endpoint
     List<UserFilterEntity> existingFilters =
         userFilterRepository.findByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
             userId, endpointId);
@@ -102,7 +129,7 @@ public class UserFilterService {
             .map(e -> e.getId().getResponsePatternId())
             .collect(Collectors.toSet());
 
-    // Filtrar solo los nuevos patrones que no estén ya asignados
+    // Filter only new patterns that are not already assigned
     Set<Integer> filtersToAdd =
         uniquePatternIds.stream()
             .filter(id -> !existingPatternIds.contains(id))
@@ -113,7 +140,7 @@ public class UserFilterService {
           "All provided responsePatternIds already exist for this endpoint.");
     }
 
-    // Crear nuevas entidades para los filtros nuevos
+    // Create new entities for the new filters
     List<UserFilterEntity> toSave =
         filtersToAdd.stream()
             .map(
@@ -137,6 +164,15 @@ public class UserFilterService {
     userFilterRepository.saveAll(toSave);
   }
 
+  /**
+   * Deletes a user filter identified by the user ID and response pattern ID. This method is
+   * transactional.
+   *
+   * @param userId The ID of the user.
+   * @param responsePatternId The ID of the response pattern associated with the filter.
+   * @throws ValidationException If userId or responsePatternId is null.
+   * @throws ServiceNotFoundException If the user filter to be deleted is not found.
+   */
   @Transactional
   public void deleteUserFilter(Integer userId, Integer responsePatternId) {
     if (userId == null || responsePatternId == null) {

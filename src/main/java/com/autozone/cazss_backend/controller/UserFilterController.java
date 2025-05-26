@@ -24,8 +24,8 @@ public class UserFilterController {
   /**
    * Constructs a new UserFilterController with the required dependencies.
    *
-   * @param userFilterService the service used to manage user filters
-   * @param endpointRepository the repository used to access endpoint data
+   * @param userFilterService The service used to manage user filters.
+   * @param endpointRepository The repository used to access endpoint data.
    */
   @Autowired
   public UserFilterController(
@@ -37,8 +37,11 @@ public class UserFilterController {
   /**
    * Retrieves all user filters for a given endpoint.
    *
-   * @param endpointId the ID of the endpoint
-   * @return a ResponseEntity containing the user filters or an error message
+   * @param endpointId The ID of the endpoint.
+   * @return A {@link ResponseEntity} containing the {@link UserFilterListDTO} with user filters or
+   *     an error message. It returns HTTP 200 (OK) on success, HTTP 400 (Bad Request) for
+   *     validation errors, and HTTP 404 (Not Found) if the endpoint or user is not found, or if the
+   *     endpoint is inactive.
    */
   @GetMapping("/{endpointId}/user-filters")
   public ResponseEntity<?> getUserFilters(@PathVariable Integer endpointId) {
@@ -62,9 +65,13 @@ public class UserFilterController {
   /**
    * Creates user filters for a specific endpoint.
    *
-   * @param endpointId the ID of the endpoint from the path
-   * @param request the request body containing the user filters to create
-   * @return a ResponseEntity indicating success or failure
+   * @param endpointId The ID of the endpoint from the path.
+   * @param request The request body containing the {@link RequestUserFilterDTO} with user filters
+   *     to create.
+   * @return A {@link ResponseEntity} indicating success (HTTP 201 Created) or failure. Returns HTTP
+   *     400 (Bad Request) if the endpoint ID in the path and body do not match or for other
+   *     validation errors. Returns HTTP 404 (Not Found) if required entities are not found. Returns
+   *     HTTP 500 (Internal Server Error) for unexpected errors.
    */
   @PostMapping("/{endpointId}/user-filters")
   public ResponseEntity<String> createUserFilters(
@@ -93,9 +100,13 @@ public class UserFilterController {
   /**
    * Deletes a specific user filter from an endpoint based on the response pattern ID.
    *
-   * @param endpointId the ID of the endpoint
-   * @param request the request body containing the responsePatternId to delete
-   * @return a ResponseEntity indicating the result of the operation
+   * @param endpointId The ID of the endpoint.
+   * @param request The request body {@link UserFilterDTO} containing the responsePatternId of the
+   *     filter to delete.
+   * @return A {@link ResponseEntity} indicating the result of the operation. Returns HTTP 204 (No
+   *     Content) on successful deletion. Returns HTTP 400 (Bad Request) for validation errors.
+   *     Returns HTTP 404 (Not Found) if the endpoint or filter is not found, or if the endpoint is
+   *     inactive. Returns HTTP 500 (Internal Server Error) for unexpected errors.
    */
   @DeleteMapping("/{endpointId}/user-filters")
   public ResponseEntity<String> deleteUserFilter(
