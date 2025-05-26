@@ -3,10 +3,13 @@ package com.autozone.cazss_backend.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 import com.autozone.cazss_backend.DTO.*;
-import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.entity.CategoryEntity;
+import com.autozone.cazss_backend.entity.EndpointsEntity;
+import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.exceptions.ValidationException;
 import com.autozone.cazss_backend.model.BodyModel;
@@ -33,9 +36,50 @@ public class EndpointServiceTest {
   @Mock private AZClient azClient;
   @Mock private TemplateFiller templateFiller;
   @Mock private RequestValidatorUtil requestValidatorUtil;
+  @Mock private CategoryRepository categoryRepository;
+  @Mock private UserRepository userRepository;
+  @Mock private RequestBodyService requestBodyService;
+  @Mock private RequestVariableService requestVariableService;
+  @Mock private ResponseService responseService;
   @Mock private ResponsePatternService responsePatternService;
 
   @InjectMocks private EndpointService endpointService;
+
+  @Test
+  void createCompleteService_withValidDTO_shouldReturnServiceDTO() {
+    // --- Arrange ---
+    CreateServiceDTO dto = new CreateServiceDTO();
+    dto.setCategoryId(1);
+    dto.setActive(true);
+    dto.setName("Test Service");
+    dto.setDescription("Test Desc");
+    dto.setMethod(EndpointMethodEnum.GET);
+    dto.setUrl("/test");
+    dto.setTemplate(null);
+    dto.setRequestVariables(Collections.emptyList());
+    dto.setResponses(Collections.emptyList());
+
+    // Simula repositorios
+    CategoryEntity cat = new CategoryEntity();
+    given(categoryRepository.findById(1)).willReturn(Optional.of(cat));
+
+    UserEntity usr = new UserEntity();
+    given(userRepository.findById(90)).willReturn(Optional.of(usr));
+
+    EndpointsEntity saved = new EndpointsEntity();
+    saved.setEndpointId(42);
+    saved.setName("Test Service");
+    saved.setDescription("Test Desc");
+    given(endpointsRepository.save(any(EndpointsEntity.class))).willReturn(saved);
+
+    // --- Act ---
+    ServiceDTO result = endpointService.createCompleteService(dto);
+
+    // --- Assert ---
+    assertEquals(42, result.getEndpointId());
+    assertEquals("Test Service", result.getName());
+    assertEquals("Test Desc", result.getDescription());
+  }
 
   @Test
   void getServiceById_shouldReturnPopulatedServiceInfoDTO() {
