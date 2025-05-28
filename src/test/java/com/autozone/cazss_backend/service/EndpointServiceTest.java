@@ -26,6 +26,7 @@ import org.springframework.test.context.ActiveProfiles;
 public class EndpointServiceTest {
 
   @Mock private EndpointsRepository endpointsRepository;
+  @Mock private UserRepository userRepository;
   @Mock private ResponseRepository responseRepository;
   @Mock private RequestVariableRepository requestVariableRepository;
   @Mock private RequestBodyRepository requestBodyRepository;
@@ -34,6 +35,7 @@ public class EndpointServiceTest {
   @Mock private TemplateFiller templateFiller;
   @Mock private RequestValidatorUtil requestValidatorUtil;
   @Mock private ResponsePatternService responsePatternService;
+  @Mock private HistoryService historyService;
 
   @InjectMocks private EndpointService endpointService;
 
