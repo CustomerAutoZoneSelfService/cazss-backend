@@ -75,14 +75,15 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler(Exception.class) // Excepción general
+  @ExceptionHandler(Exception.class)
   public ResponseEntity<Object> handleGeneralException(final Exception ex) {
-    // Crear el objeto ErrorResponse
+    ex.printStackTrace(); // ⬅️ TEMPORARY for console logging
+
     ErrorResponseTemplate error =
         new ErrorResponseTemplate(
             "INTERNAL_ERROR",
             "Unexpected error occurred",
-            "xdperro", // xddog
+            ex.getMessage(), // show real error details
             LocalDateTime.now(),
             UUID.randomUUID().toString());
 
