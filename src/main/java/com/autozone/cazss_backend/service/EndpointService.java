@@ -248,14 +248,10 @@ public class EndpointService {
 
     // SAVE IN HISTORY
     UserEntity user =
-        userRepository.getReferenceById(5); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
+        userRepository.getReferenceById(90); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
     EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
     historyService.addHistory(
-        user,
-        endpoint,
-        status.getCode(),
-        serviceInfoRequestModel.toString(),
-        parsedResponse.toString());
+        user, endpoint, status.getCode(), serviceInfoRequestModel.toString(), "");
     // SAVE IN HISTORY - END
 
     return new EndpointServiceDTO(status, parsedResponse);
