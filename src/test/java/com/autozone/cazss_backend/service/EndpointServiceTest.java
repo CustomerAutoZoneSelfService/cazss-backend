@@ -103,10 +103,13 @@ public class EndpointServiceTest {
     given(responsePatternService.getMatchesForEndpoint(endpointId, "{\"message\":\"ok\"}"))
         .willReturn(Map.of(1, List.of("ok")));
 
+    given(responseRepository.findByEndpointIdAndStatusCode(endpointId, 200))
+        .willReturn(Optional.of(new ResponseEntity(1, endpoint, 200, "Response Description")));
+
     EndpointServiceDTO result = endpointService.executeService(endpointId, request);
 
     assertEquals(200, result.getStatus().getCode());
-    assertThat(result.getResponse()).containsKey(1);
+    assertEquals(List.of("ok"), result.getResponse().get(1));
   }
 
   @Test
