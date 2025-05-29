@@ -1,9 +1,6 @@
 package com.autozone.cazss_backend.advice;
 
-import com.autozone.cazss_backend.exceptions.AZClientException;
-import com.autozone.cazss_backend.exceptions.CustomException;
-import com.autozone.cazss_backend.exceptions.ErrorResponseTemplate;
-import com.autozone.cazss_backend.exceptions.ValidationException;
+import com.autozone.cazss_backend.exceptions.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -12,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+/** Handles framework-level, validation, integration, and unknown exceptions. */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 

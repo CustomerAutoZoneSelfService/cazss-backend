@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.given;
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.CategoryEntity;
 import com.autozone.cazss_backend.entity.EndpointsEntity;
+import com.autozone.cazss_backend.entity.ResponseEntity;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.exceptions.ValidationException;
@@ -29,6 +30,7 @@ import org.springframework.test.context.ActiveProfiles;
 public class EndpointServiceTest {
 
   @Mock private EndpointsRepository endpointsRepository;
+  @Mock private UserRepository userRepository;
   @Mock private ResponseRepository responseRepository;
   @Mock private RequestVariableRepository requestVariableRepository;
   @Mock private RequestBodyRepository requestBodyRepository;
@@ -37,11 +39,11 @@ public class EndpointServiceTest {
   @Mock private TemplateFiller templateFiller;
   @Mock private RequestValidatorUtil requestValidatorUtil;
   @Mock private CategoryRepository categoryRepository;
-  @Mock private UserRepository userRepository;
   @Mock private RequestBodyService requestBodyService;
   @Mock private RequestVariableService requestVariableService;
   @Mock private ResponseService responseService;
   @Mock private ResponsePatternService responsePatternService;
+  @Mock private HistoryService historyService;
 
   @InjectMocks private EndpointService endpointService;
 
@@ -143,12 +145,15 @@ public class EndpointServiceTest {
         .willReturn(new ServiceResponseDTO(200, "{\"message\":\"ok\"}"));
 
     given(responsePatternService.getMatchesForEndpoint(endpointId, "{\"message\":\"ok\"}"))
-        .willReturn(Map.of("message", List.of("ok")));
+        .willReturn(Map.of(1, List.of("ok")));
+
+    given(responseRepository.findByEndpointIdAndStatusCode(endpointId, 200))
+        .willReturn(Optional.of(new ResponseEntity(1, endpoint, 200, "Response Description")));
 
     EndpointServiceDTO result = endpointService.executeService(endpointId, request);
 
     assertEquals(200, result.getStatus().getCode());
-    assertThat(result.getResponse()).containsKey("message");
+    assertEquals(List.of("ok"), result.getResponse().get(1));
   }
 
   @Test

@@ -7,13 +7,13 @@ import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class RegexParserTest {
+class ResponsePatternParserTest {
 
-  private RegexParser regexParser;
+  private ResponsePatternParser responsePatternParser;
 
   @BeforeEach
   void setUp() {
-    regexParser = new RegexParser();
+    responsePatternParser = new ResponsePatternParser();
   }
 
   private ResponsePatternEntity patternEntity(
@@ -35,7 +35,7 @@ class RegexParserTest {
             patternEntity(1, null, "<root>(.*?)</root>", "root", false),
             patternEntity(2, 1, "<child>(.*?)</child>", "child", true));
 
-    Map<Integer, List<ResponsePatternEntity>> dict = regexParser.populateDict(patterns);
+    Map<Integer, List<ResponsePatternEntity>> dict = responsePatternParser.populateDict(patterns);
 
     assertEquals(2, dict.size());
     assertTrue(dict.containsKey(0)); // root
@@ -52,13 +52,13 @@ class RegexParserTest {
     ResponsePatternEntity child = patternEntity(2, 1, "<child>(.*?)</child>", "child", true);
 
     List<ResponsePatternEntity> patterns = List.of(root, child);
-    Map<Integer, List<ResponsePatternEntity>> dict = regexParser.populateDict(patterns);
-    Map<String, List<String>> extracted = new HashMap<>();
+    Map<Integer, List<ResponsePatternEntity>> dict = responsePatternParser.populateDict(patterns);
+    Map<Integer, List<String>> extracted = new HashMap<>();
 
-    regexParser.parseRecursive(input, dict.get(0), dict, extracted);
+    responsePatternParser.parseRecursive(input, dict.get(0), dict, extracted);
 
-    assertTrue(extracted.containsKey("child"));
-    assertEquals(List.of("value1", "value2"), extracted.get("child"));
+    assertTrue(extracted.containsKey(2));
+    assertEquals(List.of("value1", "value2"), extracted.get(2));
   }
 
   @Test
@@ -70,10 +70,11 @@ class RegexParserTest {
 
     List<ResponsePatternEntity> patterns = List.of(root, child);
 
-    Map<String, List<String>> result = regexParser.getResponsePatternMatches(patterns, input);
+    Map<Integer, List<String>> result =
+        responsePatternParser.getResponsePatternMatches(patterns, input);
 
-    assertTrue(result.containsKey("child"));
-    assertEquals(List.of("value"), result.get("child"));
+    assertTrue(result.containsKey(2));
+    assertEquals(List.of("value"), result.get(2));
   }
 
   @Test
@@ -85,7 +86,8 @@ class RegexParserTest {
 
     List<ResponsePatternEntity> patterns = List.of(root, child);
 
-    Map<String, List<String>> result = regexParser.getResponsePatternMatches(patterns, input);
+    Map<Integer, List<String>> result =
+        responsePatternParser.getResponsePatternMatches(patterns, input);
     assertTrue(result.isEmpty());
   }
 
@@ -99,9 +101,10 @@ class RegexParserTest {
 
     List<ResponsePatternEntity> patterns = List.of(root, child);
 
-    Map<String, List<String>> result = regexParser.getResponsePatternMatches(patterns, input);
-    assertTrue(result.containsKey("child"));
-    assertEquals(List.of(""), result.get("child"));
+    Map<Integer, List<String>> result =
+        responsePatternParser.getResponsePatternMatches(patterns, input);
+    assertTrue(result.containsKey(2));
+    assertEquals(List.of(""), result.get(2));
   }
 
   @Test
@@ -114,9 +117,10 @@ class RegexParserTest {
     ResponsePatternEntity data2 = patternEntity(4, 2, "<data>(.*?)</data>", "data2", true);
 
     List<ResponsePatternEntity> patterns = List.of(root1, root2, data, data2);
-    Map<String, List<String>> result = regexParser.getResponsePatternMatches(patterns, input);
+    Map<Integer, List<String>> result =
+        responsePatternParser.getResponsePatternMatches(patterns, input);
 
-    assertEquals(List.of("abc"), result.get("data1"));
-    assertEquals(List.of("123"), result.get("data2"));
+    assertEquals(List.of("abc"), result.get(3));
+    assertEquals(List.of("123"), result.get(4));
   }
 }
