@@ -7,6 +7,13 @@ public class CreateResponseDTO {
   private String description;
   private List<CreateResponsePatternDTO> patterns;
 
+  public CreateResponseDTO(
+      Integer statusCode, String description, List<CreateResponsePatternDTO> patterns) {
+    this.statusCode = statusCode;
+    this.description = description;
+    this.patterns = patterns;
+  }
+
   public Integer getStatusCode() {
     return statusCode;
   }

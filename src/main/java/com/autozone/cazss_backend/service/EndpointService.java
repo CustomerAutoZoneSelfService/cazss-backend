@@ -120,6 +120,63 @@ public class EndpointService {
     return serviceInformation;
   }
 
+  /**
+   * Retrieves ALL the info on a given endpoint ID by ID.
+   *
+   * @param id The ID of the endpoint from which to retrieve all info.
+   * @return A CreateServiceDTO containing ALL info on the endpoint.
+   */
+  public CreateServiceDTO getFullServiceInfoById(Integer id) {
+    System.out.println("ENTERING GET SERVICE BY ID");
+    EndpointsEntity endpoint =
+        endpointsRepository
+            .findByEndpointId(id)
+            .orElseThrow(() -> new ServiceNotFoundException("Endpoint not found with id: " + id));
+
+    CreateServiceDTO serviceInformation = new CreateServiceDTO();
+
+    serviceInformation.setCategoryId(
+        endpoint.getCategory() != null ? endpoint.getCategory().getCategoryId() : null);
+    serviceInformation.setActive(endpoint.getActive());
+    serviceInformation.setName(endpoint.getName());
+    serviceInformation.setDescription(endpoint.getDescription());
+    serviceInformation.setMethod(endpoint.getMethod());
+    serviceInformation.setUrl(endpoint.getUrl());
+
+    RequestBodyEntity requestBody =
+        requestBodyRepository.findByEndpoint_EndpointId(id).orElse(null);
+    serviceInformation.setTemplate(requestBody != null ? requestBody.getTemplate() : "");
+
+    List<RequestVariableEntity> requestVariables =
+        requestVariableRepository.findByEndpoint_EndpointId(endpoint.getEndpointId());
+    serviceInformation.setRequestVariables(
+        requestVariables.stream()
+            .map(
+                requestVariableEntity ->
+                    new CreateRequestVariableDTO(
+                        requestVariableEntity.getType(),
+                        requestVariableEntity.getKeyName(),
+                        requestVariableEntity.getDefaultValue(),
+                        requestVariableEntity.getCustomizable(),
+                        requestVariableEntity.getDescription()))
+            .collect(Collectors.toList()));
+
+    List<ResponseEntity> responses =
+        responseRepository.findByEndpoint_EndpointId(endpoint.getEndpointId());
+    serviceInformation.setResponses(
+        responses.stream()
+            .map(
+                responseEntity ->
+                    new CreateResponseDTO(
+                        responseEntity.getStatusCode(),
+                        responseEntity.getDescription(),
+                        returnCreateResponsePatternDTOListFromResponseId(
+                            responseEntity.getResponseId())))
+            .collect(Collectors.toList()));
+
+    return serviceInformation;
+  }
+
   @Transactional
   public ServiceDTO createCompleteService(CreateServiceDTO serviceDTO) {
     logger.debug("Creating {} service: {}", serviceDTO.getName(), serviceDTO);
@@ -254,5 +311,24 @@ public class EndpointService {
     // SAVE IN HISTORY - END
 
     return new EndpointServiceDTO(status, parsedResponse);
+  }
+
+  private List<CreateResponsePatternDTO> returnCreateResponsePatternDTOListFromResponseId(
+      Integer responseId) {
+    List<ResponsePatternEntity> responsePatterns =
+        responsePatternRepository.findByResponse_ResponseId(responseId);
+    return (responsePatterns != null
+        ? responsePatterns.stream()
+            .map(
+                responsePatternEntity ->
+                    new CreateResponsePatternDTO(
+                        responsePatternEntity.getResponsePatternId(),
+                        responsePatternEntity.getParentId(),
+                        responsePatternEntity.getName(),
+                        responsePatternEntity.getDescription(),
+                        responsePatternEntity.getPattern(),
+                        responsePatternEntity.getIsLeaf()))
+            .collect(Collectors.toList())
+        : null);
   }
 }
