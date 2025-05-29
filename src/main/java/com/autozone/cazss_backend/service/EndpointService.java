@@ -23,8 +23,6 @@ public class EndpointService {
 
   @Autowired private EndpointsRepository endpointsRepository;
 
-  @Autowired private UserRepository userRepository;
-
   @Autowired private RequestVariableRepository requestVariableRepository;
 
   @Autowired private ResponseRepository responseRepository;
@@ -48,6 +46,8 @@ public class EndpointService {
   @Autowired private RequestVariableService requestVariableService;
 
   @Autowired private ResponseService responseService;
+
+  @Autowired private UserRepository userRepository;
 
   @Autowired private CategoryRepository categoryRepository;
 

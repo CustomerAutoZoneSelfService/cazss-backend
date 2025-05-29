@@ -11,4 +11,7 @@ public interface ResponsePatternRepository extends JpaRepository<ResponsePattern
   List<ResponsePatternEntity> findByResponse_ResponseId(Integer id);
 
   void deleteByResponse_ResponseId(Integer id);
+
+  // Added to fetch by endpoint
+  List<ResponsePatternEntity> findByResponse_Endpoint_EndpointId(Integer endpointId);
 }
