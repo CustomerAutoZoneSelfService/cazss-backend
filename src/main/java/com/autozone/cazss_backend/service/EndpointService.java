@@ -221,33 +221,36 @@ public class EndpointService {
 
     serviceInfo.setTemplate(template);
 
-    // azclient
     ServiceResponseDTO serviceResponse = azClient.callService(serviceInfo, serviceInfoRequestModel);
 
     int code = serviceResponse.getStatusCode();
-    String description = HttpStatus.valueOf(code).getReasonPhrase(); // OK, Bad Request, etc
+
+    Optional<ResponseEntity> resRepo = responseRepository.findByEndpointIdAndStatusCode(id, code);
+
+    String description =
+        resRepo.isPresent()
+            ? resRepo.get().getDescription()
+            : HttpStatus.valueOf(code).getReasonPhrase(); // OK, Bad Request, etc
     StatusModel status = new StatusModel(code, description);
 
     // regexparser Lou/edgar
-    Map<String, List<String>> parsedResponse = new HashMap<>();
-    if (serviceResponse.getResponse() != null && !serviceResponse.getResponse().trim().isEmpty()) {
+    Map<Integer, List<String>> parsedResponse = new HashMap<>();
+    if (serviceResponse.getResponse() != null
+        && !serviceResponse.getResponse().trim().isEmpty()
+        && resRepo.isPresent()) {
       parsedResponse =
           responsePatternService.getMatchesForEndpoint(
-              serviceInfo.getId(), serviceResponse.getResponse());
+              resRepo.get().getResponseId(), serviceResponse.getResponse());
     } else {
       logger.warn("Empty or null response description for endpoint {}", serviceInfo.getId());
     }
 
     // SAVE IN HISTORY
     UserEntity user =
-        userRepository.getReferenceById(5); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
+        userRepository.getReferenceById(90); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
     EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
     historyService.addHistory(
-        user,
-        endpoint,
-        status.getCode(),
-        serviceInfoRequestModel.toString(),
-        parsedResponse.toString());
+        user, endpoint, status.getCode(), serviceInfoRequestModel.toString(), "");
     // SAVE IN HISTORY - END
 
     return new EndpointServiceDTO(status, parsedResponse);

@@ -7,22 +7,16 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 @Component
-public class RegexParser {
+public class ResponsePatternParser {
 
   private final Integer ROOT_PARENT_ID = 0;
 
-  // /**
-  // * Returns the smallest responsePatternId from the list
-  // */
-  // public int getMinId(List<ResponsePatternEntity> allPatterns) {
-  // return allPatterns.stream()
-  // .filter(p -> p.getResponsePatternId() != null)
-  // .mapToInt(ResponsePatternEntity::getResponsePatternId)
-  // .min()
-  // .orElse(1); // Avoid division by 0
-  // }
-
-  /** Groups patterns by normalized parent ID. */
+  /**
+   * Groups patterns by parent ID to generate a tree like structure where parentID -> [Entities]
+   *
+   * @param patterns list of pattern entities to be transformed
+   * @return Tree like Map
+   */
   public Map<Integer, List<ResponsePatternEntity>> populateDict(
       List<ResponsePatternEntity> patterns) {
     Map<Integer, List<ResponsePatternEntity>> dict = new HashMap<>();
@@ -37,14 +31,21 @@ public class RegexParser {
     return dict;
   }
 
-  public RegexParser() {}
+  public ResponsePatternParser() {}
 
-  /** Recursive parsing of XML content based on pattern tree. */
+  /**
+   * Recursive parsing of content based on a pattern tree
+   *
+   * @param content String containing the text to be parsed
+   * @param patterns List of patterns to be matched against the content
+   * @param responsePatternDict Tree like structure where parentID -> [Entities]
+   * @param extractedPatternValues Resulting values from pattern matching
+   */
   public void parseRecursive(
       String content,
       List<ResponsePatternEntity> patterns,
       Map<Integer, List<ResponsePatternEntity>> responsePatternDict,
-      Map<String, List<String>> extractedPatternValues) {
+      Map<Integer, List<String>> extractedPatternValues) {
 
     if (patterns == null) return;
 
@@ -68,17 +69,23 @@ public class RegexParser {
           }
         } else {
           extractedPatternValues
-              .computeIfAbsent(patternItem.getName(), k -> new ArrayList<>())
+              .computeIfAbsent(patternItem.getResponsePatternId(), k -> new ArrayList<>())
               .add(innerContent != null ? innerContent.trim() : "");
         }
       }
     }
   }
 
-  /** Entrypoint: returns a map of extracted values by tag name. */
-  public Map<String, List<String>> getResponsePatternMatches(
+  /**
+   * Parser entry point which evaluates content with a the ResponsePatterns
+   *
+   * @param patterns List of rules which will be used to evaluate
+   * @param inputString content string to evaluate to
+   * @return grouped matches by responsePattern id
+   */
+  public Map<Integer, List<String>> getResponsePatternMatches(
       List<ResponsePatternEntity> patterns, String inputString) {
-    Map<String, List<String>> extractedPatternValues = new HashMap<>();
+    Map<Integer, List<String>> extractedPatternValues = new HashMap<>();
 
     Map<Integer, List<ResponsePatternEntity>> responsePatternDict = populateDict(patterns);
 
