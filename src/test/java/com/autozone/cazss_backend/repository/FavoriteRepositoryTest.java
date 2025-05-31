@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import java.util.Optional;
@@ -27,6 +28,8 @@ public class FavoriteRepositoryTest {
 
   @Autowired CategoryRepository categoryRepository;
 
+  @Autowired AuthenticationStrategyRepository authenticationStrategyRepository;
+
   @Test
   @Order(1)
   public void givenFavoriteRepository_whenSaveAndRetrieveFavorite_thenOK() {
@@ -45,6 +48,17 @@ public class FavoriteRepositoryTest {
             .orElseGet(
                 () -> userRepository.save(new UserEntity(userEmail, true, UserRoleEnum.USER)));
 
+    // Configuración del auth strategy
+    String authStrategyName = "FavoriteRepositoryTest";
+    AuthenticationStrategyEntity authenticationStrategy =
+        authenticationStrategyRepository
+            .findByName(authStrategyName)
+            .orElseGet(
+                () ->
+                    authenticationStrategyRepository.save(
+                        new AuthenticationStrategyEntity(
+                            authStrategyName, AuthStrategyEnum.Bearer, null)));
+
     // Crear el endpoint
     EndpointsEntity endpoint =
         endpointsRepository.save(
@@ -55,7 +69,8 @@ public class FavoriteRepositoryTest {
                 "FavoriteEndpoint",
                 "Testing favorite",
                 EndpointMethodEnum.GET,
-                "https://test.favorite"));
+                "https://test.favorite",
+                authenticationStrategy));
 
     // Crear el FavoriteEntity
     FavoriteEntity.FavoriteId favoriteId =
@@ -96,6 +111,17 @@ public class FavoriteRepositoryTest {
                     userRepository.save(
                         new UserEntity("johndoe@autozone.com", true, UserRoleEnum.USER)));
 
+    // Configuración del auth strategy
+    String authStrategyName = "FavoriteRepositoryTest";
+    AuthenticationStrategyEntity authenticationStrategy =
+        authenticationStrategyRepository
+            .findByName(authStrategyName)
+            .orElseGet(
+                () ->
+                    authenticationStrategyRepository.save(
+                        new AuthenticationStrategyEntity(
+                            authStrategyName, AuthStrategyEnum.Bearer, null)));
+
     // Crear datos: endpoint original
     EndpointsEntity originalEndpoint =
         endpointsRepository.save(
@@ -106,7 +132,8 @@ public class FavoriteRepositoryTest {
                 "OriginalEndpoint",
                 "Original favorite endpoint",
                 EndpointMethodEnum.GET,
-                "https://original.favorite"));
+                "https://original.favorite",
+                authenticationStrategy));
 
     // Crear y guardar el Favorite original
     FavoriteEntity.FavoriteId originalFavoriteId =
@@ -127,7 +154,8 @@ public class FavoriteRepositoryTest {
                 "UpdatedFavoriteEndpoint",
                 "Updated favorite endpoint",
                 EndpointMethodEnum.POST,
-                "https://updated.favorite"));
+                "https://updated.favorite",
+                authenticationStrategy));
 
     // Crear el nuevo Favorite (nuevo ID)
     FavoriteEntity.FavoriteId newFavoriteId =
@@ -170,6 +198,16 @@ public class FavoriteRepositoryTest {
                     userRepository.save(
                         new UserEntity("johndoe@autozone.com", true, UserRoleEnum.USER)));
 
+    String authStrategyName = "FavoriteRepositoryTest";
+    AuthenticationStrategyEntity authenticationStrategy =
+        authenticationStrategyRepository
+            .findByName(authStrategyName)
+            .orElseGet(
+                () ->
+                    authenticationStrategyRepository.save(
+                        new AuthenticationStrategyEntity(
+                            authStrategyName, AuthStrategyEnum.Bearer, null)));
+
     EndpointsEntity endpoint =
         endpointsRepository.save(
             new EndpointsEntity(
@@ -179,7 +217,8 @@ public class FavoriteRepositoryTest {
                 "EndpointToDelete",
                 "Endpoint for deletion",
                 EndpointMethodEnum.GET,
-                "https://delete.favorite"));
+                "https://delete.favorite",
+                authenticationStrategy));
 
     FavoriteEntity.FavoriteId favoriteId =
         new FavoriteEntity.FavoriteId(user.getUserId(), endpoint.getEndpointId());
