@@ -10,10 +10,12 @@ import com.autozone.cazss_backend.entity.HistoryEntity;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.HistoryDataTypeEnum;
 import com.autozone.cazss_backend.exceptions.HistoryNotFoundException;
+import com.autozone.cazss_backend.exceptions.ParseJSONException;
 import com.autozone.cazss_backend.projections.HistoryDetailedProjection;
 import com.autozone.cazss_backend.projections.HistoryProjection;
 import com.autozone.cazss_backend.repository.HistoryDataRepository;
 import com.autozone.cazss_backend.repository.HistoryRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,8 +75,17 @@ public class HistoryService {
             historyRequest.getName(),
             historyRequest.getDescription());
 
-    HistoryDataDTO historyData =
-        new HistoryDataDTO(historyRequest.getContent(), historyResponse.getContent());
+    ObjectMapper objectMapper = new ObjectMapper();
+    Object requestContent;
+    Object responseContent;
+    try {
+      requestContent = objectMapper.readValue(historyRequest.getContent(), Object.class);
+      responseContent = objectMapper.readValue(historyResponse.getContent(), Object.class);
+    } catch (Exception e) {
+      throw new ParseJSONException("Failed to parse history content");
+    }
+
+    HistoryDataDTO historyData = new HistoryDataDTO(requestContent, responseContent);
 
     return new HistoryDetailedDTO(
         historyRequest.getHistoryId(), historyRequest.getStatusCode(), endpoint, historyData);
