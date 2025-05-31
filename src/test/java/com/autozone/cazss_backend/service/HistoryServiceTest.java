@@ -3,6 +3,7 @@ package com.autozone.cazss_backend.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -178,8 +179,12 @@ public class HistoryServiceTest {
     HistoryDetailedProjection requestProjection = mock(HistoryDetailedProjection.class);
     HistoryDetailedProjection responseProjection = mock(HistoryDetailedProjection.class);
 
-    when(requestProjection.getContent()).thenReturn("{\"id\":1}");
-    when(responseProjection.getContent()).thenReturn("{\"ok\":true}");
+    // Simulate JSON objects as strings
+    String requestJson = "{\"request\":\"data\"}";
+    String responseJson = "{\"response\":\"data\"}";
+
+    when(requestProjection.getContent()).thenReturn(requestJson);
+    when(responseProjection.getContent()).thenReturn(responseJson);
 
     when(historyRepository.findHistoryRequestByHistoryId(historyId))
         .thenReturn(Optional.of(requestProjection));
@@ -192,8 +197,22 @@ public class HistoryServiceTest {
     // Assert
     assertNotNull(result);
     assertNotNull(result.getHistoryData());
-    assertEquals("{\"id\":1}", result.getHistoryData().getRequest());
-    assertEquals("{\"ok\":true}", result.getHistoryData().getResponse());
+
+    // The request and response should be parsed as Map (Jackson default for
+    // Object.class)
+    assertTrue(result.getHistoryData().getRequest() instanceof java.util.Map);
+    assertTrue(result.getHistoryData().getResponse() instanceof java.util.Map);
+
+    // Optionally, check the actual content
+    @SuppressWarnings("unchecked")
+    java.util.Map<String, Object> requestMap =
+        (java.util.Map<String, Object>) result.getHistoryData().getRequest();
+    @SuppressWarnings("unchecked")
+    java.util.Map<String, Object> responseMap =
+        (java.util.Map<String, Object>) result.getHistoryData().getResponse();
+
+    assertEquals("data", requestMap.get("request"));
+    assertEquals("data", responseMap.get("response"));
   }
 
   @Test
