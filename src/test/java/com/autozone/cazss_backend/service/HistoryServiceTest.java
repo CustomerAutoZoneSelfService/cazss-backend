@@ -24,6 +24,7 @@ import com.autozone.cazss_backend.repository.HistoryDataRepository;
 import com.autozone.cazss_backend.repository.HistoryRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -200,16 +201,14 @@ public class HistoryServiceTest {
 
     // The request and response should be parsed as Map (Jackson default for
     // Object.class)
-    assertTrue(result.getHistoryData().getRequest() instanceof java.util.Map);
-    assertTrue(result.getHistoryData().getResponse() instanceof java.util.Map);
+    assertTrue(result.getHistoryData().getRequest() instanceof Map);
+    assertTrue(result.getHistoryData().getResponse() instanceof Map);
 
     // Optionally, check the actual content
     @SuppressWarnings("unchecked")
-    java.util.Map<String, Object> requestMap =
-        (java.util.Map<String, Object>) result.getHistoryData().getRequest();
+    Map<String, Object> requestMap = (Map<String, Object>) result.getHistoryData().getRequest();
     @SuppressWarnings("unchecked")
-    java.util.Map<String, Object> responseMap =
-        (java.util.Map<String, Object>) result.getHistoryData().getResponse();
+    Map<String, Object> responseMap = (Map<String, Object>) result.getHistoryData().getResponse();
 
     assertEquals("data", requestMap.get("request"));
     assertEquals("data", responseMap.get("response"));

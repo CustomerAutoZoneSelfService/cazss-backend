@@ -17,6 +17,7 @@ import com.autozone.cazss_backend.repository.HistoryDataRepository;
 import com.autozone.cazss_backend.repository.HistoryRepository;
 import com.autozone.cazss_backend.repository.UserRepository;
 import java.time.LocalDateTime;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Transactional
 public class HistoryControllerIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
@@ -43,10 +45,7 @@ public class HistoryControllerIntegrationTest {
 
   private HistoryEntity savedHistory;
 
-  private HistoryDataEntity savedHistoryDataEntityRequest;
-
-  private HistoryDataEntity savedHistoryDataEntityResponse;
-
+  @BeforeEach
   public void setup() {
     HistoryEntity history = new HistoryEntity();
     UserEntity user = new UserEntity();
@@ -80,23 +79,20 @@ public class HistoryControllerIntegrationTest {
     HistoryDataEntity historyDataEntityRequest = new HistoryDataEntity();
     historyDataEntityRequest.setHistory(savedHistory);
     historyDataEntityRequest.setType(HistoryDataTypeEnum.REQUEST);
-    historyDataEntityRequest.setContent("Request test");
-    savedHistoryDataEntityRequest = historyDataRepository.save(historyDataEntityRequest);
+    historyDataEntityRequest.setContent("{\"id\": 1}");
+    historyDataRepository.save(historyDataEntityRequest);
 
     HistoryDataEntity historyDataEntityResponse = new HistoryDataEntity();
     historyDataEntityResponse.setHistory(savedHistory);
     historyDataEntityResponse.setType(HistoryDataTypeEnum.RESPONSE);
-    historyDataEntityResponse.setContent("Response test");
-    savedHistoryDataEntityResponse = historyDataRepository.save(historyDataEntityResponse);
+    historyDataEntityResponse.setContent("{\"result\": \"ok\"}");
+    historyDataRepository.save(historyDataEntityResponse);
   }
 
-  @Transactional
   @Test
   public void testGetAllHistory() throws Exception {
-    setup();
     System.out.println("The saved history ID is the following:");
     System.out.println(savedHistory.getHistoryId());
-
     mockMvc
         .perform(get("/services/history").contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
@@ -108,16 +104,13 @@ public class HistoryControllerIntegrationTest {
                 .value(savedHistory.getEndpoint().getDescription()));
   }
 
-  @Transactional
   @Test
   public void testGetServiceById() throws Exception {
-    setup();
-    System.out.println("The saved history ID is the following:");
+    System.out.println("The saved history ID is the following2:");
     System.out.println(savedHistory.getHistoryId());
-
     mockMvc
         .perform(
-            get("/services/history/{id}", savedHistory.getHistoryId())
+            get("/services/history/" + savedHistory.getHistoryId())
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.historyId").value(savedHistory.getHistoryId()))
@@ -127,9 +120,7 @@ public class HistoryControllerIntegrationTest {
         .andExpect(jsonPath("$.endpoint.name").value(savedHistory.getEndpoint().getName()))
         .andExpect(
             jsonPath("$.endpoint.description").value(savedHistory.getEndpoint().getDescription()))
-        .andExpect(
-            jsonPath("$.historyData.request").value(savedHistoryDataEntityRequest.getContent()))
-        .andExpect(
-            jsonPath("$.historyData.response").value(savedHistoryDataEntityResponse.getContent()));
+        .andExpect(jsonPath("$.historyData.request").isMap())
+        .andExpect(jsonPath("$.historyData.response").isMap());
   }
 }
