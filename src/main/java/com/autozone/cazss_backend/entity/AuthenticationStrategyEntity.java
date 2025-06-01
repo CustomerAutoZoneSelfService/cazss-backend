@@ -2,7 +2,8 @@ package com.autozone.cazss_backend.entity;
 
 import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import jakarta.persistence.*;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "Authentication_strategies", schema = "cazss")
@@ -19,9 +20,7 @@ public class AuthenticationStrategyEntity {
   private AuthStrategyEnum strategy;
 
   @OneToMany(mappedBy = "authStrategy", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<AuthenticationStrategyAttributeEntity> attributes = new ArrayList<>();
-
-  public AuthenticationStrategyEntity() {}
+  private List<AuthenticationStrategyAttributeEntity> attributes;
 
   public AuthenticationStrategyEntity(
       String name,
@@ -31,6 +30,8 @@ public class AuthenticationStrategyEntity {
     this.strategy = strategy;
     this.attributes = attributes;
   }
+
+  public AuthenticationStrategyEntity() {}
 
   public Integer getAuthStrategyId() {
     return authStrategyId;
@@ -64,32 +65,18 @@ public class AuthenticationStrategyEntity {
     this.attributes = attributes;
   }
 
-  public void addAttribute(AuthenticationStrategyAttributeEntity attr) {
-    attr.setAuthStrategy(this);
-    this.attributes.add(attr);
-  }
-
-  public void removeAttribute(AuthenticationStrategyAttributeEntity attr) {
-    attr.setAuthStrategy(null);
-    this.attributes.remove(attr);
-  }
-
-  public void clearAttributes() {
-    for (AuthenticationStrategyAttributeEntity attr : new ArrayList<>(attributes)) {
-      removeAttribute(attr);
-    }
-  }
-
   @Override
   public boolean equals(Object o) {
-    if (o == this) return true;
     if (o == null || getClass() != o.getClass()) return false;
     AuthenticationStrategyEntity that = (AuthenticationStrategyEntity) o;
-    return Objects.equals(authStrategyId, that.authStrategyId);
+    return Objects.equals(authStrategyId, that.authStrategyId)
+        && Objects.equals(name, that.name)
+        && strategy == that.strategy
+        && Objects.equals(attributes, that.attributes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(authStrategyId);
+    return Objects.hash(authStrategyId, name, strategy, attributes);
   }
 }
