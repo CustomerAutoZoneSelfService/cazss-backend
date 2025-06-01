@@ -5,6 +5,7 @@ import com.autozone.cazss_backend.DTO.AuthenticationStrategyDTO;
 import com.autozone.cazss_backend.entity.AuthenticationStrategyAttributeEntity;
 import com.autozone.cazss_backend.entity.AuthenticationStrategyEntity;
 import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
+import com.autozone.cazss_backend.exceptions.CustomException;
 import com.autozone.cazss_backend.repository.AuthenticationStrategyAttributeRepository;
 import com.autozone.cazss_backend.repository.AuthenticationStrategyRepository;
 import java.util.List;
@@ -21,7 +22,8 @@ public class AuthenticationStrategyService {
   @Autowired private AuthenticationStrategyAttributeRepository attributeRepo;
 
   private boolean isAdminOrConfigurator() {
-    return false;
+    // Hardocoded check for admin or configurator role.
+    return true;
   }
 
   public List<AuthenticationStrategyDTO> getAllStrategies() {
@@ -35,15 +37,22 @@ public class AuthenticationStrategyService {
   }
 
   public AuthenticationStrategyDTO createStrategy(AuthenticationStrategyDTO dto) {
+    if (!isAdminOrConfigurator()) {
+      throw new CustomException(
+          "Only admin or configurator users can modify authentication strategies.");
+    }
+
     AuthenticationStrategyEntity entity = new AuthenticationStrategyEntity();
     entity.setName(dto.getName());
     entity.setStrategy(AuthStrategyEnum.valueOf(dto.getType()));
 
-    for (AuthenticationStrategyAttributeDTO attrDto : dto.getAttributes()) {
-      AuthenticationStrategyAttributeEntity attr = new AuthenticationStrategyAttributeEntity();
-      attr.setKeyName(attrDto.getKey());
-      attr.setValue(attrDto.getValue());
-      entity.addAttribute(attr);
+    if (dto.getAttributes() != null) {
+      for (AuthenticationStrategyAttributeDTO attrDto : dto.getAttributes()) {
+        AuthenticationStrategyAttributeEntity attr = new AuthenticationStrategyAttributeEntity();
+        attr.setKeyName(attrDto.getKey());
+        attr.setValue(attrDto.getValue());
+        entity.addAttribute(attr);
+      }
     }
 
     AuthenticationStrategyEntity saved = authStrategyRepo.save(entity);
@@ -52,6 +61,11 @@ public class AuthenticationStrategyService {
 
   public Optional<AuthenticationStrategyDTO> updateStrategy(
       Integer id, AuthenticationStrategyDTO dto) {
+    if (!isAdminOrConfigurator()) {
+      throw new CustomException(
+          "Only admin or configurator users can modify authentication strategies.");
+    }
+
     Optional<AuthenticationStrategyEntity> entityOpt = authStrategyRepo.findById(id);
     if (entityOpt.isEmpty()) return Optional.empty();
 
@@ -60,11 +74,13 @@ public class AuthenticationStrategyService {
     entity.setStrategy(AuthStrategyEnum.valueOf(dto.getType()));
     entity.clearAttributes();
 
-    for (AuthenticationStrategyAttributeDTO attrDto : dto.getAttributes()) {
-      AuthenticationStrategyAttributeEntity attr = new AuthenticationStrategyAttributeEntity();
-      attr.setKeyName(attrDto.getKey());
-      attr.setValue(attrDto.getValue());
-      entity.addAttribute(attr);
+    if (dto.getAttributes() != null) {
+      for (AuthenticationStrategyAttributeDTO attrDto : dto.getAttributes()) {
+        AuthenticationStrategyAttributeEntity attr = new AuthenticationStrategyAttributeEntity();
+        attr.setKeyName(attrDto.getKey());
+        attr.setValue(attrDto.getValue());
+        entity.addAttribute(attr);
+      }
     }
 
     AuthenticationStrategyEntity saved = authStrategyRepo.save(entity);

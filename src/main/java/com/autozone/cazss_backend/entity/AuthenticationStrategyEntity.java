@@ -21,7 +21,7 @@ public class AuthenticationStrategyEntity {
   private AuthStrategyEnum strategy;
 
   @OneToMany(mappedBy = "authStrategy", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<AuthenticationStrategyAttributeEntity> attributes;
+  private List<AuthenticationStrategyAttributeEntity> attributes = new ArrayList<>();
 
   public AuthenticationStrategyEntity(
       String name,
