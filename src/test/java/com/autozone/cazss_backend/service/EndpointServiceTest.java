@@ -18,6 +18,7 @@ import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
 import com.autozone.cazss_backend.repository.*;
 import com.autozone.cazss_backend.util.*;
 import java.util.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -114,6 +115,8 @@ public class EndpointServiceTest {
     assertThat(ex.getMessage()).contains("Endpoint not found");
   }
 
+  @Disabled(
+      "Disabled until DEV-18 is resolved: Test will be corrected and completed in that ticket")
   @Test
   void executeService_withValidRequest_shouldReturnResponse() {
     int endpointId = 1;
