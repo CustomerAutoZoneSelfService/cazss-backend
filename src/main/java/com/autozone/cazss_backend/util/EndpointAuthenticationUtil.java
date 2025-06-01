@@ -27,11 +27,10 @@ public class EndpointAuthenticationUtil {
       return;
     }
 
-    AuthenticationStrategyEntity strategy = optionalStrategy.get();
-    attachAuthenticationHeaders(request, strategy);
+    attachAuthenticationHeaders(request, optionalStrategy.get());
   }
 
-  private void attachAuthenticationHeaders(
+  public void attachAuthenticationHeaders(
       ServiceInfoRequestModel request, AuthenticationStrategyEntity strategy) {
     List<HeaderModel> headers =
         request.getHeaders() != null ? new ArrayList<>(request.getHeaders()) : new ArrayList<>();

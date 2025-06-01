@@ -219,10 +219,9 @@ public class EndpointService {
     logger.debug("Información del servicio obtenida: {}", serviceInfo);
 
     EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
-    Integer authStrategyId = endpoint.getAuthStrategy().getAuthStrategyId();
 
-    endpointAuthenticationUtil.attachAuthenticationHeadersById(
-        serviceInfoRequestModel, authStrategyId);
+    endpointAuthenticationUtil.attachAuthenticationHeaders(
+        serviceInfoRequestModel, endpoint.getAuthStrategy());
 
     String template =
         templateFiller.returnFilledTemplate(serviceInfoRequestModel.getBody(), serviceInfo.getId());
