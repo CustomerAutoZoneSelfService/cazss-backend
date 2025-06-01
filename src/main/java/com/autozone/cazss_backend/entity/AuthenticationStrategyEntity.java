@@ -2,6 +2,7 @@ package com.autozone.cazss_backend.entity;
 
 import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -63,6 +64,22 @@ public class AuthenticationStrategyEntity {
 
   public void setAttributes(List<AuthenticationStrategyAttributeEntity> attributes) {
     this.attributes = attributes;
+  }
+
+  public void addAttribute(AuthenticationStrategyAttributeEntity attr) {
+    attr.setAuthStrategy(this);
+    this.attributes.add(attr);
+  }
+
+  public void removeAttribute(AuthenticationStrategyAttributeEntity attr) {
+    attr.setAuthStrategy(null);
+    this.attributes.remove(attr);
+  }
+
+  public void clearAttributes() {
+    for (AuthenticationStrategyAttributeEntity attr : new ArrayList<>(attributes)) {
+      removeAttribute(attr);
+    }
   }
 
   @Override
