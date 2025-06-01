@@ -5,30 +5,11 @@ import com.autozone.cazss_backend.entity.AuthenticationStrategyEntity;
 import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.model.HeaderModel;
 import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
-import com.autozone.cazss_backend.repository.AuthenticationStrategyRepository;
 import java.util.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class EndpointAuthenticationUtil {
-
-  @Autowired private AuthenticationStrategyRepository strategyRepository;
-
-  public void attachAuthenticationHeadersById(
-      ServiceInfoRequestModel request, Integer authStrategyId) {
-    if (request == null || authStrategyId == null) {
-      return;
-    }
-
-    Optional<AuthenticationStrategyEntity> optionalStrategy =
-        strategyRepository.findById(authStrategyId);
-    if (optionalStrategy.isEmpty()) {
-      return;
-    }
-
-    attachAuthenticationHeaders(request, optionalStrategy.get());
-  }
 
   public void attachAuthenticationHeaders(
       ServiceInfoRequestModel request, AuthenticationStrategyEntity strategy) {

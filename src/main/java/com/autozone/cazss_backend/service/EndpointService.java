@@ -220,8 +220,10 @@ public class EndpointService {
 
     EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
 
-    endpointAuthenticationUtil.attachAuthenticationHeaders(
-        serviceInfoRequestModel, endpoint.getAuthStrategy());
+    if (endpoint.getAuthStrategy() != null) {
+      endpointAuthenticationUtil.attachAuthenticationHeaders(
+          serviceInfoRequestModel, endpoint.getAuthStrategy());
+    }
 
     String template =
         templateFiller.returnFilledTemplate(serviceInfoRequestModel.getBody(), serviceInfo.getId());
