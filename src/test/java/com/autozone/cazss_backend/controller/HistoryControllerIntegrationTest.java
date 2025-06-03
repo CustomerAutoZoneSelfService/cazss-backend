@@ -106,7 +106,7 @@ public class HistoryControllerIntegrationTest {
 
   @Test
   public void testGetServiceById() throws Exception {
-    System.out.println("The saved history ID is the following2:");
+    System.out.println("The saved history ID is the following:");
     System.out.println(savedHistory.getHistoryId());
     mockMvc
         .perform(
