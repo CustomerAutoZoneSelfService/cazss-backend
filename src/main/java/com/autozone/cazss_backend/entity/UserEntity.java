@@ -21,10 +21,19 @@ public class UserEntity {
   @Enumerated(EnumType.STRING)
   private UserRoleEnum role;
 
-  public UserEntity(String email, Boolean active, UserRoleEnum role) {
+  @Column(name = "password", nullable = false)
+  private String password;
+
+  @Column(name = "username", unique = true, nullable = false)
+  private String username;
+
+  public UserEntity(
+      String email, Boolean active, UserRoleEnum role, String password, String username) {
     this.email = email;
     this.active = active;
     this.role = role;
+    this.password = password;
+    this.username = username;
   }
 
   public UserEntity() {}
@@ -61,17 +70,35 @@ public class UserEntity {
     this.role = role;
   }
 
+  public String getPassword() {
+    return password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof UserEntity that)) return false;
     return Objects.equals(userId, that.userId)
         && Objects.equals(email, that.email)
         && Objects.equals(active, that.active)
-        && role == that.role;
+        && role == that.role
+        && Objects.equals(password, that.password)
+        && Objects.equals(username, that.username);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(userId, email, active, role);
+    return Objects.hash(userId, email, active, role, password, username);
   }
 }
