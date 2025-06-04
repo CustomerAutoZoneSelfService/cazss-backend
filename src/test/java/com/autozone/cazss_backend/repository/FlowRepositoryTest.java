@@ -25,7 +25,9 @@ public class FlowRepositoryTest {
   public void givenFlowRepository_whenSaveAndRetrieveFlow_thenOK() {
     CategoryEntity category = categoryRepository.save(new CategoryEntity("FLOW_TEST", "#123456"));
     UserEntity user =
-        userRepository.save(new UserEntity("flowuser@autozone.com", true, UserRoleEnum.USER));
+        userRepository.save(
+            new UserEntity(
+                "flowuser@autozone.com", true, UserRoleEnum.USER, "testPassword123", "flowuser"));
 
     FlowEntity flow = new FlowEntity();
     flow.setName("Sample Flow");
@@ -51,7 +53,13 @@ public class FlowRepositoryTest {
   public void givenFlowRepository_whenUpdateFlow_thenOK() {
     CategoryEntity category = categoryRepository.save(new CategoryEntity("FLOW_UPDATE", "#ABCDEF"));
     UserEntity user =
-        userRepository.save(new UserEntity("updateuser@autozone.com", true, UserRoleEnum.ADMIN));
+        userRepository.save(
+            new UserEntity(
+                "updateuser@autozone.com",
+                true,
+                UserRoleEnum.ADMIN,
+                "testPassword123",
+                "updateuser"));
 
     FlowEntity flow =
         flowRepository.save(
@@ -82,7 +90,13 @@ public class FlowRepositoryTest {
   public void givenFlowRepository_whenDeleteFlow_thenOK() {
     CategoryEntity category = categoryRepository.save(new CategoryEntity("FLOW_DELETE", "#000000"));
     UserEntity user =
-        userRepository.save(new UserEntity("deleteuser@autozone.com", true, UserRoleEnum.USER));
+        userRepository.save(
+            new UserEntity(
+                "deleteuser@autozone.com",
+                true,
+                UserRoleEnum.USER,
+                "testPassword123",
+                "deleteuser"));
 
     FlowEntity flow =
         flowRepository.save(

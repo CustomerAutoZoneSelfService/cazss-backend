@@ -31,7 +31,12 @@ public class HistoryDataRepositoryTest {
 
     UserEntity user =
         userRepository.save(
-            new UserEntity("historydata+" + suffix + "@autozone.com", true, UserRoleEnum.USER));
+            new UserEntity(
+                "historydata+" + suffix + "@autozone.com",
+                true,
+                UserRoleEnum.USER,
+                "testPassword123",
+                "historyDataUser" + suffix));
 
     CategoryEntity category =
         categoryRepository.save(new CategoryEntity("HISTORY_DATA_" + suffix, "#FFFFFF"));

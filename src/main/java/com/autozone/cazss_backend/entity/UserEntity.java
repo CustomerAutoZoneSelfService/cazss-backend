@@ -36,6 +36,16 @@ public class UserEntity {
     this.username = username;
   }
 
+  public UserEntity(String email, Boolean active, UserRoleEnum role) {
+    this.email = email;
+    this.active = active;
+    this.role = role;
+    // Set default values for backward compatibility
+    this.password = "defaultPassword123";
+    // Create a username from the email (remove @ and everything after)
+    this.username = email.split("@")[0];
+  }
+
   public UserEntity() {}
 
   public Integer getUserId() {

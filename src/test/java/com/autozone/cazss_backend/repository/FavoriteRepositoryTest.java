@@ -43,7 +43,10 @@ public class FavoriteRepositoryTest {
         userRepository
             .findByEmail(userEmail)
             .orElseGet(
-                () -> userRepository.save(new UserEntity(userEmail, true, UserRoleEnum.USER)));
+                () ->
+                    userRepository.save(
+                        new UserEntity(
+                            userEmail, true, UserRoleEnum.USER, "testPassword123", "johndoe")));
 
     // Crear el endpoint
     EndpointsEntity endpoint =
@@ -94,7 +97,12 @@ public class FavoriteRepositoryTest {
             .orElseGet(
                 () ->
                     userRepository.save(
-                        new UserEntity("johndoe@autozone.com", true, UserRoleEnum.USER)));
+                        new UserEntity(
+                            "johndoe@autozone.com",
+                            true,
+                            UserRoleEnum.USER,
+                            "testPassword123",
+                            "johndoe")));
 
     // Crear datos: endpoint original
     EndpointsEntity originalEndpoint =
