@@ -42,6 +42,21 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.UNPROCESSABLE_ENTITY);
   }
 
+  @ExceptionHandler(
+      UnauthorizedUserException.class) // Excepción de acceso no autorizado a un endpoint
+  public ResponseEntity<Object> handleValidationException(final UnauthorizedUserException ex) {
+    // Crear el objeto ErrorResponse
+    ErrorResponseTemplate error =
+        new ErrorResponseTemplate(
+            "VALIDATION_ERROR",
+            ex.getMessage(),
+            "This feature is only available to administrators.",
+            LocalDateTime.now(),
+            UUID.randomUUID().toString());
+
+    return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+  }
+
   @ExceptionHandler(AZClientException.class) // Excepción de AZClient
   public ResponseEntity<Object> handleAZClientException(final AZClientException ex) {
     // Crear el objeto ErrorResponse
