@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.*;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,7 @@ public class UserFilterRepositoryTest {
     responsePattern = responsePatternRepository.save(responsePattern);
   }
 
+  @Transactional
   @Test
   public void givenUserFilterRepository_whenSavedAndRetrieved_thenOK() {
     // Crear UserFilter con los valores apropiados
@@ -78,6 +80,7 @@ public class UserFilterRepositoryTest {
         userFilter.getResponsePattern().getResponsePatternId());
   }
 
+  @Transactional
   @Test
   public void givenUserFilterRepository_whenUpdated_thenOK() {
     // Crear y guardar un UserFilter
@@ -104,6 +107,7 @@ public class UserFilterRepositoryTest {
     assertEquals("Updated Pattern Name", updatedUserFilter.getResponsePattern().getName());
   }
 
+  @Transactional
   @Test
   public void givenUserFilterRepository_whenDeleted_thenOK() {
     // Crear y guardar un UserFilter

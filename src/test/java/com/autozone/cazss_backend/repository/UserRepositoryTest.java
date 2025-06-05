@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ public class UserRepositoryTest {
 
   @Autowired UserRepository userRepository;
 
+  @Transactional
   @Test
   public void givenUserRepository_whenSaveAndRetreiveUser_thenOK() {
     UserEntity user =
@@ -33,6 +35,7 @@ public class UserRepositoryTest {
     assertEquals(user, foundUser);
   }
 
+  @Transactional
   @Test
   public void givenUserRepository_whenUpdateUser_thenOK() {
     UserEntity user =
@@ -52,6 +55,7 @@ public class UserRepositoryTest {
     assertFalse(foundUser.getActive());
   }
 
+  @Transactional
   @Test
   public void givenUserRepository_whenDeleteUser_thenOK() {
     UserEntity user =

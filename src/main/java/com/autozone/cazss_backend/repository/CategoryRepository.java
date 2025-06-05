@@ -13,6 +13,7 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, Intege
 
   // @Query()
   // Optional<CategoryDTO> findAllCategoryDTOs();
+
   Optional<CategoryEntity> findByCategoryId(Integer categoryId);
 
   List<CategoryEntity> findByCategoryIdIn(Set<Integer> categoryIds);

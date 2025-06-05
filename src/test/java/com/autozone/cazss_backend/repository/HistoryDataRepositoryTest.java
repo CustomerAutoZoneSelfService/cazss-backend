@@ -7,6 +7,7 @@ import com.autozone.cazss_backend.entity.*;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.HistoryDataTypeEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -62,6 +63,7 @@ public class HistoryDataRepositoryTest {
     return historyDataRepository.save(historyData);
   }
 
+  @Transactional
   @Test
   public void givenHistoryDataRepository_whenSaveAndFind_thenOK() {
     HistoryDataEntity saved = createSampleHistoryData();
@@ -76,6 +78,7 @@ public class HistoryDataRepositoryTest {
     assertEquals(saved.getHistory().getHistoryId(), found.getHistory().getHistoryId());
   }
 
+  @Transactional
   @Test
   public void givenHistoryDataRepository_whenUpdate_thenOK() {
     HistoryDataEntity historyData = createSampleHistoryData();
@@ -93,6 +96,7 @@ public class HistoryDataRepositoryTest {
     assertEquals("{ \"response\": \"ok\" }", found.getContent());
   }
 
+  @Transactional
   @Test
   public void givenHistoryDataRepository_whenDelete_thenOK() {
     HistoryDataEntity historyData = createSampleHistoryData();

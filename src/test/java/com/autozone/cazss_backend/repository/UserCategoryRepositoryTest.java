@@ -8,6 +8,7 @@ import com.autozone.cazss_backend.entity.UserCategoryEntity;
 import com.autozone.cazss_backend.entity.UserCategoryEntity.UserCategoryId;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ public class UserCategoryRepositoryTest {
     return userCategoryRepository.save(new UserCategoryEntity(id, user, category));
   }
 
+  @Transactional
   @Test
   public void givenUserCategoryRepository_whenSaveAndFind_thenOK() {
     UserCategoryEntity saved = createSampleUserCategory();
@@ -46,6 +48,7 @@ public class UserCategoryRepositoryTest {
     assertEquals(saved.getCategory().getName(), found.getCategory().getName());
   }
 
+  @Transactional
   @Test
   public void givenUserCategoryRepository_whenDelete_thenOK() {
     UserCategoryEntity saved = createSampleUserCategory();

@@ -6,6 +6,7 @@ import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.*;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -27,6 +28,7 @@ public class FavoriteRepositoryTest {
 
   @Autowired CategoryRepository categoryRepository;
 
+  @Transactional
   @Test
   @Order(1)
   public void givenFavoriteRepository_whenSaveAndRetrieveFavorite_thenOK() {
@@ -78,6 +80,7 @@ public class FavoriteRepositoryTest {
     assertEquals(favoriteId, foundId);
   }
 
+  @Transactional
   @Test
   @Order(2)
   public void givenFavoriteRepository_whenUpdateFavorite_thenOK() {
@@ -153,6 +156,7 @@ public class FavoriteRepositoryTest {
     assertEquals(newFavoriteId, foundId);
   }
 
+  @Transactional
   @Test
   @Order(3)
   public void givenFavoriteRepository_whenDeleteFavorite_thenOK() {
