@@ -8,6 +8,7 @@ import com.autozone.cazss_backend.entity.EndpointsEntity;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ public class EndpointsRepositoryTest {
         new UserEntity("endpointRepoTestUser02@autozone.com", true, UserRoleEnum.ADMIN));
   }
 
+  @Transactional
   @Test
   public void givenEndpointRepository_whenSaveAndRetreiveEndpoint_thenOK() {
     setUpData();
@@ -64,8 +66,10 @@ public class EndpointsRepositoryTest {
     assertEquals(endpoint, foundEndpoint);
   }
 
+  @Transactional
   @Test
   public void givenEndpointRepository_whenUpdateEndpoint_thenOK() {
+    setUpData();
     Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST02");
     assertTrue(categoryOptional.isPresent(), "Category should be present");
     CategoryEntity category = categoryOptional.get();
@@ -109,8 +113,10 @@ public class EndpointsRepositoryTest {
     assertEquals("https://datazone.example", foundEndpoint.getUrl());
   }
 
+  @Transactional
   @Test
   public void givenEndpointRepository_whenDeleteEndpoint_thenOK() {
+    setUpData();
     Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST02");
     assertTrue(categoryOptional.isPresent(), "Category should be present");
     CategoryEntity category = categoryOptional.get();

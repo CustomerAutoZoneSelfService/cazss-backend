@@ -6,6 +6,7 @@ import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.*;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,7 @@ public class ResponsePatternRepositoryTest {
     return responsePatternRepository.save(pattern);
   }
 
+  @Transactional
   @Test
   public void givenResponsePatternRepository_whenSaveAndFind_thenOK() {
     ResponsePatternEntity saved = createSampleResponsePattern();
@@ -74,6 +76,7 @@ public class ResponsePatternRepositoryTest {
     assertEquals(200, found.getResponse().getStatusCode());
   }
 
+  @Transactional
   @Test
   public void givenResponsePatternRepository_whenUpdate_thenOK() {
     ResponsePatternEntity pattern = createSampleResponsePattern();
@@ -87,6 +90,7 @@ public class ResponsePatternRepositoryTest {
     assertEquals("$.data.items[*].id", foundOpt.get().getPattern());
   }
 
+  @Transactional
   @Test
   public void givenResponsePatternRepository_whenDelete_thenOK() {
     ResponsePatternEntity pattern = createSampleResponsePattern();

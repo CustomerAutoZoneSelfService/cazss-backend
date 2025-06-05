@@ -7,6 +7,7 @@ import com.autozone.cazss_backend.entity.CategoryEntity;
 import com.autozone.cazss_backend.entity.FlowEntity;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +79,7 @@ public class FlowRepositoryTest {
     assertEquals("console.log('Updated');", foundFlow.getScript());
   }
 
+  @Transactional
   @Test
   public void givenFlowRepository_whenDeleteFlow_thenOK() {
     CategoryEntity category = categoryRepository.save(new CategoryEntity("FLOW_DELETE", "#000000"));
