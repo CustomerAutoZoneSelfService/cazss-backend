@@ -96,4 +96,19 @@ public class AuthenticationStrategyEntity {
   public int hashCode() {
     return Objects.hash(authStrategyId, name, strategy, attributes);
   }
+
+  @Override
+  public String toString() {
+    return "AuthenticationStrategyEntity{"
+        + "authStrategyId="
+        + authStrategyId
+        + ", name='"
+        + name
+        + '\''
+        + ", strategy="
+        + strategy
+        + ", attributes="
+        + attributes
+        + '}';
+  }
 }

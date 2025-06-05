@@ -80,4 +80,20 @@ public class AuthenticationStrategyAttributeEntity {
   public int hashCode() {
     return Objects.hash(authStrategyAttributeId, authStrategy, keyName, value);
   }
+
+  @Override
+  public String toString() {
+    return "AuthenticationStrategyAttributeEntity{"
+        + "authStrategyAttributeId="
+        + authStrategyAttributeId
+        + ", authStrategy="
+        + authStrategy
+        + ", keyName='"
+        + keyName
+        + '\''
+        + ", value='"
+        + value
+        + '\''
+        + '}';
+  }
 }
