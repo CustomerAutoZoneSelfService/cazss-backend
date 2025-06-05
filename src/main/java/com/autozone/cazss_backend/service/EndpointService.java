@@ -219,10 +219,11 @@ public class EndpointService {
     logger.debug("Información del servicio obtenida: {}", serviceInfo);
 
     EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
+    AuthenticationStrategyEntity authStrategy = endpoint.getAuthStrategy();
 
-    if (endpoint.getAuthStrategy() != null) {
-      endpointAuthenticationUtil.attachAuthenticationHeaders(
-          serviceInfoRequestModel, endpoint.getAuthStrategy());
+    if (authStrategy != null) {
+      logger.debug("Hooking request with the following authentication strategy: {}", authStrategy);
+      endpointAuthenticationUtil.hookRequest(serviceInfoRequestModel, authStrategy);
     }
 
     String template =
