@@ -2,15 +2,17 @@ package com.autozone.cazss_backend.DTO;
 
 public class LoginResponseDTO {
   private String message;
-  private String token;
+  private String accessToken;
+  private String refreshToken;
 
   public LoginResponseDTO(String message) {
     this.message = message;
   }
 
-  public LoginResponseDTO(String message, String token) {
+  public LoginResponseDTO(String message, String accessToken, String refreshToken) {
     this.message = message;
-    this.token = token;
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
   }
 
   public String getMessage() {
@@ -21,12 +23,19 @@ public class LoginResponseDTO {
     this.message = message;
   }
 
-  // JWT probably goes here or idk
-  public String getToken() {
-    return token;
+  public String getAccessToken() {
+    return accessToken;
   }
 
-  public void setToken(String token) {
-    this.token = token;
+  public void setAccessToken(String accessToken) {
+    this.accessToken = accessToken;
+  }
+
+  public String getRefreshToken() {
+    return refreshToken;
+  }
+
+  public void setRefreshToken(String refreshToken) {
+    this.refreshToken = refreshToken;
   }
 }

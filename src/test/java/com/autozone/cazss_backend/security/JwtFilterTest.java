@@ -57,7 +57,6 @@ class JwtFilterTest {
     jwtFilter.doFilterInternal(request, response, filterChain);
 
     verify(filterChain).doFilter(request, response);
-    verify(SecurityContextHolder.getContext(), never()).setAuthentication(any());
     assertNull(SecurityContextHolder.getContext().getAuthentication());
   }
 
