@@ -10,6 +10,7 @@ import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
 import com.autozone.cazss_backend.service.EndpointService;
 import com.autozone.cazss_backend.service.RequestVariableService;
 import com.autozone.cazss_backend.service.ResponseService;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -66,12 +67,26 @@ public class ServiceController {
    * /services/{id}
    *
    * @param id
-   * @return ServiceInfoDTO which contains all of the register info from the endpoint
+   * @return ServiceInfoDTO which contains most of the registered info from the endpoint
    */
   @GetMapping("/{id}")
   public ResponseEntity<ServiceInfoDTO> getServiceById(@PathVariable Integer id) {
     ServiceInfoDTO serviceData = endpointService.getServiceById(id);
     return new ResponseEntity<>(serviceData, HttpStatus.OK);
+  }
+
+  /**
+   * /services/{id}
+   *
+   * @param id
+   * @return CreateServiceDTO which contains ALL the registered info from the endpoint (meant for
+   *     editing existing services)
+   */
+  @GetMapping("/{id}/edit")
+  public ResponseEntity<CreateServiceDTO> getFullServiceById(
+      @PathVariable @PositiveOrZero Integer id) {
+    CreateServiceDTO fullServiceData = endpointService.getFullServiceInfoById(id);
+    return new ResponseEntity<>(fullServiceData, HttpStatus.OK);
   }
 
   @PutMapping("/{id}/request-variables")

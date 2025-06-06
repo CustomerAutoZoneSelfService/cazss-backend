@@ -8,6 +8,24 @@ public class CreateResponsePatternDTO {
   private String pattern;
   private Boolean isLeaf;
 
+  public CreateResponsePatternDTO() {}
+  ;
+
+  public CreateResponsePatternDTO(
+      Integer responsePatternId,
+      Integer parentId,
+      String name,
+      String description,
+      String pattern,
+      Boolean isLeaf) {
+    this.responsePatternId = responsePatternId;
+    this.parentId = parentId;
+    this.name = name;
+    this.description = description;
+    this.pattern = pattern;
+    this.isLeaf = isLeaf;
+  }
+
   public Integer getResponsePatternId() {
     return responsePatternId;
   }
