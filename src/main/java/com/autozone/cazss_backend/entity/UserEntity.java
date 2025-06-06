@@ -12,13 +12,14 @@ public class UserEntity {
   @Column(name = "user_id")
   private Integer userId;
 
-  @Column(unique = true)
+  @Column(name = "email", unique = true)
   private String email;
 
-  @Column(nullable = false)
+  @Column(name = "active", nullable = false)
   private Boolean active;
 
   @Enumerated(EnumType.STRING)
+  @Column(name = "role", nullable = false)
   private UserRoleEnum role;
 
   @Column(name = "password", nullable = false)
@@ -34,16 +35,6 @@ public class UserEntity {
     this.role = role;
     this.password = password;
     this.username = username;
-  }
-
-  public UserEntity(String email, Boolean active, UserRoleEnum role) {
-    this.email = email;
-    this.active = active;
-    this.role = role;
-    // Set default values for backward compatibility
-    this.password = "defaultPassword123";
-    // Create a username from the email (remove @ and everything after)
-    this.username = email.split("@")[0];
   }
 
   public UserEntity() {}
