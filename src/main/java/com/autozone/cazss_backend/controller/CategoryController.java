@@ -24,10 +24,10 @@ public class CategoryController {
    *
    * @return List&ltCategoryDTO&gt which contains category ids, names and colors
    */
-  @GetMapping("")
-  public ResponseEntity<List<CategoryDTO>> getCategories() {
-    return new ResponseEntity<>(new ArrayList<CategoryDTO>(), HttpStatus.OK);
-  }
+  // @GetMapping("")
+  // public ResponseEntity<List<CategoryDTO>> getCategories() {
+  //   return new ResponseEntity<>(new ArrayList<CategoryDTO>(), HttpStatus.OK);
+  // }
 
   /**
    * POST /categories If the user is an admin, create a category with the specified characteristics
@@ -64,6 +64,12 @@ public class CategoryController {
   public ResponseEntity<String> deleteCategory(
       @RequestHeader Integer userId, @PathVariable Integer categoryId) {
     return new ResponseEntity<>(categoryService.deleteCategory(userId, categoryId), HttpStatus.OK);
+  }
+
+  @GetMapping
+  public ResponseEntity<List<CategoryDTO>> getCategories(@RequestHeader Integer userId) {
+    List<CategoryDTO> categories = categoryService.getCategoriesByUserId(userId);
+    return new ResponseEntity<>(categories, HttpStatus.OK);
   }
 
   /**

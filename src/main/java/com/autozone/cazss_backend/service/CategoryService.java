@@ -1,7 +1,9 @@
 package com.autozone.cazss_backend.service;
 
 import com.autozone.cazss_backend.DTO.CategoryDTO;
+import com.autozone.cazss_backend.entity.CategoryEntity;
 import com.autozone.cazss_backend.entity.EndpointsEntity;
+import com.autozone.cazss_backend.entity.UserCategoryEntity;
 import com.autozone.cazss_backend.exceptions.CategoryNotFoundException;
 import com.autozone.cazss_backend.exceptions.UnauthorizedUserException;
 import com.autozone.cazss_backend.repository.CategoryRepository;
@@ -11,6 +13,8 @@ import com.autozone.cazss_backend.util.PermissionValidator;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +27,27 @@ public class CategoryService {
 
   public List<CategoryDTO> getAllCategories() {
     return new ArrayList<CategoryDTO>();
+  }
+
+  public List<CategoryDTO> getCategoriesByUserId(Integer userId) {
+    System.out.println("Checking categories for userId: " + userId);
+
+    if (permissionValidator.isAdmin(userId)) {
+      System.out.println("User is admin, returning all categories");
+      return categoryRepository.findAll().stream()
+          .map(category -> new CategoryDTO(category))
+          .collect(Collectors.toList());
+    } else {
+      System.out.println("User is NOT admin, fetching user categories");
+      List<UserCategoryEntity> userCategories = userCategoryRepository.findByUser_UserId(userId);
+      System.out.println("User categories found: " + userCategories.size());
+      List<CategoryEntity> categories =
+          userCategories.stream()
+              .map(UserCategoryEntity::getCategory)
+              .filter(Objects::nonNull)
+              .collect(Collectors.toList());
+      return categories.stream().map(CategoryDTO::new).collect(Collectors.toList());
+    }
   }
 
   public List<CategoryDTO> getUserCategories(Integer userId) {

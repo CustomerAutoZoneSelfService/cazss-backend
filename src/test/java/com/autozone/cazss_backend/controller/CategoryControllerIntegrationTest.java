@@ -2,6 +2,7 @@ package com.autozone.cazss_backend.controller;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.autozone.cazss_backend.entity.CategoryEntity;
@@ -98,5 +99,57 @@ public class CategoryControllerIntegrationTest {
     assertTrue(postDeleteCategoryEntity.isEmpty());
 
     assertTrue(postDeleteFoundUserCategory.isEmpty());
+  }
+
+  @Transactional
+  @Test
+  public void testGetCategoriesByUser() throws Exception {
+    // Crea usuario admin
+    UserEntity adminUser = new UserEntity();
+    adminUser.setEmail("adminGetTest@autozone.com");
+    adminUser.setActive(true);
+    adminUser.setRole(UserRoleEnum.ADMIN);
+    userRepository.save(adminUser);
+
+    // Crea usuario normal
+    UserEntity normalUser = new UserEntity();
+    normalUser.setEmail("normalGetTest@autozone.com");
+    normalUser.setActive(true);
+    normalUser.setRole(UserRoleEnum.USER);
+    userRepository.save(normalUser);
+
+    // Crea categorías y asigna a usuario normal
+    CategoryEntity cat1 = new CategoryEntity();
+    cat1.setName("Category1");
+    cat1.setColor("#FF0000");
+    categoryRepository.save(cat1);
+
+    CategoryEntity cat2 = new CategoryEntity();
+    cat2.setName("Category2");
+    cat2.setColor("#00FF00");
+    categoryRepository.save(cat2);
+
+    UserCategoryEntity userCat = new UserCategoryEntity();
+    UserCategoryEntity.UserCategoryId userCategoryId = new UserCategoryEntity.UserCategoryId();
+    userCategoryId.setUserId(normalUser.getUserId());
+    userCategoryId.setCategoryId(cat1.getCategoryId());
+    userCat.setId(userCategoryId);
+    userCat.setUser(normalUser);
+    userCat.setCategory(cat1);
+    userCategoryRepository.save(userCat);
+
+    // Test para admin - debería obtener ambas categorías
+    mockMvc
+        .perform(get("/categories").header("userId", adminUser.getUserId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$.length()").value(2));
+
+    // Test para usuario normal - debería obtener solo una categoría
+    mockMvc
+        .perform(get("/categories").header("userId", normalUser.getUserId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$.length()").value(1));
   }
 }
