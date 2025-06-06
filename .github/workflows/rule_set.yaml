@@ -32,7 +32,7 @@ jobs:
             exit 1
           fi
 
-          team_regex="^team-[0-9]+-(stable)$"
+          team_regex="^team-[0-9]+-stable$|^user-categories$|^user-authentication$|^general-integration$|^filter-integration$|^endpoint-editing$|^endpoint-authentication$|^categories$|^call-again-integration$"
           developer_regex="^[A-Z]+-[0-9]+$"
           predefined_regex="^(main|dev)$"
 
