@@ -22,11 +22,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
+@WithMockUser(
+    username = "prueba.12@example.com",
+    roles = {"USER", "ADMIN"})
 public class HistoryControllerIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
@@ -54,6 +58,8 @@ public class HistoryControllerIntegrationTest {
 
     user.setActive(true);
     user.setEmail("prueba.12@example.com");
+    user.setUsername("prueba.12");
+    user.setPassword("test123");
     user.setRole(UserRoleEnum.ADMIN);
     user = userRepository.save(user);
 
