@@ -4,6 +4,9 @@ import com.autozone.cazss_backend.DTO.CategoryDTO;
 import com.autozone.cazss_backend.DTO.UserCategoryDTO;
 import com.autozone.cazss_backend.service.CategoryService;
 import com.autozone.cazss_backend.service.UserCategoryService;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,16 +84,17 @@ public class CategoryController {
 
   /**
    * POST /categories/{categoryId}/user-categories If the user is an admin, add access to a category
-   * for a specified list of users
-   *
-   * @param categoryId ID of the category to give access to for a list of users
-   * @param usersToAdd List of user IDs to add
-   * @return List&ltUserCategoryDTO&gt with the added users fetched from the database
+   * for a specified list of users.
    */
   @PostMapping("/{categoryId}/user-categories")
   public ResponseEntity<List<UserCategoryDTO>> addPermissionToAccessCategoryToUsers(
-      @PathVariable Integer categoryId, @RequestBody List<Integer> usersToAdd) {
-    return new ResponseEntity<>(new ArrayList<UserCategoryDTO>(), HttpStatus.CREATED);
+      @RequestHeader @NotNull @Positive Integer userId,
+      @PathVariable @NotNull @Positive Integer categoryId,
+      @RequestBody @NotEmpty List<@NotNull @Positive Integer> usersToAdd) {
+
+    List<UserCategoryDTO> result =
+        userCategoryService.addPermissionToAccessCategoryToUsers(userId, categoryId, usersToAdd);
+    return new ResponseEntity<>(result, HttpStatus.CREATED);
   }
 
   /**
