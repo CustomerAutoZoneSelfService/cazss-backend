@@ -55,7 +55,10 @@ public class CategoryService {
   }
 
   public List<CategoryDTO> getAvailableCategories(Integer userId) {
-    return new ArrayList<CategoryDTO>();
+    System.out.println("Getting available categories for userId: " + userId);
+    List<CategoryDTO> categories = getCategoriesByUserId(userId);
+    System.out.println("Categories found: " + categories.size());
+    return categories;
   }
 
   @Transactional
