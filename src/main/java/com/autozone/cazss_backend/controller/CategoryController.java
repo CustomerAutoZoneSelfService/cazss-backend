@@ -4,13 +4,18 @@ import com.autozone.cazss_backend.DTO.CategoryDTO;
 import com.autozone.cazss_backend.DTO.UserCategoryDTO;
 import com.autozone.cazss_backend.service.CategoryService;
 import com.autozone.cazss_backend.service.UserCategoryService;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Validated
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/categories")
@@ -103,9 +108,11 @@ public class CategoryController {
    */
   @DeleteMapping("/{categoryId}/user-categories")
   public ResponseEntity<String> deleteAccessToCategoryForUsers(
-      @PathVariable Integer categoryId, @RequestBody List<Integer> usersToDelete) {
-    return new ResponseEntity<>(
-        "Access to category " + categoryId + " deleted for users " + usersToDelete.toString(),
-        HttpStatus.OK);
+      @RequestHeader @NotNull @Positive Integer userId,
+      @PathVariable @NotNull @Positive Integer categoryId,
+      @RequestBody @NotEmpty List<@NotNull @Positive Integer> usersToDelete) {
+    String result =
+        userCategoryService.deleteAccessToCategoryForUsers(userId, categoryId, usersToDelete);
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }
