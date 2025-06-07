@@ -2,6 +2,7 @@ package com.autozone.cazss_backend.service;
 
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.exceptions.ServiceNotActiveException;
 import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
 import com.autozone.cazss_backend.exceptions.ValidationException;
 import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
@@ -55,12 +56,17 @@ public class EndpointService {
     return endpointsRepository.findAllServiceDTOs();
   }
 
+  // TODO validate if endpoint is active
   public ServiceInfoDTO getServiceById(Integer id) {
     System.out.println("ENTERING GET SERVICE BY ID");
     EndpointsEntity endpoint =
         endpointsRepository
             .findByEndpointId(id)
             .orElseThrow(() -> new ServiceNotFoundException("Endpoint not found with id: " + id));
+
+    if (!endpoint.getActive()) {
+      throw new ServiceNotActiveException(id);
+    }
 
     ServiceInfoDTO serviceInformation =
         new ServiceInfoDTO(

@@ -42,6 +42,23 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.UNPROCESSABLE_ENTITY);
   }
 
+  @ExceptionHandler(
+      ServiceNotActiveException
+          .class) // Excepción de validación de datos lanzados al executeService
+  public ResponseEntity<Object> handleServiceNotActiveException(
+      final ServiceNotActiveException ex) {
+    // Crear el objeto ErrorResponse
+    ErrorResponseTemplate error =
+        new ErrorResponseTemplate(
+            "SERVICE_NOT_ACTIVE_ERROR",
+            ex.getMessage(),
+            "The service you are trying to reach is inactive",
+            LocalDateTime.now(),
+            UUID.randomUUID().toString());
+
+    return new ResponseEntity<>(error, HttpStatus.UNPROCESSABLE_ENTITY);
+  }
+
   @ExceptionHandler(AZClientException.class) // Excepción de AZClient
   public ResponseEntity<Object> handleAZClientException(final AZClientException ex) {
     // Crear el objeto ErrorResponse
