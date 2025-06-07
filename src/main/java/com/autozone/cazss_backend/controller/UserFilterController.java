@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /** REST controller for managing user filters related to response patterns in endpoints. */
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/responses")
 public class UserFilterController {

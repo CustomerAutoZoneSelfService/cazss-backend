@@ -107,7 +107,7 @@ public class EndpointService {
         responses.stream().map(ResponseEntity::getResponseId).collect(Collectors.toSet());
 
     List<ResponsePatternEntity> responsePatterns =
-        responsePatternRepository.findByResponse_ResponseIdIn(responseIds);
+        responsePatternRepository.findByResponse_ResponseIdInAndIsLeafTrue(responseIds);
     serviceInformation.setFilters(
         responsePatterns.stream()
             .map(
