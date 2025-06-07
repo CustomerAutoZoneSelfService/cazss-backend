@@ -1,10 +1,15 @@
 package com.autozone.cazss_backend.DTO;
 
 import com.autozone.cazss_backend.entity.CategoryEntity;
+import jakarta.validation.constraints.NotBlank;
 
 public class CategoryDTO {
   private Integer categoryId;
+
+  @NotBlank(message = "Category name is required")
   private String name;
+
+  @NotBlank(message = "Category color is required")
   private String color;
 
   public CategoryDTO() {}

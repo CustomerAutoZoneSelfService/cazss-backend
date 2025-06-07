@@ -4,6 +4,7 @@ import com.autozone.cazss_backend.DTO.CategoryDTO;
 import com.autozone.cazss_backend.entity.CategoryEntity;
 import com.autozone.cazss_backend.entity.EndpointsEntity;
 import com.autozone.cazss_backend.entity.UserCategoryEntity;
+import com.autozone.cazss_backend.exceptions.CategoryAlreadyExistsException;
 import com.autozone.cazss_backend.exceptions.CategoryNotFoundException;
 import com.autozone.cazss_backend.exceptions.UnauthorizedUserException;
 import com.autozone.cazss_backend.repository.CategoryRepository;
@@ -63,7 +64,17 @@ public class CategoryService {
 
   @Transactional
   public CategoryDTO createCategory(Integer userId, CategoryDTO categoryDTO) {
-    return new CategoryDTO();
+    // Check if category name already exists
+    if (categoryRepository.findByName(categoryDTO.getName()).isPresent()) {
+      throw new CategoryAlreadyExistsException(
+          "Category with name '" + categoryDTO.getName() + "' already exists.");
+    }
+
+    CategoryEntity categoryEntity =
+        new CategoryEntity(categoryDTO.getName(), categoryDTO.getColor());
+    CategoryEntity savedCategory = categoryRepository.save(categoryEntity);
+    return new CategoryDTO(
+        savedCategory.getCategoryId(), savedCategory.getName(), savedCategory.getColor());
   }
 
   @Transactional

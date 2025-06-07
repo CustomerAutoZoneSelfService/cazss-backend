@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -97,6 +98,20 @@ public class GlobalExceptionHandler {
             "VALIDATION_ERROR",
             defaultMessage,
             "Detalles del error de validación",
+            LocalDateTime.now(),
+            UUID.randomUUID().toString());
+
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(MissingRequestHeaderException.class) // Excepción de bad request
+  public ResponseEntity<Object> handleMethodArgumentNotValid(
+      final MissingRequestHeaderException ex) {
+    ErrorResponseTemplate error =
+        new ErrorResponseTemplate(
+            "VALIDATION_ERROR",
+            ex.getMessage(),
+            "Missing headers during endpoint call",
             LocalDateTime.now(),
             UUID.randomUUID().toString());
 

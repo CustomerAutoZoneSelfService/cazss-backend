@@ -7,6 +7,7 @@ import com.autozone.cazss_backend.service.UserCategoryService;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +42,10 @@ public class CategoryController {
    * @return CategoryDTO of the specified category with the newly provided name and color
    */
   @PostMapping("")
-  public ResponseEntity<CategoryDTO> createCategory(@RequestBody CategoryDTO categoryDTO) {
-    return new ResponseEntity<>(new CategoryDTO(), HttpStatus.CREATED);
+  public ResponseEntity<CategoryDTO> createCategory(
+      @RequestHeader("userId") Integer userId, @Valid @RequestBody CategoryDTO categoryDTO) {
+    return new ResponseEntity<>(
+        categoryService.createCategory(userId, categoryDTO), HttpStatus.CREATED);
   }
 
   /**
@@ -67,7 +70,7 @@ public class CategoryController {
    */
   @DeleteMapping("/{categoryId}")
   public ResponseEntity<String> deleteCategory(
-      @RequestHeader Integer userId, @PathVariable Integer categoryId) {
+      @RequestHeader @NotNull Integer userId, @PathVariable @NotNull Integer categoryId) {
     return new ResponseEntity<>(categoryService.deleteCategory(userId, categoryId), HttpStatus.OK);
   }
 
