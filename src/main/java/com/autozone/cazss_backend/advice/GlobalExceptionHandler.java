@@ -59,18 +59,33 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(
-      CategoryNotFoundException.class) // Excepción de acceso no autorizado a un endpoint
+      CategoryNotFoundException.class) // Excepción de categoría no encontrada en alguna operación
   public ResponseEntity<Object> handleValidationException(final CategoryNotFoundException ex) {
     // Crear el objeto ErrorResponse
     ErrorResponseTemplate error =
         new ErrorResponseTemplate(
-            "VALIDATION_ERROR",
+            "CATEGORY_DOES_NOT_EXIST",
             ex.getMessage(),
             "No such category was found.",
             LocalDateTime.now(),
             UUID.randomUUID().toString());
 
     return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(
+      CategoryAlreadyExistsException.class) // Excepción de acceso no autorizado a un endpoint
+  public ResponseEntity<Object> handleValidationException(final CategoryAlreadyExistsException ex) {
+    // Crear el objeto ErrorResponse
+    ErrorResponseTemplate error =
+        new ErrorResponseTemplate(
+            "CATEGORY_ALREADY_EXISTS",
+            ex.getMessage(),
+            "Can't create category with already existing name.",
+            LocalDateTime.now(),
+            UUID.randomUUID().toString());
+
+    return new ResponseEntity<>(error, HttpStatus.CONFLICT);
   }
 
   @ExceptionHandler(AZClientException.class) // Excepción de AZClient
@@ -109,7 +124,7 @@ public class GlobalExceptionHandler {
       final MissingRequestHeaderException ex) {
     ErrorResponseTemplate error =
         new ErrorResponseTemplate(
-            "VALIDATION_ERROR",
+            "MISSING_REQUEST_HEADER",
             ex.getMessage(),
             "Missing headers during endpoint call",
             LocalDateTime.now(),
