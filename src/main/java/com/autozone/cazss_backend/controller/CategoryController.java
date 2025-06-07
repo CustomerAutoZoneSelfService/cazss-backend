@@ -25,8 +25,8 @@ public class CategoryController {
    * @return List&ltCategoryDTO&gt which contains category ids, names and colors
    */
   @GetMapping("")
-  public ResponseEntity<List<CategoryDTO>> getCategories() {
-    return new ResponseEntity<>(new ArrayList<CategoryDTO>(), HttpStatus.OK);
+  public ResponseEntity<List<CategoryDTO>> getCategories(@RequestHeader Integer userId) {
+    return new ResponseEntity<>(categoryService.getAvailableCategories(userId), HttpStatus.OK);
   }
 
   /**

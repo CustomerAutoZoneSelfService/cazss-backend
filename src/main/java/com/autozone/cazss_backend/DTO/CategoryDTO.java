@@ -1,5 +1,7 @@
 package com.autozone.cazss_backend.DTO;
 
+import com.autozone.cazss_backend.entity.CategoryEntity;
+
 public class CategoryDTO {
   private Integer categoryId;
   private String name;
@@ -11,6 +13,12 @@ public class CategoryDTO {
     this.categoryId = categoryId;
     this.name = name;
     this.color = color;
+  }
+
+  public CategoryDTO(CategoryEntity entity) {
+    this.categoryId = entity.getCategoryId();
+    this.name = entity.getName();
+    this.color = entity.getColor();
   }
 
   public String getName() {
