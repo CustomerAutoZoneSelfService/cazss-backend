@@ -29,7 +29,12 @@ public class ResponsePatternRepositoryTest {
 
     UserEntity user =
         userRepository.save(
-            new UserEntity("pattern+" + uniqueSuffix + "@autozone.com", true, UserRoleEnum.USER));
+            new UserEntity(
+                "response+" + uniqueSuffix + "@autozone.com",
+                true,
+                UserRoleEnum.USER,
+                "testPassword123",
+                "testUser" + uniqueSuffix));
 
     CategoryEntity category =
         categoryRepository.save(new CategoryEntity("PATTERN_" + uniqueSuffix, "#FAFAFA"));

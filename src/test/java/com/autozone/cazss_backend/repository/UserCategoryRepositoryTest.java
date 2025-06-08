@@ -24,7 +24,11 @@ public class UserCategoryRepositoryTest {
 
   private UserCategoryEntity createSampleUserCategory() {
     String uniqueEmail = "usercat+" + System.currentTimeMillis() + "@autozone.com";
-    UserEntity user = userRepository.save(new UserEntity(uniqueEmail, true, UserRoleEnum.USER));
+    String uniqueUsername = "testUser" + System.currentTimeMillis();
+    UserEntity user =
+        userRepository.save(
+            new UserEntity(
+                uniqueEmail, true, UserRoleEnum.USER, "testPassword123", uniqueUsername));
     CategoryEntity category =
         categoryRepository.save(
             new CategoryEntity("UserCat_" + System.currentTimeMillis(), "#FFDDEE"));

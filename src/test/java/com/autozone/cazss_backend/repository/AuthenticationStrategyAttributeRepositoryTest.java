@@ -35,10 +35,13 @@ public class AuthenticationStrategyAttributeRepositoryTest {
     String email = "test" + System.currentTimeMillis() + "@example.com";
 
     // Crear usuario
-    user = new UserEntity();
-    user.setEmail(email);
-    user.setActive(true);
-    user.setRole(UserRoleEnum.USER); // Asegúrate de tener el Enum definido
+    user =
+        new UserEntity(
+            email,
+            true,
+            UserRoleEnum.USER,
+            "testPassword123",
+            "testUser" + System.currentTimeMillis());
     user = userRepository.save(user);
 
     // Crear categoría

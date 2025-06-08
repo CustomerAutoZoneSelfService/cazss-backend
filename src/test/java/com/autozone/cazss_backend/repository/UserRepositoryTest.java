@@ -22,7 +22,12 @@ public class UserRepositoryTest {
   public void givenUserRepository_whenSaveAndRetreiveUser_thenOK() {
     UserEntity user =
         userRepository.save(
-            new UserEntity("userRepoTestUser@autozone.com", true, UserRoleEnum.USER));
+            new UserEntity(
+                "userRepoTestUser@autozone.com",
+                true,
+                UserRoleEnum.USER,
+                "testPassword123",
+                "userRepoTestUser"));
 
     Optional<UserEntity> foundUserOptional = userRepository.findById(user.getUserId());
 
@@ -36,10 +41,17 @@ public class UserRepositoryTest {
   @Test
   public void givenUserRepository_whenUpdateUser_thenOK() {
     UserEntity user =
-        userRepository.save(new UserEntity("oldUserEmail@autozone.com", true, UserRoleEnum.USER));
+        userRepository.save(
+            new UserEntity(
+                "oldUserEmail@autozone.com",
+                true,
+                UserRoleEnum.USER,
+                "testPassword123",
+                "oldUserName"));
 
     user.setEmail("newUserEmail@autozone.com");
     user.setActive(false);
+    user.setUsername("newUserName");
 
     UserEntity updatedUser = userRepository.save(user);
 
@@ -50,12 +62,19 @@ public class UserRepositoryTest {
     UserEntity foundUser = foundUserOptional.get();
     assertEquals("newUserEmail@autozone.com", foundUser.getEmail());
     assertFalse(foundUser.getActive());
+    assertEquals("newUserName", foundUser.getUsername());
   }
 
   @Test
   public void givenUserRepository_whenDeleteUser_thenOK() {
     UserEntity user =
-        userRepository.save(new UserEntity("tobedeleted@autozone.com", true, UserRoleEnum.USER));
+        userRepository.save(
+            new UserEntity(
+                "tobedeleted@autozone.com",
+                true,
+                UserRoleEnum.USER,
+                "testPassword123",
+                "toBeDeletedUser"));
 
     Integer userId = user.getUserId();
 
