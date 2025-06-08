@@ -1,7 +1,9 @@
 package com.autozone.cazss_backend.service;
 
 import com.autozone.cazss_backend.DTO.UserCategoryDTO;
+import com.autozone.cazss_backend.entity.CategoryEntity;
 import com.autozone.cazss_backend.entity.UserCategoryEntity;
+import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.exceptions.CategoryNotFoundException;
 import com.autozone.cazss_backend.exceptions.UnauthorizedUserException;
 import com.autozone.cazss_backend.repository.CategoryRepository;
@@ -12,6 +14,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -53,8 +56,79 @@ public class UserCategoryService {
 
   @Transactional
   public List<UserCategoryDTO> addPermissionToAccessCategoryToUsers(
-      Integer userId, Integer categoryId, List<Integer> userIds) {
-    return new ArrayList<UserCategoryDTO>();
+      Integer userId, Integer categoryId, List<Integer> usersToAdd) {
+
+    if (usersToAdd.isEmpty()) {
+      throw new IllegalArgumentException("List of userIds cannot be empty");
+    }
+
+    userRepository
+        .findByUserId(userId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+    if (!permissionValidator.isAdmin(userId)) {
+      throw new UnauthorizedUserException("This feature is only available to administrators.");
+    }
+
+    if (!categoryRepository.existsById(categoryId)) {
+      throw new EntityNotFoundException("Category with ID " + categoryId + " not found");
+    }
+
+    List<UserCategoryDTO> addedUsers = new ArrayList<>();
+
+    for (Integer targetUserId : usersToAdd) {
+      try {
+        Optional<UserEntity> userOpt = userRepository.findByUserId(targetUserId);
+
+        if (userOpt.isEmpty()) {
+          log.warn("User with ID {} not found, skipping", targetUserId);
+          continue;
+        }
+
+        log.info(
+            "Found user:"
+                + userOpt.get().getUserId()
+                + " "
+                + userOpt.get().getEmail()
+                + " "
+                + userOpt.get().getActive());
+
+        Optional<UserCategoryEntity> existing =
+            userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(
+                categoryId, targetUserId);
+        if (existing.isPresent()) {
+          log.info("User {} already has access to category {}", targetUserId, categoryId);
+          continue;
+        }
+
+        UserCategoryEntity relation = new UserCategoryEntity();
+        relation.setUser(userOpt.get());
+        Optional<CategoryEntity> foundCategory = categoryRepository.findById(categoryId);
+        log.info(
+            "Found category:"
+                + foundCategory.get().getCategoryId()
+                + " "
+                + foundCategory.get().getName()
+                + " "
+                + foundCategory.get().getColor());
+        relation.setCategory(foundCategory.get());
+
+        UserCategoryEntity.UserCategoryId compositeId =
+            new UserCategoryEntity.UserCategoryId(
+                userOpt.get().getUserId(), foundCategory.get().getCategoryId());
+
+        relation.setId(compositeId);
+
+        userCategoryRepository.save(relation);
+
+        addedUsers.add(new UserCategoryDTO(targetUserId, categoryId));
+        log.info("Granted access to category {} for user {}", categoryId, targetUserId);
+      } catch (Exception e) {
+        log.error("Failed to add access for user {}: {}", targetUserId, e.getMessage());
+      }
+    }
+
+    return addedUsers;
   }
 
   @Transactional

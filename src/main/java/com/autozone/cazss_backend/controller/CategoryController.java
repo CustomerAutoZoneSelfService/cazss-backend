@@ -4,11 +4,10 @@ import com.autozone.cazss_backend.DTO.CategoryDTO;
 import com.autozone.cazss_backend.DTO.UserCategoryDTO;
 import com.autozone.cazss_backend.service.CategoryService;
 import com.autozone.cazss_backend.service.UserCategoryService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.Valid;
-import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -83,8 +82,9 @@ public class CategoryController {
    */
   @GetMapping("/{categoryId}/user-categories")
   public ResponseEntity<List<UserCategoryDTO>> getUsersWithAccessToCategory(
-      @PathVariable Integer categoryId) {
-    return new ResponseEntity<>(new ArrayList<UserCategoryDTO>(), HttpStatus.OK);
+      @RequestHeader Integer userId, @PathVariable Integer categoryId) {
+    return new ResponseEntity<>(
+        userCategoryService.getUsersWithAccessToCategory(userId, categoryId), HttpStatus.OK);
   }
 
   /**
@@ -97,8 +97,13 @@ public class CategoryController {
    */
   @PostMapping("/{categoryId}/user-categories")
   public ResponseEntity<List<UserCategoryDTO>> addPermissionToAccessCategoryToUsers(
-      @PathVariable Integer categoryId, @RequestBody List<Integer> usersToAdd) {
-    return new ResponseEntity<>(new ArrayList<UserCategoryDTO>(), HttpStatus.CREATED);
+      @RequestHeader @NotNull @Positive Integer userId,
+      @PathVariable @NotNull @Positive Integer categoryId,
+      @RequestBody @NotEmpty List<@NotNull @Positive Integer> usersToAdd) {
+
+    List<UserCategoryDTO> result =
+        userCategoryService.addPermissionToAccessCategoryToUsers(userId, categoryId, usersToAdd);
+    return new ResponseEntity<>(result, HttpStatus.CREATED);
   }
 
   /**
