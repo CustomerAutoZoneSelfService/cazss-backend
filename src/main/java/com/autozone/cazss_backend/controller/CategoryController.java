@@ -30,7 +30,8 @@ public class CategoryController {
    * @return List&ltCategoryDTO&gt which contains category ids, names and colors
    */
   @GetMapping("")
-  public ResponseEntity<List<CategoryDTO>> getCategories(@RequestHeader Integer userId) {
+  public ResponseEntity<List<CategoryDTO>> getCategories(
+      @RequestHeader @NotNull @Positive Integer userId) {
     return new ResponseEntity<>(categoryService.getAvailableCategories(userId), HttpStatus.OK);
   }
 
@@ -42,7 +43,8 @@ public class CategoryController {
    */
   @PostMapping("")
   public ResponseEntity<CategoryDTO> createCategory(
-      @RequestHeader("userId") Integer userId, @Valid @RequestBody CategoryDTO categoryDTO) {
+      @RequestHeader("userId") @NotNull @Positive Integer userId,
+      @Valid @RequestBody @NotNull CategoryDTO categoryDTO) {
     return new ResponseEntity<>(
         categoryService.createCategory(userId, categoryDTO), HttpStatus.CREATED);
   }
@@ -57,9 +59,9 @@ public class CategoryController {
    */
   @PutMapping("/{categoryId}")
   public ResponseEntity<CategoryDTO> updateCategory(
-      @RequestHeader Integer userId,
-      @PathVariable Integer categoryId,
-      @RequestBody CategoryDTO categoryDTO) {
+      @RequestHeader @NotNull @Positive Integer userId,
+      @PathVariable @NotNull @Positive Integer categoryId,
+      @RequestBody @Valid @NotNull CategoryDTO categoryDTO) {
     CategoryDTO updatedCategory = categoryService.updateCategory(userId, categoryId, categoryDTO);
     return new ResponseEntity<>(updatedCategory, HttpStatus.OK);
   }
@@ -85,7 +87,8 @@ public class CategoryController {
    */
   @GetMapping("/{categoryId}/user-categories")
   public ResponseEntity<List<UserCategoryDTO>> getUsersWithAccessToCategory(
-      @RequestHeader Integer userId, @PathVariable Integer categoryId) {
+      @RequestHeader @NotNull @Positive Integer userId,
+      @PathVariable @NotNull @Positive Integer categoryId) {
     return new ResponseEntity<>(
         userCategoryService.getUsersWithAccessToCategory(userId, categoryId), HttpStatus.OK);
   }

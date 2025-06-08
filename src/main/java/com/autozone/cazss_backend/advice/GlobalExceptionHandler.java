@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -127,6 +128,20 @@ public class GlobalExceptionHandler {
             "MISSING_REQUEST_HEADER",
             ex.getMessage(),
             "Missing headers during endpoint call",
+            LocalDateTime.now(),
+            UUID.randomUUID().toString());
+
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class) // Excepción de bad request
+  public ResponseEntity<Object> handleMethodArgumentNotValid(
+      final HttpMessageNotReadableException ex) {
+    ErrorResponseTemplate error =
+        new ErrorResponseTemplate(
+            "INVALID_REQUEST",
+            ex.getMessage(),
+            "Check your request fields.",
             LocalDateTime.now(),
             UUID.randomUUID().toString());
 
