@@ -1,7 +1,10 @@
 package com.autozone.cazss_backend.service;
 
 import com.autozone.cazss_backend.DTO.CategoryDTO;
+import com.autozone.cazss_backend.entity.CategoryEntity;
 import com.autozone.cazss_backend.entity.EndpointsEntity;
+import com.autozone.cazss_backend.entity.UserCategoryEntity;
+import com.autozone.cazss_backend.exceptions.CategoryAlreadyExistsException;
 import com.autozone.cazss_backend.exceptions.CategoryNotFoundException;
 import com.autozone.cazss_backend.exceptions.UnauthorizedUserException;
 import com.autozone.cazss_backend.repository.CategoryRepository;
@@ -11,6 +14,8 @@ import com.autozone.cazss_backend.util.PermissionValidator;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,17 +30,51 @@ public class CategoryService {
     return new ArrayList<CategoryDTO>();
   }
 
+  public List<CategoryDTO> getCategoriesByUserId(Integer userId) {
+    System.out.println("Checking categories for userId: " + userId);
+
+    if (permissionValidator.isAdmin(userId)) {
+      System.out.println("User is admin, returning all categories");
+      return categoryRepository.findAll().stream()
+          .map(category -> new CategoryDTO(category))
+          .collect(Collectors.toList());
+    } else {
+      System.out.println("User is NOT admin, fetching user categories");
+      List<UserCategoryEntity> userCategories = userCategoryRepository.findByUser_UserId(userId);
+      System.out.println("User categories found: " + userCategories.size());
+      List<CategoryEntity> categories =
+          userCategories.stream()
+              .map(UserCategoryEntity::getCategory)
+              .filter(Objects::nonNull)
+              .collect(Collectors.toList());
+      return categories.stream().map(CategoryDTO::new).collect(Collectors.toList());
+    }
+  }
+
   public List<CategoryDTO> getUserCategories(Integer userId) {
     return new ArrayList<CategoryDTO>();
   }
 
   public List<CategoryDTO> getAvailableCategories(Integer userId) {
-    return new ArrayList<CategoryDTO>();
+    System.out.println("Getting available categories for userId: " + userId);
+    List<CategoryDTO> categories = getCategoriesByUserId(userId);
+    System.out.println("Categories found: " + categories.size());
+    return categories;
   }
 
   @Transactional
   public CategoryDTO createCategory(Integer userId, CategoryDTO categoryDTO) {
-    return new CategoryDTO();
+    // Check if category name already exists
+    if (categoryRepository.findByName(categoryDTO.getName()).isPresent()) {
+      throw new CategoryAlreadyExistsException(
+          "Category with name '" + categoryDTO.getName() + "' already exists.");
+    }
+
+    CategoryEntity categoryEntity =
+        new CategoryEntity(categoryDTO.getName(), categoryDTO.getColor());
+    CategoryEntity savedCategory = categoryRepository.save(categoryEntity);
+    return new CategoryDTO(
+        savedCategory.getCategoryId(), savedCategory.getName(), savedCategory.getColor());
   }
 
   @Transactional

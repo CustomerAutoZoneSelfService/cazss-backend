@@ -4,6 +4,7 @@ import com.autozone.cazss_backend.DTO.CategoryDTO;
 import com.autozone.cazss_backend.DTO.UserCategoryDTO;
 import com.autozone.cazss_backend.service.CategoryService;
 import com.autozone.cazss_backend.service.UserCategoryService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -12,8 +13,10 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Validated
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/categories")
@@ -28,8 +31,8 @@ public class CategoryController {
    * @return List&ltCategoryDTO&gt which contains category ids, names and colors
    */
   @GetMapping("")
-  public ResponseEntity<List<CategoryDTO>> getCategories() {
-    return new ResponseEntity<>(new ArrayList<CategoryDTO>(), HttpStatus.OK);
+  public ResponseEntity<List<CategoryDTO>> getCategories(@RequestHeader Integer userId) {
+    return new ResponseEntity<>(categoryService.getAvailableCategories(userId), HttpStatus.OK);
   }
 
   /**
@@ -39,8 +42,10 @@ public class CategoryController {
    * @return CategoryDTO of the specified category with the newly provided name and color
    */
   @PostMapping("")
-  public ResponseEntity<CategoryDTO> createCategory(@RequestBody CategoryDTO categoryDTO) {
-    return new ResponseEntity<>(new CategoryDTO(), HttpStatus.CREATED);
+  public ResponseEntity<CategoryDTO> createCategory(
+      @RequestHeader("userId") Integer userId, @Valid @RequestBody CategoryDTO categoryDTO) {
+    return new ResponseEntity<>(
+        categoryService.createCategory(userId, categoryDTO), HttpStatus.CREATED);
   }
 
   /**
@@ -65,7 +70,7 @@ public class CategoryController {
    */
   @DeleteMapping("/{categoryId}")
   public ResponseEntity<String> deleteCategory(
-      @RequestHeader Integer userId, @PathVariable Integer categoryId) {
+      @RequestHeader @NotNull Integer userId, @PathVariable @NotNull Integer categoryId) {
     return new ResponseEntity<>(categoryService.deleteCategory(userId, categoryId), HttpStatus.OK);
   }
 
@@ -84,7 +89,11 @@ public class CategoryController {
 
   /**
    * POST /categories/{categoryId}/user-categories If the user is an admin, add access to a category
-   * for a specified list of users.
+   * for a specified list of users
+   *
+   * @param categoryId ID of the category to give access to for a list of users
+   * @param usersToAdd List of user IDs to add
+   * @return List&ltUserCategoryDTO&gt with the added users fetched from the database
    */
   @PostMapping("/{categoryId}/user-categories")
   public ResponseEntity<List<UserCategoryDTO>> addPermissionToAccessCategoryToUsers(
@@ -107,9 +116,11 @@ public class CategoryController {
    */
   @DeleteMapping("/{categoryId}/user-categories")
   public ResponseEntity<String> deleteAccessToCategoryForUsers(
-      @PathVariable Integer categoryId, @RequestBody List<Integer> usersToDelete) {
-    return new ResponseEntity<>(
-        "Access to category " + categoryId + " deleted for users " + usersToDelete.toString(),
-        HttpStatus.OK);
+      @RequestHeader @NotNull @Positive Integer userId,
+      @PathVariable @NotNull @Positive Integer categoryId,
+      @RequestBody @NotEmpty List<@NotNull @Positive Integer> usersToDelete) {
+    String result =
+        userCategoryService.deleteAccessToCategoryForUsers(userId, categoryId, usersToDelete);
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }
