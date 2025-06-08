@@ -1,24 +1,24 @@
 package com.autozone.cazss_backend.controller;
 
-import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.autozone.cazss_backend.entity.CategoryEntity;
 import com.autozone.cazss_backend.entity.EndpointsEntity;
+import com.autozone.cazss_backend.entity.UserCategoryEntity;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
+import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import com.autozone.cazss_backend.repository.CategoryRepository;
 import com.autozone.cazss_backend.repository.EndpointsRepository;
+import com.autozone.cazss_backend.repository.UserCategoryRepository;
 import com.autozone.cazss_backend.repository.UserRepository;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,33 +30,74 @@ public class EndpointControllerIntegrationTest {
 
   @Autowired private CategoryRepository categoryRepository;
 
-  @MockitoBean private UserRepository userRepository;
+  @Autowired private UserRepository userRepository;
 
   @Autowired private EndpointsRepository endpointsRepository;
 
+  @Autowired private UserCategoryRepository userCategoryRepository;
+
   private EndpointsEntity savedEndpoint;
 
-  public void setup() {
+  private UserEntity savedUser;
+
+  private CategoryEntity savedCategory;
+
+  private UserCategoryEntity savedUserCategory;
+
+  public void setupUserCategory() {
+    UserCategoryEntity userCategory = new UserCategoryEntity();
+    userCategory.setCategory(savedCategory);
+    userCategory.setUser(savedUser);
+    userCategory.setId(
+        new UserCategoryEntity.UserCategoryId(
+            savedUser.getUserId(), savedCategory.getCategoryId()));
+    savedUserCategory = userCategoryRepository.save(userCategory);
+  }
+
+  public void setupEndpoint(UserRoleEnum userRole) {
     // Create and save a test endpoint into the real database
     EndpointsEntity endpoint = new EndpointsEntity();
     endpoint.setName("EndpointControllerIntegrationTestEndpoint");
     endpoint.setDescription("This is a test endpoint");
     endpoint.setActive(true);
+    if (userRole != UserRoleEnum.ADMIN) {
+      endpoint.setCategory(savedCategory);
+    }
     endpoint.setMethod(EndpointMethodEnum.GET);
     endpoint.setUrl("/test/url");
 
     savedEndpoint = endpointsRepository.save(endpoint);
   }
 
+  public void setupUser(UserRoleEnum userRole) {
+    UserEntity user = new UserEntity();
+
+    user.setEmail("test@example.com");
+    user.setRole(userRole);
+    user.setActive(true);
+
+    savedUser = userRepository.save(user);
+  }
+
+  public void setupCategory() {
+    CategoryEntity category = new CategoryEntity();
+    category.setName("EndpointControllerIntegrationTestCategory");
+    category.setColor("#FF0000");
+    savedCategory = categoryRepository.save(category);
+  }
+
   @Transactional
   @Test
   public void testGetServiceById() throws Exception {
-    setup();
+    setupUser(UserRoleEnum.USER);
+    setupEndpoint(UserRoleEnum.USER);
     System.out.println("The saved endpoint id is the following:");
     System.out.println(savedEndpoint.getEndpointId());
 
     mockMvc
-        .perform(get("/services/{id}", savedEndpoint.getEndpointId()))
+        .perform(
+            get("/services/{id}", savedEndpoint.getEndpointId())
+                .header("userId", savedUser.getUserId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("EndpointControllerIntegrationTestEndpoint"))
         .andExpect(jsonPath("$.description").value("This is a test endpoint"))
@@ -65,10 +106,14 @@ public class EndpointControllerIntegrationTest {
         .andExpect(jsonPath("$.url").value("/test/url"));
   }
 
+  @Transactional
   @Test
   void testGetServiceById_NotFound() throws Exception {
+    setupUser(UserRoleEnum.USER);
     mockMvc
-        .perform(get("/services/{id}", 9999)) // ID that doesn't exist
+        .perform(
+            get("/services/{id}", 9999)
+                .header("userId", savedUser.getUserId())) // ID that doesn't exist
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("NOT_FOUND"))
         .andExpect(jsonPath("$.message").value("Endpoint not found with id: 9999"))
@@ -80,13 +125,59 @@ public class EndpointControllerIntegrationTest {
 
   @Transactional
   @Test
-  public void testGetAllServices() throws Exception {
-    setup();
+  public void testGetAvailableServicesAsAdmin() throws Exception {
+    setupUser(UserRoleEnum.ADMIN);
+    setupEndpoint(UserRoleEnum.ADMIN);
     System.out.println("The result from getting all services is the following");
     System.out.println(mockMvc.perform(get("/services").contentType(MediaType.APPLICATION_JSON)));
 
     mockMvc
-        .perform(get("/services").contentType(MediaType.APPLICATION_JSON).header("userId", 1))
+        .perform(
+            get("/services")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("userId", savedUser.getUserId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].name").value("EndpointControllerIntegrationTestEndpoint"))
+        .andExpect(jsonPath("$[0].description").value("This is a test endpoint"))
+        .andExpect(jsonPath("$[0].endpointId").exists());
+  }
+
+  @Transactional
+  @Test
+  public void testGetAvailableServicesAsNormalUserWithNoEndpointAccess() throws Exception {
+    setupUser(UserRoleEnum.USER);
+    setupEndpoint(UserRoleEnum.ADMIN);
+    System.out.println("The result from getting all services is the following");
+    System.out.println(mockMvc.perform(get("/services").contentType(MediaType.APPLICATION_JSON)));
+
+    mockMvc
+        .perform(
+            get("/services")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("userId", savedUser.getUserId()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$").isEmpty());
+  }
+
+  @Transactional
+  @Test
+  public void testGetAvailableServicesAsNormalUserWithEndpointAccess() throws Exception {
+    setupUser(UserRoleEnum.USER);
+    setupCategory();
+    setupEndpoint(UserRoleEnum.USER);
+    setupUserCategory();
+    System.out.println("The result from getting all services is the following");
+    System.out.println(
+        mockMvc.perform(
+            get("/services")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("userId", savedUser.getUserId())));
+
+    mockMvc
+        .perform(
+            get("/services")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("userId", savedUser.getUserId()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].name").value("EndpointControllerIntegrationTestEndpoint"))
         .andExpect(jsonPath("$[0].description").value("This is a test endpoint"))
@@ -96,18 +187,8 @@ public class EndpointControllerIntegrationTest {
   @Transactional
   @Test
   public void testCreateService() throws Exception {
-    CategoryEntity cat = new CategoryEntity();
-    cat.setName("Test Category");
-    cat.setColor("#FF0000");
-    categoryRepository.save(cat);
-
-    UserEntity usr = new UserEntity();
-
-    usr.setEmail("test@example.com");
-    given(userRepository.findById(90)).willReturn(Optional.of(usr));
-    // usr.setUserId(90);
-    // usr.setEmail("foo@bar.com");
-    // userRepository.save(usr);
+    setupUser(UserRoleEnum.ADMIN);
+    setupCategory();
 
     String payload =
         """
@@ -123,10 +204,14 @@ public class EndpointControllerIntegrationTest {
       "responses": []
     }
     """
-            .formatted(cat.getCategoryId());
+            .formatted(savedCategory.getCategoryId());
 
     mockMvc
-        .perform(post("/services").contentType(MediaType.APPLICATION_JSON).content(payload))
+        .perform(
+            post("/services")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload)
+                .header("userId", savedUser.getUserId()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.endpointId").isNumber())
         .andExpect(jsonPath("$.name").value("New Service"))

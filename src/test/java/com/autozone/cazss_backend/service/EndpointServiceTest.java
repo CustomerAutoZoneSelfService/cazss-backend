@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 
 import com.autozone.cazss_backend.DTO.*;
@@ -44,6 +45,7 @@ public class EndpointServiceTest {
   @Mock private ResponseService responseService;
   @Mock private ResponsePatternService responsePatternService;
   @Mock private HistoryService historyService;
+  @Mock private PermissionValidator permissionValidator;
 
   @InjectMocks private EndpointService endpointService;
 
@@ -66,6 +68,7 @@ public class EndpointServiceTest {
     given(categoryRepository.findById(1)).willReturn(Optional.of(cat));
 
     UserEntity usr = new UserEntity();
+    usr.setUserId(90);
     given(userRepository.findById(90)).willReturn(Optional.of(usr));
 
     EndpointsEntity saved = new EndpointsEntity();
@@ -74,8 +77,10 @@ public class EndpointServiceTest {
     saved.setDescription("Test Desc");
     given(endpointsRepository.save(any(EndpointsEntity.class))).willReturn(saved);
 
+    given(permissionValidator.isAdmin(anyInt())).willReturn(true);
+
     // --- Act ---
-    ServiceDTO result = endpointService.createCompleteService(dto);
+    ServiceDTO result = endpointService.createCompleteService(usr.getUserId(), dto);
 
     // --- Assert ---
     assertEquals(42, result.getEndpointId());

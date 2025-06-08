@@ -44,8 +44,10 @@ public class ServiceController {
    * @return Returns the endpoint id, name, and description
    */
   @PostMapping("")
-  public ResponseEntity<ServiceDTO> createNewService(@RequestBody CreateServiceDTO service) {
-    return new ResponseEntity<>(endpointService.createCompleteService(service), HttpStatus.CREATED);
+  public ResponseEntity<ServiceDTO> createNewService(
+      @RequestHeader Integer userId, @RequestBody CreateServiceDTO service) {
+    return new ResponseEntity<>(
+        endpointService.createCompleteService(userId, service), HttpStatus.CREATED);
   }
 
   /**
