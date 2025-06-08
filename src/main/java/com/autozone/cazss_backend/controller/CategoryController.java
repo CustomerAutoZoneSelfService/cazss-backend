@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -83,8 +82,9 @@ public class CategoryController {
    */
   @GetMapping("/{categoryId}/user-categories")
   public ResponseEntity<List<UserCategoryDTO>> getUsersWithAccessToCategory(
-      @PathVariable Integer categoryId) {
-    return new ResponseEntity<>(new ArrayList<UserCategoryDTO>(), HttpStatus.OK);
+      @RequestHeader Integer userId, @PathVariable Integer categoryId) {
+    return new ResponseEntity<>(
+        userCategoryService.getUsersWithAccessToCategory(userId, categoryId), HttpStatus.OK);
   }
 
   /**

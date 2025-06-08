@@ -1,6 +1,7 @@
 package com.autozone.cazss_backend.service;
 
 import com.autozone.cazss_backend.DTO.UserCategoryDTO;
+import com.autozone.cazss_backend.entity.CategoryEntity;
 import com.autozone.cazss_backend.entity.UserCategoryEntity;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.exceptions.CategoryNotFoundException;
@@ -78,10 +79,19 @@ public class UserCategoryService {
     for (Integer targetUserId : usersToAdd) {
       try {
         Optional<UserEntity> userOpt = userRepository.findByUserId(targetUserId);
+
         if (userOpt.isEmpty()) {
           log.warn("User with ID {} not found, skipping", targetUserId);
           continue;
         }
+
+        log.info(
+            "Found user:"
+                + userOpt.get().getUserId()
+                + " "
+                + userOpt.get().getEmail()
+                + " "
+                + userOpt.get().getActive());
 
         Optional<UserCategoryEntity> existing =
             userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(
@@ -93,7 +103,22 @@ public class UserCategoryService {
 
         UserCategoryEntity relation = new UserCategoryEntity();
         relation.setUser(userOpt.get());
-        relation.setCategory(categoryRepository.findById(categoryId).get());
+        Optional<CategoryEntity> foundCategory = categoryRepository.findById(categoryId);
+        log.info(
+            "Found category:"
+                + foundCategory.get().getCategoryId()
+                + " "
+                + foundCategory.get().getName()
+                + " "
+                + foundCategory.get().getColor());
+        relation.setCategory(foundCategory.get());
+
+        UserCategoryEntity.UserCategoryId compositeId =
+            new UserCategoryEntity.UserCategoryId(
+                userOpt.get().getUserId(), foundCategory.get().getCategoryId());
+
+        relation.setId(compositeId);
+
         userCategoryRepository.save(relation);
 
         addedUsers.add(new UserCategoryDTO(targetUserId, categoryId));
