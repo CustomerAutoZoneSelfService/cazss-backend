@@ -33,8 +33,8 @@ public class ServiceController {
    * @return List<ServiceDTO> which contains endpoint id, name and description
    */
   @GetMapping("")
-  public ResponseEntity<List<ServiceDTO>> getAllServices() {
-    return ResponseEntity.status(200).body(endpointService.getAllServices());
+  public ResponseEntity<List<ServiceDTO>> getAllServices(@RequestHeader Integer userId) {
+    return ResponseEntity.status(200).body(endpointService.getAvailableServices(userId));
   }
 
   /**

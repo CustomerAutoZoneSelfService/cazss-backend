@@ -86,7 +86,7 @@ public class EndpointControllerIntegrationTest {
     System.out.println(mockMvc.perform(get("/services").contentType(MediaType.APPLICATION_JSON)));
 
     mockMvc
-        .perform(get("/services").contentType(MediaType.APPLICATION_JSON))
+        .perform(get("/services").contentType(MediaType.APPLICATION_JSON).header("userId", 1))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].name").value("EndpointControllerIntegrationTestEndpoint"))
         .andExpect(jsonPath("$[0].description").value("This is a test endpoint"))

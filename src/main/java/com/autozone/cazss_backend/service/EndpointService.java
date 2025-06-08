@@ -50,9 +50,22 @@ public class EndpointService {
   @Autowired private UserRepository userRepository;
 
   @Autowired private CategoryRepository categoryRepository;
+  @Autowired private PermissionValidator permissionValidator;
 
   public List<ServiceDTO> getAllServices() {
     return endpointsRepository.findAllServiceDTOs();
+  }
+
+  public List<ServiceDTO> getUserAccessibleServices(Integer userId) {
+    return endpointsRepository.findServicesByUserIdAccess(userId);
+  }
+
+  public List<ServiceDTO> getAvailableServices(Integer userId) {
+    if (permissionValidator.isAdmin(userId)) {
+      return getAllServices();
+    } else {
+      return getUserAccessibleServices(userId);
+    }
   }
 
   public ServiceInfoDTO getServiceById(Integer id) {
