@@ -152,4 +152,37 @@ public class CategoryControllerIntegrationTest {
         .andExpect(jsonPath("$").isArray())
         .andExpect(jsonPath("$.length()").value(1));
   }
+
+  @Transactional
+  @Test
+  public void testDeleteCategory_CategoryNotFound_ShouldReturnNotFound() throws Exception {
+    UserEntity user = new UserEntity();
+    user.setEmail("notfound" + UUID.randomUUID() + "@autozone.com");
+    user.setActive(true);
+    user.setRole(UserRoleEnum.ADMIN);
+    userRepository.save(user);
+
+    int nonExistentCategoryId = 999999;
+
+    mockMvc
+        .perform(
+            delete("/categories/{categoryId}", nonExistentCategoryId)
+                .header("userId", user.getUserId()))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.message").value("No category found")); // Ajusta según tu handler
+  }
+
+  @Transactional
+  @Test
+  public void testDeleteCategory_MissingUserIdHeader_ShouldReturnBadRequest() throws Exception {
+    CategoryEntity category = new CategoryEntity();
+    category.setName("MissingUserTest" + UUID.randomUUID());
+    category.setColor("#FFFFFF");
+    categoryRepository.save(category);
+
+    mockMvc
+        .perform(delete("/categories/{categoryId}", category.getCategoryId()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").exists());
+  }
 }
