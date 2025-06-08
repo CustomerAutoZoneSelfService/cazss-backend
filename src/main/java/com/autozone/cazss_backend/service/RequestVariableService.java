@@ -3,7 +3,6 @@ package com.autozone.cazss_backend.service;
 import com.autozone.cazss_backend.DTO.CreateRequestVariableDTO;
 import com.autozone.cazss_backend.entity.EndpointsEntity;
 import com.autozone.cazss_backend.entity.RequestVariableEntity;
-import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
 import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.RequestVariableRepository;
 import jakarta.transaction.Transactional;
@@ -34,7 +33,8 @@ public class RequestVariableService {
   }
 
   @Transactional
-  public void updateRequestVariables(Integer endpointId, List<CreateRequestVariableDTO> dtos) {
+  public void updateRequestVariables(
+      EndpointsEntity endpoint, List<CreateRequestVariableDTO> dtos) {
     Set<String> keySet = new HashSet<>();
     for (CreateRequestVariableDTO dto : dtos) {
       if (!keySet.add(dto.getKey())) {
@@ -42,14 +42,8 @@ public class RequestVariableService {
       }
     }
 
-    EndpointsEntity endpoint =
-        endpointsRepository
-            .findById(endpointId)
-            .orElseThrow(
-                () -> new ServiceNotFoundException("Endpoint not found with id: " + endpointId));
-
     List<RequestVariableEntity> existingVariables =
-        requestVariableRepository.findByEndpoint_EndpointId(endpointId);
+        requestVariableRepository.findByEndpoint(endpoint);
     Map<String, RequestVariableEntity> existingMap =
         existingVariables.stream()
             .collect(Collectors.toMap(RequestVariableEntity::getKeyName, v -> v));

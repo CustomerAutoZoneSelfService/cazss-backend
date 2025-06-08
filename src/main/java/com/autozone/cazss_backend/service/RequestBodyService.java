@@ -12,6 +12,16 @@ public class RequestBodyService {
   @Autowired private RequestBodyRepository requestBodyRepository;
 
   @Transactional
+  public RequestBodyEntity createOrUpdateRequestBody(EndpointsEntity endpoint, String template) {
+    RequestBodyEntity requestBody =
+        requestBodyRepository.findByEndpoint(endpoint).orElse(new RequestBodyEntity());
+    requestBody.setEndpoint(endpoint);
+    requestBody.setTemplate(template);
+
+    return requestBodyRepository.save(requestBody);
+  }
+
+  @Transactional
   public RequestBodyEntity createRequestBody(EndpointsEntity endpoint, String template) {
     RequestBodyEntity requestBody = new RequestBodyEntity();
     requestBody.setEndpoint(endpoint);

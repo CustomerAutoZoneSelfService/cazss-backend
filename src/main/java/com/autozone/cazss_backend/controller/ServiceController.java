@@ -6,6 +6,7 @@ import com.autozone.cazss_backend.DTO.CreateServiceDTO;
 import com.autozone.cazss_backend.DTO.EndpointServiceDTO;
 import com.autozone.cazss_backend.DTO.ServiceDTO;
 import com.autozone.cazss_backend.DTO.ServiceInfoDTO;
+import com.autozone.cazss_backend.entity.EndpointsEntity;
 import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
 import com.autozone.cazss_backend.service.EndpointService;
 import com.autozone.cazss_backend.service.RequestVariableService;
@@ -47,6 +48,12 @@ public class ServiceController {
   @PostMapping("")
   public ResponseEntity<ServiceDTO> createNewService(@RequestBody CreateServiceDTO service) {
     return new ResponseEntity<>(endpointService.createCompleteService(service), HttpStatus.CREATED);
+  }
+
+  @PutMapping("/{id}")
+  public ResponseEntity<ServiceDTO> updateService(
+      @PathVariable Integer id, @RequestBody CreateServiceDTO service) {
+    return new ResponseEntity<>(endpointService.updateCompleteService(id, service), HttpStatus.OK);
   }
 
   /**
@@ -92,14 +99,16 @@ public class ServiceController {
   @PutMapping("/{id}/request-variables")
   public ResponseEntity<Void> updateRequestVariables(
       @PathVariable Integer id, @RequestBody List<CreateRequestVariableDTO> requestVariableDTOs) {
-    requestVariableService.updateRequestVariables(id, requestVariableDTOs);
+    EndpointsEntity endpoint = endpointService.findEndpointById(id);
+    requestVariableService.updateRequestVariables(endpoint, requestVariableDTOs);
     return ResponseEntity.ok().build();
   }
 
   @PutMapping("/{id}/responses")
   public ResponseEntity<Void> updateResponses(
       @PathVariable Integer id, @RequestBody List<CreateResponseDTO> responseDTOs) {
-    responseService.updateResponses(id, responseDTOs);
+    EndpointsEntity endpoint = endpointService.findEndpointById(id);
+    responseService.updateResponses(endpoint, responseDTOs);
     return ResponseEntity.ok().build();
   }
 }
