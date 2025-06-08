@@ -79,7 +79,22 @@ public class CategoryService {
 
   @Transactional
   public CategoryDTO updateCategory(Integer userId, Integer categoryId, CategoryDTO categoryDTO) {
-    return new CategoryDTO();
+    if (!permissionValidator.isAdmin(userId)) {
+      throw new UnauthorizedUserException("This feature is only available to administrators.");
+    }
+
+    CategoryEntity category =
+        categoryRepository
+            .findByCategoryId(categoryId)
+            .orElseThrow(
+                () -> new CategoryNotFoundException("No category found with id: " + categoryId));
+
+    category.setName(categoryDTO.getName());
+    category.setColor(categoryDTO.getColor());
+
+    CategoryEntity saved = categoryRepository.save(category);
+
+    return new CategoryDTO(saved.getCategoryId(), saved.getName(), saved.getColor());
   }
 
   @Transactional
