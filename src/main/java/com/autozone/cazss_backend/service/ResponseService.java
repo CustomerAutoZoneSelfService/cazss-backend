@@ -47,8 +47,7 @@ public class ResponseService {
     for (CreateResponseDTO dto : dtos) {
       ResponseEntity responseEntity = existingMap.get(dto.getStatusCode());
       ResponseEntity savedResponseEntity;
-      final boolean isNewResponse = (responseEntity == null);
-      if (isNewResponse) {
+      if (responseEntity == null) {
         savedResponseEntity = createResponse(endpoint, dto);
       } else {
         responseEntity.setDescription(dto.getDescription());
@@ -56,13 +55,8 @@ public class ResponseService {
       }
 
       if (dto.getPatterns() != null && !dto.getPatterns().isEmpty()) {
-        if (isNewResponse) {
-          responsePatternService.replacePatterns(
-              savedResponseEntity.getResponseId(), dto.getPatterns());
-        } else {
-          responsePatternService.updatePatterns(
-              savedResponseEntity.getResponseId(), dto.getPatterns());
-        }
+        responsePatternService.replacePatterns(
+                savedResponseEntity.getResponseId(), dto.getPatterns());
       }
     }
     for (ResponseEntity existingRes : existingResponses) {
