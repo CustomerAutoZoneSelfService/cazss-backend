@@ -17,7 +17,9 @@ import com.autozone.cazss_backend.repository.HistoryDataRepository;
 import com.autozone.cazss_backend.repository.HistoryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -77,15 +79,33 @@ public class HistoryService {
 
     ObjectMapper objectMapper = new ObjectMapper();
     Object requestContent;
-    Object responseContent;
     try {
       requestContent = objectMapper.readValue(historyRequest.getContent(), Object.class);
-      responseContent = objectMapper.readValue(historyResponse.getContent(), Object.class);
     } catch (Exception e) {
       throw new ParseJSONException("Failed to parse history content");
     }
 
-    HistoryDataDTO historyData = new HistoryDataDTO(requestContent, responseContent);
+    // PRARSE OBJECT INTO MORE PARSED REQUEST OBJECT FOR FRONTEND
+
+    Map<String, Object> parsedRequestContent = new HashMap<>();
+    if (requestContent instanceof List<?> list) {
+      for (Object obj : list) {
+        if (obj instanceof Map<?, ?> entry) {
+          Object k = entry.get("key");
+          Object v = entry.get("value");
+          if (k != null) {
+            parsedRequestContent.put(k.toString(), v);
+          }
+        }
+      }
+    }
+
+    // PRARSE OBJECT END
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("response", historyResponse.getContent());
+
+    HistoryDataDTO historyData = new HistoryDataDTO(parsedRequestContent, response);
 
     return new HistoryDetailedDTO(
         historyRequest.getHistoryId(), historyRequest.getStatusCode(), endpoint, historyData);
