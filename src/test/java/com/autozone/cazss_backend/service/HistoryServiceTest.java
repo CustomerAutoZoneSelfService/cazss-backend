@@ -181,8 +181,8 @@ public class HistoryServiceTest {
     HistoryDetailedProjection responseProjection = mock(HistoryDetailedProjection.class);
 
     // Simulate JSON objects as strings
-    String requestJson = "{\"request\":\"data\"}";
-    String responseJson = "{\"response\":\"data\"}";
+    String requestJson = "[{\"key\": \"request\",\"value\": \"data\"}]";
+    String responseJson = "response data";
 
     when(requestProjection.getContent()).thenReturn(requestJson);
     when(responseProjection.getContent()).thenReturn(responseJson);
@@ -211,7 +211,7 @@ public class HistoryServiceTest {
     Map<String, Object> responseMap = (Map<String, Object>) result.getHistoryData().getResponse();
 
     assertEquals("data", requestMap.get("request"));
-    assertEquals("data", responseMap.get("response"));
+    assertEquals("response data", responseMap.get("response"));
   }
 
   @Test
