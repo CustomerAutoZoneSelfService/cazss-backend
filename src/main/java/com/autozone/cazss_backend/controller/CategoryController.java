@@ -31,8 +31,8 @@ public class CategoryController {
    */
   @GetMapping("")
   public ResponseEntity<List<CategoryDTO>> getCategories(
-      @RequestHeader @NotNull @Positive Integer userId) {
-    return new ResponseEntity<>(categoryService.getAvailableCategories(userId), HttpStatus.OK);
+      @RequestHeader() @NotNull String userEmail) {
+    return new ResponseEntity<>(categoryService.getAvailableCategories(userEmail), HttpStatus.OK);
   }
 
   /**
@@ -43,10 +43,10 @@ public class CategoryController {
    */
   @PostMapping("")
   public ResponseEntity<CategoryDTO> createCategory(
-      @RequestHeader("userId") @NotNull @Positive Integer userId,
+      @RequestHeader() @NotNull String userEmail,
       @Valid @RequestBody @NotNull CategoryDTO categoryDTO) {
     return new ResponseEntity<>(
-        categoryService.createCategory(userId, categoryDTO), HttpStatus.CREATED);
+        categoryService.createCategory(userEmail, categoryDTO), HttpStatus.CREATED);
   }
 
   /**
@@ -59,10 +59,11 @@ public class CategoryController {
    */
   @PutMapping("/{categoryId}")
   public ResponseEntity<CategoryDTO> updateCategory(
-      @RequestHeader @NotNull @Positive Integer userId,
+      @RequestHeader() @NotNull String userEmail,
       @PathVariable @NotNull @Positive Integer categoryId,
       @RequestBody @Valid @NotNull CategoryDTO categoryDTO) {
-    CategoryDTO updatedCategory = categoryService.updateCategory(userId, categoryId, categoryDTO);
+    CategoryDTO updatedCategory =
+        categoryService.updateCategory(userEmail, categoryId, categoryDTO);
     return new ResponseEntity<>(updatedCategory, HttpStatus.OK);
   }
 
@@ -74,8 +75,9 @@ public class CategoryController {
    */
   @DeleteMapping("/{categoryId}")
   public ResponseEntity<String> deleteCategory(
-      @RequestHeader @NotNull Integer userId, @PathVariable @NotNull Integer categoryId) {
-    return new ResponseEntity<>(categoryService.deleteCategory(userId, categoryId), HttpStatus.OK);
+      @RequestHeader() @NotNull String userEmail, @PathVariable @NotNull Integer categoryId) {
+    return new ResponseEntity<>(
+        categoryService.deleteCategory(userEmail, categoryId), HttpStatus.OK);
   }
 
   /**
@@ -87,10 +89,10 @@ public class CategoryController {
    */
   @GetMapping("/{categoryId}/user-categories")
   public ResponseEntity<List<UserCategoryDTO>> getUsersWithAccessToCategory(
-      @RequestHeader @NotNull @Positive Integer userId,
+      @RequestHeader() @NotNull String userEmail,
       @PathVariable @NotNull @Positive Integer categoryId) {
     return new ResponseEntity<>(
-        userCategoryService.getUsersWithAccessToCategory(userId, categoryId), HttpStatus.OK);
+        userCategoryService.getUsersWithAccessToCategory(userEmail, categoryId), HttpStatus.OK);
   }
 
   /**
@@ -103,12 +105,12 @@ public class CategoryController {
    */
   @PostMapping("/{categoryId}/user-categories")
   public ResponseEntity<List<UserCategoryDTO>> addPermissionToAccessCategoryToUsers(
-      @RequestHeader @NotNull @Positive Integer userId,
+      @RequestHeader() @NotNull String userEmail,
       @PathVariable @NotNull @Positive Integer categoryId,
       @RequestBody @NotEmpty List<@NotNull @Positive Integer> usersToAdd) {
 
     List<UserCategoryDTO> result =
-        userCategoryService.addPermissionToAccessCategoryToUsers(userId, categoryId, usersToAdd);
+        userCategoryService.addPermissionToAccessCategoryToUsers(userEmail, categoryId, usersToAdd);
     return new ResponseEntity<>(result, HttpStatus.CREATED);
   }
 
@@ -122,11 +124,11 @@ public class CategoryController {
    */
   @DeleteMapping("/{categoryId}/user-categories")
   public ResponseEntity<String> deleteAccessToCategoryForUsers(
-      @RequestHeader @NotNull @Positive Integer userId,
+      @RequestHeader() @NotNull String userEmail,
       @PathVariable @NotNull @Positive Integer categoryId,
       @RequestBody @NotEmpty List<@NotNull @Positive Integer> usersToDelete) {
     String result =
-        userCategoryService.deleteAccessToCategoryForUsers(userId, categoryId, usersToDelete);
+        userCategoryService.deleteAccessToCategoryForUsers(userEmail, categoryId, usersToDelete);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }

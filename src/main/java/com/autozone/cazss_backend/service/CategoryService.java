@@ -30,10 +30,10 @@ public class CategoryService {
     return categoryRepository.findAllCategoryDTOs();
   }
 
-  public List<CategoryDTO> getUserSpecificCategories(Integer userId) {
-    System.out.println("Getting available categories for userId: " + userId);
+  public List<CategoryDTO> getUserSpecificCategories(String userEmail) {
+    System.out.println("Getting available categories for userEmail: " + userEmail);
     List<UserCategoryEntity> foundUserCategoryPermissions =
-        userCategoryRepository.findByUser_UserId(userId);
+        userCategoryRepository.findByUser_Email(userEmail);
     System.out.println("Categories found: " + foundUserCategoryPermissions.size());
     List<CategoryEntity> foundUserAccessibleCategories =
         foundUserCategoryPermissions.stream()
@@ -45,17 +45,17 @@ public class CategoryService {
         .collect(Collectors.toList());
   }
 
-  public List<CategoryDTO> getAvailableCategories(Integer userId) {
-    System.out.println("Checking categories for userId: " + userId);
-    if (permissionValidator.isAdmin(userId)) {
+  public List<CategoryDTO> getAvailableCategories(String userEmail) {
+    System.out.println("Checking categories for userEmail: " + userEmail);
+    if (permissionValidator.isAdmin(userEmail)) {
       return getAllCategories();
     } else {
-      return getUserSpecificCategories(userId);
+      return getUserSpecificCategories(userEmail);
     }
   }
 
   @Transactional
-  public CategoryDTO createCategory(Integer userId, CategoryDTO categoryDTO) {
+  public CategoryDTO createCategory(String userEmail, CategoryDTO categoryDTO) {
     // Check if category name already exists
     if (categoryRepository.findByName(categoryDTO.getName()).isPresent()) {
       throw new CategoryAlreadyExistsException(
@@ -70,8 +70,8 @@ public class CategoryService {
   }
 
   @Transactional
-  public CategoryDTO updateCategory(Integer userId, Integer categoryId, CategoryDTO categoryDTO) {
-    if (!permissionValidator.isAdmin(userId)) {
+  public CategoryDTO updateCategory(String userEmail, Integer categoryId, CategoryDTO categoryDTO) {
+    if (!permissionValidator.isAdmin(userEmail)) {
       throw new UnauthorizedUserException("This feature is only available to administrators.");
     }
 
@@ -90,8 +90,8 @@ public class CategoryService {
   }
 
   @Transactional
-  public String deleteCategory(Integer userId, Integer categoryId) {
-    if (permissionValidator.isAdmin(userId)) {
+  public String deleteCategory(String userEmail, Integer categoryId) {
+    if (permissionValidator.isAdmin(userEmail)) {
       if (categoryRepository.existsById(categoryId)) {
         // Delete user access to the categoryId
         userCategoryRepository.deleteByCategory_CategoryId(categoryId);

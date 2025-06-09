@@ -30,9 +30,9 @@ public class UserCategoryService {
   @Autowired private PermissionValidator permissionValidator;
   @Autowired private UserRepository userRepository;
 
-  public List<UserCategoryDTO> getUsersWithAccessToCategory(Integer userId, Integer categoryId) {
+  public List<UserCategoryDTO> getUsersWithAccessToCategory(String userEmail, Integer categoryId) {
     // Verify if user is admin
-    if (!permissionValidator.isAdmin(userId)) {
+    if (!permissionValidator.isAdmin(userEmail)) {
       throw new UnauthorizedUserException("User does not have permission to access this resource.");
     }
 
@@ -56,17 +56,17 @@ public class UserCategoryService {
 
   @Transactional
   public List<UserCategoryDTO> addPermissionToAccessCategoryToUsers(
-      Integer userId, Integer categoryId, List<Integer> usersToAdd) {
+      String userEmail, Integer categoryId, List<Integer> usersToAdd) {
 
     if (usersToAdd.isEmpty()) {
       throw new IllegalArgumentException("List of userIds cannot be empty");
     }
 
     userRepository
-        .findByUserId(userId)
+        .findByEmail(userEmail)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-    if (!permissionValidator.isAdmin(userId)) {
+    if (!permissionValidator.isAdmin(userEmail)) {
       throw new UnauthorizedUserException("This feature is only available to administrators.");
     }
 
@@ -133,17 +133,17 @@ public class UserCategoryService {
 
   @Transactional
   public String deleteAccessToCategoryForUsers(
-      Integer userId, Integer categoryId, List<Integer> userIds) {
+      String userEmail, Integer categoryId, List<Integer> userIds) {
     // verify that userId, categoryId, and userIds are not null or empty
     if (userIds.isEmpty()) {
       throw new IllegalArgumentException("List of userIds cannot be empty");
     }
     // verify that user exists
     userRepository
-        .findByUserId(userId)
+        .findByEmail(userEmail)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
     // verify that user has admin permissions
-    if (!permissionValidator.isAdmin(userId)) {
+    if (!permissionValidator.isAdmin(userEmail)) {
       throw new UnauthorizedUserException("This feature is only available to administrators.");
     }
     // verify that category exists

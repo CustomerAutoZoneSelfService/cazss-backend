@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 public class PermissionValidator {
   @Autowired UserRepository userRepository;
 
-  private UserRoleEnum getUserRole(Integer userId) {
-    return userRepository.findByUserId(userId).get().getRole();
+  private UserRoleEnum getUserRole(String userEmail) {
+    return userRepository.findByEmail(userEmail).get().getRole();
   }
 
-  public boolean isAdmin(Integer userId) {
-    return getUserRole(userId) == UserRoleEnum.ADMIN;
+  public boolean isAdmin(String userEmail) {
+    return getUserRole(userEmail) == UserRoleEnum.ADMIN;
   }
 
   // public boolean isConfigurator(Integer userId) {

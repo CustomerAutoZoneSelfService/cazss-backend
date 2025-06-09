@@ -81,7 +81,7 @@ public class CategoryControllerIntegrationTest {
     mockMvc
         .perform(
             delete("/categories/{categoryId}", categoryToSave.getCategoryId())
-                .header("userId", userToSave.getUserId()))
+                .header("userEmail", userToSave.getEmail()))
         .andExpect(status().isOk());
 
     Optional<EndpointsEntity> postDeleteFoundEndpoint =
@@ -140,14 +140,14 @@ public class CategoryControllerIntegrationTest {
 
     // Test para admin - debería obtener ambas categorías
     mockMvc
-        .perform(get("/categories").header("userId", adminUser.getUserId()))
+        .perform(get("/categories").header("userEmail", adminUser.getEmail()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$").isArray())
         .andExpect(jsonPath("$.length()").value(2));
 
     // Test para usuario normal - debería obtener solo una categoría
     mockMvc
-        .perform(get("/categories").header("userId", normalUser.getUserId()))
+        .perform(get("/categories").header("userEmail", normalUser.getEmail()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$").isArray())
         .andExpect(jsonPath("$.length()").value(1));
@@ -167,7 +167,7 @@ public class CategoryControllerIntegrationTest {
     mockMvc
         .perform(
             delete("/categories/{categoryId}", nonExistentCategoryId)
-                .header("userId", user.getUserId()))
+                .header("userEmail", user.getEmail()))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.message").value("No category found")); // Ajusta según tu handler
   }

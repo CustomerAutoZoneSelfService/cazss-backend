@@ -1,6 +1,5 @@
 package com.autozone.cazss_backend.service;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,11 +17,9 @@ import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import com.autozone.cazss_backend.exceptions.CategoryNotFoundException;
 import com.autozone.cazss_backend.exceptions.UnauthorizedUserException;
-import com.autozone.cazss_backend.repository.*;
 import com.autozone.cazss_backend.repository.CategoryRepository;
 import com.autozone.cazss_backend.repository.UserCategoryRepository;
 import com.autozone.cazss_backend.repository.UserRepository;
-import com.autozone.cazss_backend.util.*;
 import com.autozone.cazss_backend.util.PermissionValidator;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.*;
@@ -51,7 +48,7 @@ public class UserCategoryServiceTest {
 
   @Mock private PermissionValidator permissionValidator;
 
-  private final Integer adminUserId = 1;
+  private final String adminUserEmail = "anyAdminUserEmail@email.com";
   private UserEntity adminUser;
   private UserEntity normalUser;
   private Integer categoryId;
@@ -60,10 +57,12 @@ public class UserCategoryServiceTest {
   public void setup() {
     adminUser = new UserEntity();
     adminUser.setUserId(1);
+    adminUser.setEmail("anyAdminUserEmail@email.com");
     adminUser.setRole(UserRoleEnum.ADMIN);
 
     normalUser = new UserEntity();
     normalUser.setUserId(2);
+    normalUser.setEmail("anyNonAdminUserEmail@email.com");
     normalUser.setRole(UserRoleEnum.USER);
 
     categoryId = 100;
@@ -72,15 +71,18 @@ public class UserCategoryServiceTest {
   @Test
   public void whenValidInputs_thenDeleteAccessSuccess() {
     // Arrange
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(adminUser));
-    when(permissionValidator.isAdmin(1)).thenReturn(true);
+    when(userRepository.findByEmail("anyAdminUserEmail@email.com"))
+        .thenReturn(Optional.of(adminUser));
+    when(permissionValidator.isAdmin("anyAdminUserEmail@email.com")).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(userRepository.existsById(2)).thenReturn(true);
     when(userCategoryRepository.deleteByUser_UserIdAndCategory_CategoryId(2, categoryId))
         .thenReturn(1L);
 
     // Act
-    String result = userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, List.of(2));
+    String result =
+        userCategoryService.deleteAccessToCategoryForUsers(
+            "anyAdminUserEmail@email.com", categoryId, List.of(2));
 
     // Assert
     assertNotNull(result);
@@ -94,20 +96,22 @@ public class UserCategoryServiceTest {
         assertThrows(
             IllegalArgumentException.class,
             () -> {
-              userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, new ArrayList<>());
+              userCategoryService.deleteAccessToCategoryForUsers(
+                  "anyAdminUserEmail@email.com", categoryId, new ArrayList<>());
             });
     assertEquals("List of userIds cannot be empty", thrown.getMessage());
   }
 
   @Test
   public void whenUserNotFound_thenThrowUnauthorized() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.empty());
+    when(userRepository.findByEmail("anyAdminUserEmail@email.com")).thenReturn(Optional.empty());
 
     ResponseStatusException thrown =
         assertThrows(
             ResponseStatusException.class,
             () -> {
-              userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, List.of(2));
+              userCategoryService.deleteAccessToCategoryForUsers(
+                  "anyAdminUserEmail@email.com", categoryId, List.of(2));
             });
 
     assertEquals(HttpStatus.UNAUTHORIZED, thrown.getStatusCode());
@@ -116,14 +120,16 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenUserIsNotAdmin_thenThrowUnauthorizedUserException() {
-    when(userRepository.findByUserId(2)).thenReturn(Optional.of(normalUser));
-    when(permissionValidator.isAdmin(2)).thenReturn(false);
+    when(userRepository.findByEmail("anyNonAdminUserEmail@email.com"))
+        .thenReturn(Optional.of(normalUser));
+    when(permissionValidator.isAdmin("anyNonAdminUserEmail@email.com")).thenReturn(false);
 
     UnauthorizedUserException thrown =
         assertThrows(
             UnauthorizedUserException.class,
             () -> {
-              userCategoryService.deleteAccessToCategoryForUsers(2, categoryId, List.of(3));
+              userCategoryService.deleteAccessToCategoryForUsers(
+                  "anyNonAdminUserEmail@email.com", categoryId, List.of(3));
             });
 
     assertEquals("This feature is only available to administrators.", thrown.getMessage());
@@ -131,25 +137,30 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenCategoryNotFound_thenThrowEntityNotFoundException() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(adminUser));
-    when(permissionValidator.isAdmin(1)).thenReturn(true);
+    when(userRepository.findByEmail("anyAdminUserEmail@email.com"))
+        .thenReturn(Optional.of(adminUser));
+    when(permissionValidator.isAdmin("anyAdminUserEmail@email.com")).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(false);
 
     assertThrows(
         EntityNotFoundException.class,
         () -> {
-          userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, List.of(2));
+          userCategoryService.deleteAccessToCategoryForUsers(
+              "anyAdminUserEmail@email.com", categoryId, List.of(2));
         });
   }
 
   @Test
   public void whenTargetUserNotFound_thenSkipUser() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(adminUser));
-    when(permissionValidator.isAdmin(1)).thenReturn(true);
+    when(userRepository.findByEmail("anyAdminUserEmail@email.com"))
+        .thenReturn(Optional.of(adminUser));
+    when(permissionValidator.isAdmin("anyAdminUserEmail@email.com")).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(userRepository.existsById(2)).thenReturn(false); // User doesn't exist
 
-    String result = userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, List.of(2));
+    String result =
+        userCategoryService.deleteAccessToCategoryForUsers(
+            "anyAdminUserEmail@email.com", categoryId, List.of(2));
 
     assertNotNull(result);
     verify(userCategoryRepository, never())
@@ -158,8 +169,9 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenDeleteFailsForUser_thenContinueWithOthers() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(adminUser));
-    when(permissionValidator.isAdmin(1)).thenReturn(true);
+    when(userRepository.findByEmail("anyAdminUserEmail@email.com"))
+        .thenReturn(Optional.of(adminUser));
+    when(permissionValidator.isAdmin("anyAdminUserEmail@email.com")).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(userRepository.existsById(2)).thenReturn(true);
     when(userRepository.existsById(3)).thenReturn(true);
@@ -173,7 +185,8 @@ public class UserCategoryServiceTest {
         .thenReturn(1L);
 
     String result =
-        userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, List.of(2, 3));
+        userCategoryService.deleteAccessToCategoryForUsers(
+            "anyAdminUserEmail@email.com", categoryId, List.of(2, 3));
 
     assertNotNull(result);
 
@@ -186,7 +199,7 @@ public class UserCategoryServiceTest {
   @Test
   public void testGetUsersWithAccessToCategory_ReturnsList() {
     // Arrange
-    when(permissionValidator.isAdmin(adminUserId)).thenReturn(true);
+    when(permissionValidator.isAdmin(adminUserEmail)).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
 
     UserEntity user = new UserEntity();
@@ -204,7 +217,7 @@ public class UserCategoryServiceTest {
 
     // Act
     List<UserCategoryDTO> result =
-        userCategoryService.getUsersWithAccessToCategory(adminUserId, categoryId);
+        userCategoryService.getUsersWithAccessToCategory(adminUserEmail, categoryId);
 
     // Assert
     assertEquals(1, result.size());
@@ -216,13 +229,13 @@ public class UserCategoryServiceTest {
   @Test
   public void testGetUsersWithAccessToCategory_UserNotAdmin_ThrowsException() {
     // Arrange
-    when(permissionValidator.isAdmin(adminUserId)).thenReturn(false);
+    when(permissionValidator.isAdmin(adminUserEmail)).thenReturn(false);
 
     // Act & Assert
     var exception =
         org.junit.jupiter.api.Assertions.assertThrows(
             UnauthorizedUserException.class,
-            () -> userCategoryService.getUsersWithAccessToCategory(adminUserId, categoryId));
+            () -> userCategoryService.getUsersWithAccessToCategory(adminUserEmail, categoryId));
 
     assertEquals("User does not have permission to access this resource.", exception.getMessage());
   }
@@ -231,14 +244,14 @@ public class UserCategoryServiceTest {
   @Test
   public void testGetUsersWithAccessToCategory_CategoryNotFound_ThrowsException() {
     // Arrange
-    when(permissionValidator.isAdmin(adminUserId)).thenReturn(true);
+    when(permissionValidator.isAdmin(adminUserEmail)).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(false);
 
     // Act & Assert
     var exception =
         org.junit.jupiter.api.Assertions.assertThrows(
             CategoryNotFoundException.class,
-            () -> userCategoryService.getUsersWithAccessToCategory(adminUserId, categoryId));
+            () -> userCategoryService.getUsersWithAccessToCategory(adminUserEmail, categoryId));
 
     assertEquals("Category not found with ID: " + categoryId, exception.getMessage());
   }
@@ -247,13 +260,13 @@ public class UserCategoryServiceTest {
   @Test
   public void testGetUsersWithAccessToCategory_NoUsers_ReturnsEmptyList() {
     // Arrange
-    when(permissionValidator.isAdmin(adminUserId)).thenReturn(true);
+    when(permissionValidator.isAdmin(adminUserEmail)).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(userCategoryRepository.findByCategory_CategoryId(categoryId)).thenReturn(List.of());
 
     // Act
     List<UserCategoryDTO> result =
-        userCategoryService.getUsersWithAccessToCategory(adminUserId, categoryId);
+        userCategoryService.getUsersWithAccessToCategory(adminUserEmail, categoryId);
 
     // Assert
     assertEquals(0, result.size());
@@ -263,7 +276,7 @@ public class UserCategoryServiceTest {
   @Test
   public void testGetUsersWithAccessToCategory_MultipleUsers_ReturnsList() {
     // Arrange
-    when(permissionValidator.isAdmin(adminUserId)).thenReturn(true);
+    when(permissionValidator.isAdmin(adminUserEmail)).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
 
     UserEntity user1 = new UserEntity();
@@ -288,7 +301,7 @@ public class UserCategoryServiceTest {
 
     // Act
     List<UserCategoryDTO> result =
-        userCategoryService.getUsersWithAccessToCategory(adminUserId, categoryId);
+        userCategoryService.getUsersWithAccessToCategory(adminUserEmail, categoryId);
 
     // Assert
     assertEquals(2, result.size());
@@ -299,12 +312,12 @@ public class UserCategoryServiceTest {
   @Test
   public void testAddPermissionToAccessCategoryToUsers_ReturnsOneUser() {
     // Arrange
-    Integer adminId = 1;
+    String adminEmail = "anyAdminUserEmail@email.com";
     Integer targetUserId = 2;
     Integer categoryId = 100;
 
     UserEntity admin = new UserEntity();
-    admin.setUserId(adminId);
+    admin.setEmail(adminEmail);
 
     UserEntity targetUser = new UserEntity();
     targetUser.setUserId(targetUserId);
@@ -312,8 +325,8 @@ public class UserCategoryServiceTest {
     CategoryEntity category = new CategoryEntity();
     category.setCategoryId(categoryId);
 
-    when(userRepository.findByUserId(adminId)).thenReturn(Optional.of(admin));
-    when(permissionValidator.isAdmin(adminId)).thenReturn(true);
+    when(userRepository.findByEmail(adminEmail)).thenReturn(Optional.of(admin));
+    when(permissionValidator.isAdmin(adminEmail)).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
     when(userRepository.findByUserId(targetUserId)).thenReturn(Optional.of(targetUser));
@@ -324,7 +337,7 @@ public class UserCategoryServiceTest {
     // Act
     List<UserCategoryDTO> result =
         userCategoryService.addPermissionToAccessCategoryToUsers(
-            adminId, categoryId, List.of(targetUserId));
+            adminEmail, categoryId, List.of(targetUserId));
 
     // Assert
     assertEquals(1, result.size());
@@ -335,7 +348,7 @@ public class UserCategoryServiceTest {
   @Test
   public void whenAdminAddsMultipleUsers_thenAllAreGrantedAccess() {
     UserEntity admin = new UserEntity();
-    admin.setUserId(1);
+    admin.setEmail("anyAdminUserEmail@email.com");
 
     CategoryEntity category = new CategoryEntity();
     category.setCategoryId(100);
@@ -346,8 +359,8 @@ public class UserCategoryServiceTest {
     user2.setUserId(3);
 
     // Mock admin check and category existence
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(admin));
-    when(permissionValidator.isAdmin(1)).thenReturn(true);
+    when(userRepository.findByEmail("anyAdminUserEmail@email.com")).thenReturn(Optional.of(admin));
+    when(permissionValidator.isAdmin("anyAdminUserEmail@email.com")).thenReturn(true);
     when(categoryRepository.existsById(100)).thenReturn(true);
     when(categoryRepository.findById(100)).thenReturn(Optional.of(category));
 
@@ -365,7 +378,8 @@ public class UserCategoryServiceTest {
     when(userCategoryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     List<UserCategoryDTO> result =
-        userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of(2, 3));
+        userCategoryService.addPermissionToAccessCategoryToUsers(
+            "anyAdminUserEmail@email.com", 100, List.of(2, 3));
 
     assertEquals(2, result.size());
     assertEquals(2, result.get(0).getUserId());
@@ -374,12 +388,14 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenAdminUserNotFound_thenThrowUnauthorized() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.empty());
+    when(userRepository.findByEmail("anyNonAdminUserEmail@email.com")).thenReturn(Optional.empty());
 
     Exception exception =
         assertThrows(
             ResponseStatusException.class,
-            () -> userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of(2)));
+            () ->
+                userCategoryService.addPermissionToAccessCategoryToUsers(
+                    "anyNonAdminUserEmail@email.com", 100, List.of(2)));
 
     assertEquals("401 UNAUTHORIZED \"User not found\"", exception.getMessage());
   }
@@ -387,14 +403,14 @@ public class UserCategoryServiceTest {
   @Test
   public void whenUserAlreadyHasAccess_thenSkipAdding() {
     UserEntity admin = new UserEntity();
-    admin.setUserId(1);
+    admin.setEmail("anyAdminUserEmail@email.com");
 
     UserEntity existingUser = new UserEntity();
     existingUser.setUserId(2);
 
     // Stubs necesarios
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(admin));
-    when(permissionValidator.isAdmin(1)).thenReturn(true);
+    when(userRepository.findByEmail("anyAdminUserEmail@email.com")).thenReturn(Optional.of(admin));
+    when(permissionValidator.isAdmin("anyAdminUserEmail@email.com")).thenReturn(true);
     when(categoryRepository.existsById(100)).thenReturn(true);
     when(userRepository.findByUserId(2)).thenReturn(Optional.of(existingUser));
     when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(100, 2))
@@ -402,7 +418,8 @@ public class UserCategoryServiceTest {
 
     // Ejecuta
     List<UserCategoryDTO> result =
-        userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of(2));
+        userCategoryService.addPermissionToAccessCategoryToUsers(
+            "anyAdminUserEmail@email.com", 100, List.of(2));
 
     // No se añadió nada
     assertEquals(0, result.size());
@@ -413,19 +430,24 @@ public class UserCategoryServiceTest {
     IllegalArgumentException ex =
         assertThrows(
             IllegalArgumentException.class,
-            () -> userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of()));
+            () ->
+                userCategoryService.addPermissionToAccessCategoryToUsers(
+                    "anyAdminUserEmail@email.com", 100, List.of()));
 
     assertEquals("List of userIds cannot be empty", ex.getMessage());
   }
 
   @Test
   public void whenAdminUserDoesNotExist_thenThrowsUnauthorized() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.empty());
+    when(userRepository.findByEmail("anyNonExistentAdminUserEmail@email.com"))
+        .thenReturn(Optional.empty());
 
     ResponseStatusException ex =
         assertThrows(
             ResponseStatusException.class,
-            () -> userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of(2)));
+            () ->
+                userCategoryService.addPermissionToAccessCategoryToUsers(
+                    "anyNonExistentAdminUserEmail@email.com", 100, List.of(2)));
 
     assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
   }
@@ -433,15 +455,17 @@ public class UserCategoryServiceTest {
   @Test
   public void whenCategoryDoesNotExist_thenThrowsEntityNotFound() {
     UserEntity admin = new UserEntity();
-    admin.setUserId(1);
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(admin));
-    when(permissionValidator.isAdmin(1)).thenReturn(true);
+    admin.setEmail("anyAdminUserEmail@email.com");
+    when(userRepository.findByEmail("anyAdminUserEmail@email.com")).thenReturn(Optional.of(admin));
+    when(permissionValidator.isAdmin("anyAdminUserEmail@email.com")).thenReturn(true);
     when(categoryRepository.existsById(999)).thenReturn(false);
 
     EntityNotFoundException ex =
         assertThrows(
             EntityNotFoundException.class,
-            () -> userCategoryService.addPermissionToAccessCategoryToUsers(1, 999, List.of(2)));
+            () ->
+                userCategoryService.addPermissionToAccessCategoryToUsers(
+                    "anyAdminUserEmail@email.com", 999, List.of(2)));
 
     assertEquals("Category with ID 999 not found", ex.getMessage());
   }
@@ -449,7 +473,7 @@ public class UserCategoryServiceTest {
   @Test
   public void whenUserAlreadyHasAccess_thenSkipSavingAgain() {
     UserEntity admin = new UserEntity();
-    admin.setUserId(1);
+    admin.setEmail("anyAdminUserEmail@email.com");
     UserEntity targetUser = new UserEntity();
     targetUser.setUserId(2);
 
@@ -460,15 +484,16 @@ public class UserCategoryServiceTest {
     existing.setUser(targetUser);
     existing.setCategory(category);
 
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(admin));
-    when(permissionValidator.isAdmin(1)).thenReturn(true);
+    when(userRepository.findByEmail("anyAdminUserEmail@email.com")).thenReturn(Optional.of(admin));
+    when(permissionValidator.isAdmin("anyAdminUserEmail@email.com")).thenReturn(true);
     when(categoryRepository.existsById(100)).thenReturn(true);
     when(userRepository.findByUserId(2)).thenReturn(Optional.of(targetUser));
     when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(100, 2))
         .thenReturn(Optional.of(existing));
 
     List<UserCategoryDTO> result =
-        userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of(2));
+        userCategoryService.addPermissionToAccessCategoryToUsers(
+            "anyAdminUserEmail@email.com", 100, List.of(2));
 
     assertEquals(0, result.size()); // No new user was added
   }

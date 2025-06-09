@@ -9,6 +9,8 @@ public interface UserCategoryRepository
     extends JpaRepository<UserCategoryEntity, UserCategoryEntity.UserCategoryId> {
   List<UserCategoryEntity> findByUser_UserId(Integer userId);
 
+  List<UserCategoryEntity> findByUser_Email(String userEmail);
+
   Optional<UserCategoryEntity> findByCategory_CategoryIdAndUser_UserId(
       Integer userId, Integer categoryId);
 

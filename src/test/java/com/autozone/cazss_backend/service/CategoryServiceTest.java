@@ -46,9 +46,9 @@ public class CategoryServiceTest {
 
     when(categoryRepository.existsById(anyInt())).thenReturn(true);
     when(endpointsRepository.findByCategory_CategoryId(anyInt())).thenReturn(endpoints);
-    when(permissionValidator.isAdmin(anyInt())).thenReturn(true);
+    when(permissionValidator.isAdmin(any(String.class))).thenReturn(true);
 
-    assertDoesNotThrow(() -> categoryService.deleteCategory(90, 1));
+    assertDoesNotThrow(() -> categoryService.deleteCategory("anyAdminUserEmail@email.com", 1));
 
     // Verify that these functions were called
     verify(categoryRepository).deleteByCategoryId(anyInt());
@@ -59,21 +59,25 @@ public class CategoryServiceTest {
   @Test
   void deleteCategory_withValidAdminUserIdButInvalidCategoryID_shouldThrowCategoryNotFound() {
     when(categoryRepository.existsById(anyInt())).thenReturn(false);
-    when(permissionValidator.isAdmin(anyInt())).thenReturn(true);
+    when(permissionValidator.isAdmin(any(String.class))).thenReturn(true);
 
-    assertThrows(CategoryNotFoundException.class, () -> categoryService.deleteCategory(90, 1));
+    assertThrows(
+        CategoryNotFoundException.class,
+        () -> categoryService.deleteCategory("anyAdminUserEmail@email.com", 1));
   }
 
   @Test
   void deleteCategory_withNonAdminUserId_shouldThrowUnauthorizedUserException() {
-    when(permissionValidator.isAdmin(anyInt())).thenReturn(false);
+    when(permissionValidator.isAdmin(any(String.class))).thenReturn(false);
 
-    assertThrows(UnauthorizedUserException.class, () -> categoryService.deleteCategory(90, 1));
+    assertThrows(
+        UnauthorizedUserException.class,
+        () -> categoryService.deleteCategory("anyNonAdminUserEmail@email.com", 1));
   }
 
   @Test
   void updateCategory_AdminUser_UpdatesCategorySuccessfully() {
-    Integer userId = 1;
+    String adminUserEmail = "anyAdminUserEmail@email.com";
     Integer categoryId = 10;
     CategoryDTO categoryDTO = new CategoryDTO(categoryId, "Updated Name", "#ABCDEF");
 
@@ -82,11 +86,11 @@ public class CategoryServiceTest {
     existingCategory.setName("Old Name");
     existingCategory.setColor("#123456");
 
-    when(permissionValidator.isAdmin(userId)).thenReturn(true);
+    when(permissionValidator.isAdmin(adminUserEmail)).thenReturn(true);
     when(categoryRepository.findByCategoryId(categoryId)).thenReturn(Optional.of(existingCategory));
     when(categoryRepository.save(any(CategoryEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    CategoryDTO result = categoryService.updateCategory(userId, categoryId, categoryDTO);
+    CategoryDTO result = categoryService.updateCategory(adminUserEmail, categoryId, categoryDTO);
 
     assertEquals("Updated Name", result.getName());
     assertEquals("#ABCDEF", result.getColor());
@@ -95,16 +99,16 @@ public class CategoryServiceTest {
 
   @Test
   void updateCategory_NonAdminUser_ThrowsUnauthorizedUserException() {
-    Integer userId = 2;
+    String userEmail = "anyAdminUserEmail@email.com";
     Integer categoryId = 11;
     CategoryDTO categoryDTO = new CategoryDTO(categoryId, "New Name", "#111111");
 
-    when(permissionValidator.isAdmin(userId)).thenReturn(false);
+    when(permissionValidator.isAdmin(userEmail)).thenReturn(false);
 
     UnauthorizedUserException exception =
         assertThrows(
             UnauthorizedUserException.class,
-            () -> categoryService.updateCategory(userId, categoryId, categoryDTO));
+            () -> categoryService.updateCategory(userEmail, categoryId, categoryDTO));
 
     assertEquals("This feature is only available to administrators.", exception.getMessage());
     verify(categoryRepository, never()).save(any());
@@ -112,17 +116,17 @@ public class CategoryServiceTest {
 
   @Test
   void updateCategory_CategoryNotFound_ThrowsCategoryNotFoundException() {
-    Integer userId = 1;
+    String userEmail = "anyAdminUserEmail@email.com";
     Integer categoryId = 99;
     CategoryDTO categoryDTO = new CategoryDTO(categoryId, "Ghost Category", "#FAFAFA");
 
-    when(permissionValidator.isAdmin(userId)).thenReturn(true);
+    when(permissionValidator.isAdmin(userEmail)).thenReturn(true);
     when(categoryRepository.findByCategoryId(categoryId)).thenReturn(Optional.empty());
 
     CategoryNotFoundException exception =
         assertThrows(
             CategoryNotFoundException.class,
-            () -> categoryService.updateCategory(userId, categoryId, categoryDTO));
+            () -> categoryService.updateCategory(userEmail, categoryId, categoryDTO));
 
     assertEquals("No category found with id: " + categoryId, exception.getMessage());
     verify(categoryRepository, never()).save(any());
