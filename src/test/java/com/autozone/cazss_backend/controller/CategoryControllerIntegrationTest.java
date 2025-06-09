@@ -45,6 +45,8 @@ public class CategoryControllerIntegrationTest {
     userToSave.setEmail("CategoryControllerIntegration" + UUID.randomUUID() + "@autozone.com");
     userToSave.setActive(true);
     userToSave.setRole(UserRoleEnum.ADMIN);
+    userToSave.setUsername("myadmin");
+    userToSave.setPassword("myadminpassword");
     userRepository.save(userToSave);
 
     System.out.println("My user ID is " + userToSave.getUserId());
@@ -109,6 +111,8 @@ public class CategoryControllerIntegrationTest {
     adminUser.setEmail("adminGetTest@autozone.com");
     adminUser.setActive(true);
     adminUser.setRole(UserRoleEnum.ADMIN);
+    adminUser.setUsername("myadmin");
+    adminUser.setPassword("myadminpassword");
     userRepository.save(adminUser);
 
     // Crea usuario normal
@@ -116,6 +120,8 @@ public class CategoryControllerIntegrationTest {
     normalUser.setEmail("normalGetTest@autozone.com");
     normalUser.setActive(true);
     normalUser.setRole(UserRoleEnum.USER);
+    normalUser.setUsername("wiwiwi");
+    normalUser.setPassword("wiwiwiwi");
     userRepository.save(normalUser);
 
     // Crea categorías y asigna a usuario normal
@@ -160,6 +166,8 @@ public class CategoryControllerIntegrationTest {
     user.setEmail("notfound" + UUID.randomUUID() + "@autozone.com");
     user.setActive(true);
     user.setRole(UserRoleEnum.ADMIN);
+    user.setUsername("myadmin");
+    user.setPassword("myadminpassword");
     userRepository.save(user);
 
     int nonExistentCategoryId = 999999;
