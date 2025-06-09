@@ -17,9 +17,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 public class AZClient {
 
-  private final RestTemplate restTemplate; // Uso RestTemplate mas facil hacer peticiones
+  private RestTemplate restTemplate =
+      CustomRestTemplate.restTemplate(); // Uso RestTemplate mas facil hacer peticiones
 
-  public AZClient(RestTemplate restTemplate) {
+  public AZClient(RestTemplate restTemplate) throws Exception {
     this.restTemplate = restTemplate;
   }
 
