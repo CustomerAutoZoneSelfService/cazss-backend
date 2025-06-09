@@ -2,7 +2,6 @@ package com.autozone.cazss_backend.repository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import jakarta.transaction.Transactional;
@@ -11,9 +10,11 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(classes = CazssBackendApplication.class)
+@DataJpaTest
+@ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class UserRepositoryTest {
 
@@ -24,7 +25,12 @@ public class UserRepositoryTest {
   public void givenUserRepository_whenSaveAndRetreiveUser_thenOK() {
     UserEntity user =
         userRepository.save(
-            new UserEntity("userRepoTestUser@autozone.com", true, UserRoleEnum.USER));
+            new UserEntity(
+                "userRepoTestUser@autozone.com",
+                true,
+                UserRoleEnum.USER,
+                "testPassword123",
+                "userRepoTestUser"));
 
     Optional<UserEntity> foundUserOptional = userRepository.findById(user.getUserId());
 
@@ -39,10 +45,17 @@ public class UserRepositoryTest {
   @Test
   public void givenUserRepository_whenUpdateUser_thenOK() {
     UserEntity user =
-        userRepository.save(new UserEntity("oldUserEmail@autozone.com", true, UserRoleEnum.USER));
+        userRepository.save(
+            new UserEntity(
+                "oldUserEmail@autozone.com",
+                true,
+                UserRoleEnum.USER,
+                "testPassword123",
+                "oldUserName"));
 
     user.setEmail("newUserEmail@autozone.com");
     user.setActive(false);
+    user.setUsername("newUserName");
 
     UserEntity updatedUser = userRepository.save(user);
 
@@ -53,13 +66,20 @@ public class UserRepositoryTest {
     UserEntity foundUser = foundUserOptional.get();
     assertEquals("newUserEmail@autozone.com", foundUser.getEmail());
     assertFalse(foundUser.getActive());
+    assertEquals("newUserName", foundUser.getUsername());
   }
 
   @Transactional
   @Test
   public void givenUserRepository_whenDeleteUser_thenOK() {
     UserEntity user =
-        userRepository.save(new UserEntity("tobedeleted@autozone.com", true, UserRoleEnum.USER));
+        userRepository.save(
+            new UserEntity(
+                "tobedeleted@autozone.com",
+                true,
+                UserRoleEnum.USER,
+                "testPassword123",
+                "toBeDeletedUser"));
 
     Integer userId = user.getUserId();
 

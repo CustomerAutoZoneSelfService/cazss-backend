@@ -16,12 +16,18 @@ import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.HistoryDataRepository;
 import com.autozone.cazss_backend.repository.HistoryRepository;
 import com.autozone.cazss_backend.repository.UserRepository;
+import com.autozone.cazss_backend.security.JwtUtil;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,42 +47,49 @@ public class HistoryControllerIntegrationTest {
 
   @Autowired private CategoryRepository categoryRepository;
 
+  @Autowired private JwtUtil jwtUtil;
+
   private HistoryEntity savedHistory;
-
   private HistoryDataEntity savedHistoryDataEntityRequest;
-
   private HistoryDataEntity savedHistoryDataEntityResponse;
+  private String authToken;
 
+  @BeforeEach
   public void setup() {
-    HistoryEntity history = new HistoryEntity();
+    // Create test user
     UserEntity user = new UserEntity();
-    EndpointsEntity endpoint = new EndpointsEntity();
-
     user.setActive(true);
-    user.setEmail("prueba.12@example.com");
+    user.setEmail("test@example.com");
+    user.setUsername("testuser");
+    user.setPassword("password");
     user.setRole(UserRoleEnum.ADMIN);
     user = userRepository.save(user);
 
+    // Create test category
     CategoryEntity category = new CategoryEntity();
     category.setColor("red");
-    category.setName("gets");
+    category.setName("test-category");
     category = categoryRepository.save(category);
 
+    // Create test endpoint
+    EndpointsEntity endpoint = new EndpointsEntity();
     endpoint.setActive(true);
     endpoint.setCategory(category);
     endpoint.setMethod(EndpointMethodEnum.GET);
-    endpoint.setDescription("Esto es una prueba de endpoint en History");
-    endpoint.setName("Prueba de Endpoint");
+    endpoint.setDescription("Test endpoint");
+    endpoint.setName("Test Endpoint");
     endpoint.setUrl("/test/url");
     endpoint = endpointsRepository.save(endpoint);
 
+    // Create test history
+    HistoryEntity history = new HistoryEntity();
     history.setUser(user);
     history.setStatusCode(200);
     history.setCreatedAt(LocalDateTime.now());
     history.setEndpoint(endpoint);
-
     savedHistory = historyRepository.save(history);
 
+    // Create test history data
     HistoryDataEntity historyDataEntityRequest = new HistoryDataEntity();
     historyDataEntityRequest.setHistory(savedHistory);
     historyDataEntityRequest.setType(HistoryDataTypeEnum.REQUEST);
@@ -88,17 +101,28 @@ public class HistoryControllerIntegrationTest {
     historyDataEntityResponse.setType(HistoryDataTypeEnum.RESPONSE);
     historyDataEntityResponse.setContent("Response test");
     savedHistoryDataEntityResponse = historyDataRepository.save(historyDataEntityResponse);
+
+    // Generate JWT token
+    UserDetails userDetails =
+        new User(
+            user.getEmail(),
+            user.getPassword(),
+            user.getActive(),
+            true,
+            true,
+            true,
+            Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
+    authToken = jwtUtil.generateAccessToken(userDetails);
   }
 
   @Transactional
   @Test
   public void testGetAllHistory() throws Exception {
-    setup();
-    System.out.println("The saved history ID is the following:");
-    System.out.println(savedHistory.getHistoryId());
-
     mockMvc
-        .perform(get("/services/history").contentType(MediaType.APPLICATION_JSON))
+        .perform(
+            get("/services/history")
+                .header("Authorization", "Bearer " + authToken)
+                .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].historyId").value(savedHistory.getHistoryId()))
         .andExpect(jsonPath("$[0].email").value(savedHistory.getUser().getEmail()))
@@ -111,13 +135,10 @@ public class HistoryControllerIntegrationTest {
   @Transactional
   @Test
   public void testGetServiceById() throws Exception {
-    setup();
-    System.out.println("The saved history ID is the following:");
-    System.out.println(savedHistory.getHistoryId());
-
     mockMvc
         .perform(
             get("/services/history/{id}", savedHistory.getHistoryId())
+                .header("Authorization", "Bearer " + authToken)
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.historyId").value(savedHistory.getHistoryId()))
