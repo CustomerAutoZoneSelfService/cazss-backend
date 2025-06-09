@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -133,13 +135,16 @@ public class EndpointService {
                     new ServiceNotFoundException(
                         "Category not found with id " + serviceDTO.getCategoryId()));
 
+    // Get authenticated user email from security context
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String userEmail = authentication.getName();
+
     // User
-    Integer placeholderUserId = 90; // Placeholder
     UserEntity user =
         userRepository
-            .findById(placeholderUserId)
+            .findByEmail(userEmail)
             .orElseThrow(
-                () -> new ServiceNotFoundException("User not found with id " + placeholderUserId));
+                () -> new ServiceNotFoundException("User not found with email " + userEmail));
 
     // Endpoint
     EndpointsEntity endpoint = createService(category, user, serviceDTO);
