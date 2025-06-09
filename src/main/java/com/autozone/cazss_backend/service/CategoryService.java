@@ -12,7 +12,6 @@ import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.UserCategoryRepository;
 import com.autozone.cazss_backend.util.PermissionValidator;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -27,39 +26,32 @@ public class CategoryService {
   @Autowired private PermissionValidator permissionValidator;
 
   public List<CategoryDTO> getAllCategories() {
-    return new ArrayList<CategoryDTO>();
+    System.out.println("User is admin, returning all categories");
+    return categoryRepository.findAllCategoryDTOs();
   }
 
-  public List<CategoryDTO> getCategoriesByUserId(Integer userId) {
-    System.out.println("Checking categories for userId: " + userId);
-
-    if (permissionValidator.isAdmin(userId)) {
-      System.out.println("User is admin, returning all categories");
-      return categoryRepository.findAll().stream()
-          .map(category -> new CategoryDTO(category))
-          .collect(Collectors.toList());
-    } else {
-      System.out.println("User is NOT admin, fetching user categories");
-      List<UserCategoryEntity> userCategories = userCategoryRepository.findByUser_UserId(userId);
-      System.out.println("User categories found: " + userCategories.size());
-      List<CategoryEntity> categories =
-          userCategories.stream()
-              .map(UserCategoryEntity::getCategory)
-              .filter(Objects::nonNull)
-              .collect(Collectors.toList());
-      return categories.stream().map(CategoryDTO::new).collect(Collectors.toList());
-    }
-  }
-
-  public List<CategoryDTO> getUserCategories(Integer userId) {
-    return new ArrayList<CategoryDTO>();
+  public List<CategoryDTO> getUserSpecificCategories(Integer userId) {
+    System.out.println("Getting available categories for userId: " + userId);
+    List<UserCategoryEntity> foundUserCategoryPermissions =
+        userCategoryRepository.findByUser_UserId(userId);
+    System.out.println("Categories found: " + foundUserCategoryPermissions.size());
+    List<CategoryEntity> foundUserAccessibleCategories =
+        foundUserCategoryPermissions.stream()
+            .map(UserCategoryEntity::getCategory)
+            .filter(Objects::nonNull)
+            .toList();
+    return foundUserAccessibleCategories.stream()
+        .map(CategoryDTO::new)
+        .collect(Collectors.toList());
   }
 
   public List<CategoryDTO> getAvailableCategories(Integer userId) {
-    System.out.println("Getting available categories for userId: " + userId);
-    List<CategoryDTO> categories = getCategoriesByUserId(userId);
-    System.out.println("Categories found: " + categories.size());
-    return categories;
+    System.out.println("Checking categories for userId: " + userId);
+    if (permissionValidator.isAdmin(userId)) {
+      return getAllCategories();
+    } else {
+      return getUserSpecificCategories(userId);
+    }
   }
 
   @Transactional
