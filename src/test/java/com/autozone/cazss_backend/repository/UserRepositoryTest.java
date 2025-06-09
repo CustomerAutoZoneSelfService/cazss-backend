@@ -2,7 +2,6 @@ package com.autozone.cazss_backend.repository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import java.util.Optional;
@@ -10,9 +9,11 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(classes = CazssBackendApplication.class)
+@DataJpaTest
+@ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class UserRepositoryTest {
 
