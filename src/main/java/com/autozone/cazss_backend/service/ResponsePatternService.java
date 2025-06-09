@@ -5,7 +5,7 @@ import com.autozone.cazss_backend.entity.ResponseEntity;
 import com.autozone.cazss_backend.entity.ResponsePatternEntity;
 import com.autozone.cazss_backend.repository.ResponsePatternRepository;
 import com.autozone.cazss_backend.repository.ResponseRepository;
-import com.autozone.cazss_backend.util.RegexParser;
+import com.autozone.cazss_backend.util.ResponsePatternParser;
 import com.autozone.cazss_backend.util.ResponsePatternTreeValidator;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ResponsePatternService {
@@ -26,13 +27,13 @@ public class ResponsePatternService {
 
   private final ResponseRepository responseRepository;
 
-  private final RegexParser regexParser;
+  private final ResponsePatternParser regexParser;
 
   private static final Logger logger = LoggerFactory.getLogger(ResponsePatternService.class);
 
   public ResponsePatternService(
       ResponsePatternRepository responsePatternRepository,
-      RegexParser regexParser,
+      ResponsePatternParser regexParser,
       ResponseRepository responseRepository) {
     this.responsePatternRepository = responsePatternRepository;
     this.regexParser = regexParser;
@@ -40,20 +41,20 @@ public class ResponsePatternService {
   }
 
   /**
-   * Retrieves the response patterns for a given endpoint ID and parses the input string to find
+   * Retrieves the response patterns for a given response ID and parses the input string to find
    * matches.
    *
-   * @param endpointId The ID of the endpoint for which to retrieve response patterns.
+   * @param responseId The ID of the response for which to retrieve response patterns.
    * @param inputString The input string to parse for matches against the response patterns.
    * @return A map where the keys are pattern names and the values are lists of matched strings.
    */
-  public Map<String, List<String>> getMatchesForEndpoint(Integer endpointId, String inputString) {
+  public Map<Integer, List<String>> getMatchesForEndpoint(Integer responseId, String inputString) {
     List<ResponsePatternEntity> patterns =
-        responsePatternRepository.findByResponse_ResponseId(endpointId);
+        responsePatternRepository.findByResponse_ResponseId(responseId);
 
     if (patterns == null || patterns.isEmpty()) {
-      Map<String, List<String>> fallback = new HashMap<>();
-      fallback.put("content", List.of(inputString));
+      Map<Integer, List<String>> fallback = new HashMap<>();
+      fallback.put(-1, List.of(inputString));
       return fallback;
     }
 
@@ -61,10 +62,11 @@ public class ResponsePatternService {
   }
 
   /**
-   * Transforms a list of entities to a list of models used in response pattern services
+   * Converts a list of ResponsePatternEntity instances into a list of CreateResponsePatternDTO
+   * objects, preserving relevant pattern metadata.
    *
-   * @param entitiesList
-   * @return
+   * @param entitiesList The list of response pattern entities retrieved from the database.
+   * @return A list of DTOs representing the same information as the original entities.
    */
   public List<CreateResponsePatternDTO> parseToDTO(List<ResponsePatternEntity> entitiesList) {
     List<CreateResponsePatternDTO> dtoList = new ArrayList<>();
@@ -83,12 +85,13 @@ public class ResponsePatternService {
   }
 
   /**
-   * Inserts new response patterns in the data base connecting to the old ones, whilst maintaining
-   * the tree structure
+   * Inserts a new tree of response patterns into the database, linking them to the specified
+   * response. Existing patterns are not modified. This assumes the new patterns are correctly
+   * structured as a tree and not yet persisted (indicated by negative IDs).
    *
-   * @param tree
-   * @param responseId
-   * @return
+   * @param tree A tree structure where each node is grouped by its parent ID.
+   * @param responseId The ID of the response to which the new patterns will be linked.
+   * @return A list of DTOs representing the inserted nodes with updated database-generated IDs.
    */
   public List<CreateResponsePatternDTO> insertTree(
       Map<Integer, List<CreateResponsePatternDTO>> tree, Integer responseId) {
@@ -110,15 +113,20 @@ public class ResponsePatternService {
   }
 
   /**
-   * Replaces certain nodes in the data base with the new ones, whilst maintaining the tree
-   * structure
+   * Replaces an existing pattern tree in the database with a new tree. All provided nodes are
+   * inserted as new entries and existing nodes are removed. It assumes the tree structure is valid
+   * and the database can be cleaned prior to insertion.
    *
-   * @param tree
-   * @param responseId
-   * @return
+   * @param tree A tree structure of new patterns grouped by parent ID.
+   * @param responseId The ID of the response to which the tree belongs.
+   * @return A list of DTOs reflecting the newly inserted structure with updated IDs.
    */
   public List<CreateResponsePatternDTO> replaceTree(
       Map<Integer, List<CreateResponsePatternDTO>> tree, Integer responseId) {
+
+    if (tree.isEmpty()) {
+      return new ArrayList<>();
+    }
 
     CreateResponsePatternDTO root = tree.get(null).get(0);
 
@@ -136,6 +144,18 @@ public class ResponsePatternService {
     return result;
   }
 
+  /**
+   * Traverses and inserts a pattern tree recursively. New nodes are inserted into the database only
+   * if their ID is negative (indicating they are new). Parent-child relationships are maintained
+   * using an ID remapping structure.
+   *
+   * @param node The current node to insert.
+   * @param tree The grouped tree structure.
+   * @param responseId The response to which this tree belongs.
+   * @param idMap A map to track remapped (new) IDs of nodes.
+   * @param responseEntity The actual response entity from the database.
+   * @param result A list accumulating all inserted DTOs.
+   */
   private void dfsInsert(
       CreateResponsePatternDTO node,
       Map<Integer, List<CreateResponsePatternDTO>> tree,
@@ -185,6 +205,18 @@ public class ResponsePatternService {
     }
   }
 
+  /**
+   * Traverses and selectively updates or inserts nodes in the pattern tree. Existing nodes are
+   * updated only if present in the update map, and new nodes (with negative IDs) are inserted.
+   *
+   * @param node The root node to start traversal.
+   * @param tree The grouped structure of pattern nodes.
+   * @param responseId The response to which the nodes are linked.
+   * @param idMap A mapping between old (possibly temporary) IDs and new database-generated IDs.
+   * @param responseEntity The associated response entity.
+   * @param result A list to collect all updated/inserted DTOs.
+   * @param updatesMap A map containing only the nodes that need to be updated.
+   */
   private void dfsSelectiveUpdate(
       CreateResponsePatternDTO node,
       Map<Integer, List<CreateResponsePatternDTO>> tree,
@@ -252,6 +284,18 @@ public class ResponsePatternService {
     }
   }
 
+  /**
+   * Traverses and replaces the entire response pattern tree structure by inserting new entries for
+   * each node, regardless of whether it existed previously. This method assumes that the database
+   * has been cleared of previous nodes.
+   *
+   * @param node The node to process and insert.
+   * @param tree The full tree grouped by parent ID.
+   * @param responseId The response entity identifier.
+   * @param idMap A remapping structure from temporary to actual database IDs.
+   * @param responseEntity The response entity to which the tree is linked.
+   * @param result A list of DTOs containing the newly inserted nodes.
+   */
   private void dfsReplace(
       CreateResponsePatternDTO node,
       Map<Integer, List<CreateResponsePatternDTO>> tree,
@@ -296,6 +340,15 @@ public class ResponsePatternService {
     }
   }
 
+  /**
+   * Adds a new tree of response patterns to a given response. The tree may include existing nodes,
+   * and it will be validated against the existing data. Only new nodes (with negative IDs) are
+   * inserted.
+   *
+   * @param responseId The response ID to associate the new patterns with.
+   * @param responsePatterns The list of response pattern nodes including the new subtree.
+   * @return The inserted subtree with newly assigned IDs.
+   */
   public List<CreateResponsePatternDTO> addPatterns(
       Integer responseId, List<CreateResponsePatternDTO> responsePatterns) {
     logger.debug("Entering addPatterns by response id");
@@ -320,6 +373,15 @@ public class ResponsePatternService {
     return insertTree(tree, responseId);
   }
 
+  /**
+   * Updates a subset of response pattern nodes while preserving the existing tree structure. Only
+   * nodes present in the update list are modified; all others are left unchanged. New nodes (with
+   * negative IDs) are inserted and integrated.
+   *
+   * @param responseId The ID of the response to which the pattern tree belongs.
+   * @param responsePatterns The list of nodes to be inserted or updated.
+   * @return A list of all nodes that were inserted or updated, with corrected IDs.
+   */
   public List<CreateResponsePatternDTO> updatePatterns(
       Integer responseId, List<CreateResponsePatternDTO> responsePatterns) {
     logger.debug("Starting partial tree update for response {}", responseId);
@@ -376,14 +438,20 @@ public class ResponsePatternService {
     return result;
   }
 
+  /**
+   * Replaces the entire set of response patterns for a response with a new tree structure. All
+   * existing nodes are deleted before inserting the new ones.
+   *
+   * @param responseId The ID of the response whose tree should be replaced.
+   * @param responsePatterns The new tree structure to insert.
+   * @return A list of DTOs representing the newly inserted response pattern tree.
+   */
+  @Transactional
   public List<CreateResponsePatternDTO> replacePatterns(
       Integer responseId, List<CreateResponsePatternDTO> responsePatterns) {
     logger.debug("Entering replacePatterns by response id");
 
-    List<ResponsePatternEntity> existing =
-        Optional.ofNullable(responsePatternRepository.findByResponse_ResponseId(responseId))
-            .orElse(Collections.emptyList());
-    responsePatternRepository.deleteAll(existing);
+    responsePatternRepository.deleteByResponse_ResponseId(responseId);
 
     if (!ResponsePatternTreeValidator.isValid(responsePatterns)) {
       throw new IllegalArgumentException("Invalid response pattern tree");
