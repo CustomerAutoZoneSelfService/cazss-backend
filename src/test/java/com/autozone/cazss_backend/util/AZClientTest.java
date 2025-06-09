@@ -25,7 +25,7 @@ public class AZClientTest {
   private AZClient azClient;
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws Exception {
     MockitoAnnotations.openMocks(this);
     azClient = new AZClient(restTemplate);
   }

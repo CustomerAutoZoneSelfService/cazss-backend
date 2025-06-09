@@ -24,7 +24,6 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class EndpointAuthenticationUtil {
   private final Logger logger = LoggerFactory.getLogger(EndpointAuthenticationUtil.class);
-  private RestTemplate restTemplate;
   private final SimpleCache cache = new SimpleCache();
 
   // Primitives
@@ -56,7 +55,8 @@ public class EndpointAuthenticationUtil {
   }
 
   private void oauthAuthentication(
-      ServiceInfoRequestModel request, List<AuthenticationStrategyAttributeEntity> attributes) {
+      ServiceInfoRequestModel request, List<AuthenticationStrategyAttributeEntity> attributes)
+      throws Exception {
     String url = getAttributeValue(attributes, "url");
     String clientId = getAttributeValue(attributes, "client_id");
     String clientSecret = getAttributeValue(attributes, "client_secret");
@@ -84,6 +84,7 @@ public class EndpointAuthenticationUtil {
 
       // Request
       HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(formData, headers);
+      RestTemplate restTemplate = CustomRestTemplate.restTemplate();
       ResponseEntity<TokenResponseDTO> response =
           restTemplate.postForEntity(url, requestEntity, TokenResponseDTO.class);
       TokenResponseDTO body = response.getBody();
@@ -113,16 +114,21 @@ public class EndpointAuthenticationUtil {
   // Hook
   public void hookRequest(
       ServiceInfoRequestModel request, AuthenticationStrategyEntity authStrategy) {
-    AuthStrategyEnum strategy = authStrategy.getStrategy();
-    List<AuthenticationStrategyAttributeEntity> attributes = authStrategy.getAttributes();
+    try {
+      AuthStrategyEnum strategy = authStrategy.getStrategy();
+      List<AuthenticationStrategyAttributeEntity> attributes = authStrategy.getAttributes();
 
-    switch (strategy) {
-      case Basic -> basicAuthentication(request, attributes);
-      case Bearer -> bearerAuthentication(request, attributes);
-      case OAuth -> oauthAuthentication(request, attributes);
-      case Header -> keyValueAuthentication(AuthStrategyEnum.Header, request, attributes);
-      case QueryString -> keyValueAuthentication(AuthStrategyEnum.QueryString, request, attributes);
-      default -> logger.warn("Strategy {} is not implemented", strategy);
+      switch (strategy) {
+        case Basic -> basicAuthentication(request, attributes);
+        case Bearer -> bearerAuthentication(request, attributes);
+        case OAuth -> oauthAuthentication(request, attributes);
+        case Header -> keyValueAuthentication(AuthStrategyEnum.Header, request, attributes);
+        case QueryString ->
+            keyValueAuthentication(AuthStrategyEnum.QueryString, request, attributes);
+        default -> logger.warn("Strategy {} is not implemented", strategy);
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 }
