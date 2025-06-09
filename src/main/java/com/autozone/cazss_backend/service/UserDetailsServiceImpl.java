@@ -24,7 +24,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
   /**
    * Carga un usuario por su email. Este método es el requerido por la interfaz UserDetailsService
-   * cuando Spring Security intenta autenticar con email/password.
+   * cuando Spring Security intenta autenticar con email/password. El UserDetails devuelto tendrá el
+   * ID del usuario (como String) como el "username" para consistencia interna con cómo se manejarán
+   * los JWTs en frontend.
    */
   @Override
   @Transactional(readOnly = true)
@@ -41,12 +43,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
   public UserDetails loadUserById(Integer userId) throws UsernameNotFoundException {
     UserEntity userEntity =
         userRepository
-            .findById(userId)
+            .findById(userId) // Asumiendo que UserRepository tiene findById
             .orElseThrow(() -> new UsernameNotFoundException("User not found with ID: " + userId));
     return buildUserDetails(userEntity);
   }
 
   private UserDetails buildUserDetails(UserEntity userEntity) {
+
     if (userEntity.getPassword() == null) {
       throw new IllegalStateException(
           "UserEntity para " + userEntity.getEmail() + " no tiene contraseña definida.");
@@ -58,7 +61,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name()));
 
     return new User(
-        userEntity.getEmail(), // Usar email como principal
+        String.valueOf(userEntity.getUserId()),
         passwordHash,
         userEntity.getActive(),
         true,

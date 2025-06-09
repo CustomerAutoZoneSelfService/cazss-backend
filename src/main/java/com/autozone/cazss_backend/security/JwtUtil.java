@@ -38,14 +38,16 @@ public class JwtUtil {
   }
 
   public String generateAccessToken(UserDetails userDetails) {
-    String email = userDetails.getUsername();
+    String userIdString = userDetails.getUsername();
+    Integer userId = Integer.parseInt(userIdString);
+
     UserEntity userEntity =
         userRepository
-            .findByEmail(email)
+            .findById(userId)
             .orElseThrow(
                 () ->
                     new UsernameNotFoundException(
-                        "User not found with email: " + email + " during JWT generation"));
+                        "User not found with ID: " + userId + " during JWT generation"));
 
     String role =
         userDetails.getAuthorities().stream()
@@ -54,9 +56,9 @@ public class JwtUtil {
             .orElse(null);
 
     return JWT.create()
-        .withSubject(email)
-        .withClaim("userId", userEntity.getUserId())
+        .withSubject(String.valueOf(userEntity.getUserId()))
         .withClaim("username", userEntity.getUsername())
+        .withClaim("email", userEntity.getEmail())
         .withClaim("role", role)
         .withIssuedAt(new Date())
         .withExpiresAt(new Date(System.currentTimeMillis() + accessTokenExpirationMs))
@@ -64,20 +66,19 @@ public class JwtUtil {
   }
 
   public String generateRefreshToken(UserDetails userDetails) {
-    String email = userDetails.getUsername();
+    String userIdString = userDetails.getUsername();
+    Integer userId = Integer.parseInt(userIdString);
+
     UserEntity userEntity =
         userRepository
-            .findByEmail(email)
+            .findById(userId)
             .orElseThrow(
                 () ->
                     new UsernameNotFoundException(
-                        "User not found with email: "
-                            + email
-                            + " during refresh token generation"));
+                        "User not found with ID: " + userId + " during refresh token generation"));
 
     return JWT.create()
-        .withSubject(email)
-        .withClaim("userId", userEntity.getUserId())
+        .withSubject(String.valueOf(userEntity.getUserId()))
         .withClaim("username", userEntity.getUsername())
         .withIssuedAt(new Date())
         .withExpiresAt(new Date(System.currentTimeMillis() + refreshTokenExpirationMs))
@@ -90,7 +91,7 @@ public class JwtUtil {
   }
 
   public String extractUserId(String token) {
-    return String.valueOf(verifyToken(token).getClaim("userId").asInt());
+    return verifyToken(token).getSubject();
   }
 
   public String extractUsername(String token) {
@@ -102,7 +103,11 @@ public class JwtUtil {
   }
 
   public String extractEmail(String token) {
-    return verifyToken(token).getSubject();
+    DecodedJWT decodedJWT = verifyToken(token);
+    if (decodedJWT.getClaim("email").isNull()) {
+      return null;
+    }
+    return decodedJWT.getClaim("email").asString();
   }
 
   public String extractRole(String token) {
@@ -123,8 +128,8 @@ public class JwtUtil {
 
   public boolean validateToken(String token, UserDetails userDetails) {
     try {
-      final String emailFromToken = extractEmail(token);
-      return (emailFromToken.equals(userDetails.getUsername()) && !isTokenExpired(token));
+      final String userIdFromToken = extractUserId(token);
+      return (userIdFromToken.equals(userDetails.getUsername()) && !isTokenExpired(token));
     } catch (JWTVerificationException e) {
       return false;
     }

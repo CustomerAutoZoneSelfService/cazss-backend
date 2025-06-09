@@ -40,28 +40,30 @@ public class ResponsesControllerIntegrationTest {
   @MockBean private ResponsePatternService responsePatternService;
 
   private String authToken;
+  private UserEntity testUser;
 
   @BeforeEach
   public void setup() {
     // Create test user
-    UserEntity user = new UserEntity();
-    user.setActive(true);
-    user.setEmail("test@example.com");
-    user.setUsername("testuser");
-    user.setPassword("password");
-    user.setRole(UserRoleEnum.ADMIN);
-    user = userRepository.save(user);
+    testUser = new UserEntity();
+    testUser.setActive(true);
+    testUser.setEmail("test@example.com");
+    testUser.setUsername("testuser");
+    testUser.setPassword("password");
+    testUser.setRole(UserRoleEnum.ADMIN);
+    testUser = userRepository.save(testUser);
 
-    // Generate JWT token
+    // Generate JWT token using userId as subject
     UserDetails userDetails =
         new User(
-            user.getEmail(),
-            user.getPassword(),
-            user.getActive(),
+            String.valueOf(testUser.getUserId()),
+            testUser.getPassword(),
+            testUser.getActive(),
             true,
             true,
             true,
-            Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
+            Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + testUser.getRole().name())));
     authToken = jwtUtil.generateAccessToken(userDetails);
   }
 
