@@ -54,6 +54,8 @@ public class HistoryControllerIntegrationTest {
 
     user.setActive(true);
     user.setEmail("prueba.12@example.com");
+    user.setUsername("prueba.12");
+    user.setPassword("prueba.12");
     user.setRole(UserRoleEnum.ADMIN);
     user = userRepository.save(user);
 
