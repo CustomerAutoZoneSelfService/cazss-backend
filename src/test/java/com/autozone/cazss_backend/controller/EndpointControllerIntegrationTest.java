@@ -5,17 +5,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.autozone.cazss_backend.DTO.CreateServiceDTO;
-import com.autozone.cazss_backend.entity.CategoryEntity;
-import com.autozone.cazss_backend.entity.EndpointsEntity;
-import com.autozone.cazss_backend.entity.UserEntity;
+import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import com.autozone.cazss_backend.repository.AuthenticationStrategyRepository;
 import com.autozone.cazss_backend.repository.CategoryRepository;
 import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.UserRepository;
 import com.autozone.cazss_backend.security.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,8 @@ public class EndpointControllerIntegrationTest {
 
   @Autowired private CategoryRepository categoryRepository;
 
+  @Autowired private AuthenticationStrategyRepository authenticationStrategyRepository;
+
   @Autowired private ObjectMapper objectMapper;
 
   @Autowired private JwtUtil jwtUtil;
@@ -47,6 +51,7 @@ public class EndpointControllerIntegrationTest {
   private EndpointsEntity savedEndpoint;
   private String authToken;
   private UserEntity testUser;
+  private AuthenticationStrategyEntity testAuthStrategy;
 
   @BeforeEach
   public void setup() {
@@ -64,6 +69,20 @@ public class EndpointControllerIntegrationTest {
     category.setColor("red");
     category.setName("test-category");
     category = categoryRepository.save(category);
+
+    // create test authentication strategy
+    testAuthStrategy = new AuthenticationStrategyEntity();
+    testAuthStrategy.setName("Test Auth Strategy");
+    testAuthStrategy.setStrategy(AuthStrategyEnum.Bearer);
+    AuthenticationStrategyAttributeEntity testAuthEntity =
+        new AuthenticationStrategyAttributeEntity();
+    testAuthEntity.setKeyName("Key");
+    testAuthEntity.setValue("Value");
+    testAuthEntity.setAuthStrategy(testAuthStrategy);
+    List<AuthenticationStrategyAttributeEntity> testAuthEntities = new ArrayList<>();
+    testAuthEntities.add(testAuthEntity);
+    testAuthStrategy.setAttributes(testAuthEntities);
+    testAuthStrategy = authenticationStrategyRepository.save(testAuthStrategy);
 
     // Create test endpoint
     EndpointsEntity endpoint = new EndpointsEntity();
@@ -139,6 +158,7 @@ public class EndpointControllerIntegrationTest {
     createServiceDTO.setUrl("/new-test-url");
     createServiceDTO.setCategoryId(savedEndpoint.getCategory().getCategoryId());
     createServiceDTO.setActive(true);
+    createServiceDTO.setAuthenticationStrategy(testAuthStrategy.getAuthStrategyId());
 
     mockMvc
         .perform(

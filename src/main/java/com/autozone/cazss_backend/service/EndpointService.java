@@ -247,7 +247,19 @@ public class EndpointService {
       CategoryEntity category,
       UserEntity user,
       CreateServiceDTO serviceDTO) {
-    AuthenticationStrategyEntity authenticationStrategyEntity = authenticationStrategyRepository.findById(serviceDTO.getAuthenticationStrategy()).orElseThrow(() -> new AuthenticationStrategyNotFoundException("Authentication strategy not found with id: " + serviceDTO.getAuthenticationStrategy()));
+    if (serviceDTO.getAuthenticationStrategy() != null) {
+      AuthenticationStrategyEntity authenticationStrategyEntity =
+          authenticationStrategyRepository
+              .findById(serviceDTO.getAuthenticationStrategy())
+              .orElseThrow(
+                  () ->
+                      new AuthenticationStrategyNotFoundException(
+                          "Authentication strategy not found with id: "
+                              + serviceDTO.getAuthenticationStrategy()));
+      endpoint.setAuthStrategy(authenticationStrategyEntity);
+    } else {
+      endpoint.setAuthStrategy(null);
+    }
     endpoint.setCategory(category);
     endpoint.setUser(user);
     endpoint.setActive(serviceDTO.getActive());
@@ -255,7 +267,6 @@ public class EndpointService {
     endpoint.setDescription(serviceDTO.getDescription());
     endpoint.setMethod(serviceDTO.getMethod());
     endpoint.setUrl(serviceDTO.getUrl());
-    endpoint.setAuthStrategy(authenticationStrategyEntity);
   }
 
   /**
