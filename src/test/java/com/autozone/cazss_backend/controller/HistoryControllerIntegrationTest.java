@@ -19,6 +19,7 @@ import com.autozone.cazss_backend.repository.UserRepository;
 import com.autozone.cazss_backend.security.JwtUtil;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,16 +61,16 @@ public class HistoryControllerIntegrationTest {
     // Create test user
     user = new UserEntity();
     user.setActive(true);
-    user.setEmail("test@example.com");
-    user.setUsername("testuser");
-    user.setPassword("password");
+    user.setEmail("test@example.com" + UUID.randomUUID());
+    user.setUsername("testuser" + UUID.randomUUID());
+    user.setPassword("password" + UUID.randomUUID());
     user.setRole(UserRoleEnum.ADMIN);
     user = userRepository.save(user);
 
     // Create test category
     CategoryEntity category = new CategoryEntity();
-    category.setColor("red");
-    category.setName("test-category");
+    category.setColor("red" + UUID.randomUUID());
+    category.setName("test-category" + UUID.randomUUID());
     category = categoryRepository.save(category);
 
     // Create test endpoint
@@ -77,9 +78,9 @@ public class HistoryControllerIntegrationTest {
     endpoint.setActive(true);
     endpoint.setCategory(category);
     endpoint.setMethod(EndpointMethodEnum.GET);
-    endpoint.setDescription("Test endpoint");
-    endpoint.setName("Test Endpoint");
-    endpoint.setUrl("/test/url");
+    endpoint.setDescription("Test endpoint" + UUID.randomUUID());
+    endpoint.setName("Test Endpoint" + UUID.randomUUID());
+    endpoint.setUrl("/test/url" + UUID.randomUUID());
     endpoint = endpointsRepository.save(endpoint);
 
     // Create test history
@@ -94,13 +95,13 @@ public class HistoryControllerIntegrationTest {
     HistoryDataEntity historyDataEntityRequest = new HistoryDataEntity();
     historyDataEntityRequest.setHistory(savedHistory);
     historyDataEntityRequest.setType(HistoryDataTypeEnum.REQUEST);
-    historyDataEntityRequest.setContent("Request test");
+    historyDataEntityRequest.setContent("Request test" + UUID.randomUUID());
     savedHistoryDataEntityRequest = historyDataRepository.save(historyDataEntityRequest);
 
     HistoryDataEntity historyDataEntityResponse = new HistoryDataEntity();
     historyDataEntityResponse.setHistory(savedHistory);
     historyDataEntityResponse.setType(HistoryDataTypeEnum.RESPONSE);
-    historyDataEntityResponse.setContent("Response test");
+    historyDataEntityResponse.setContent("Response test" + UUID.randomUUID());
     savedHistoryDataEntityResponse = historyDataRepository.save(historyDataEntityResponse);
 
     // Generate JWT token
