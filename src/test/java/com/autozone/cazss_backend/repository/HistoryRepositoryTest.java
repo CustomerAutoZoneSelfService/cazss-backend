@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import java.time.LocalDateTime;
@@ -11,6 +12,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(classes = CazssBackendApplication.class)
 public class HistoryRepositoryTest {
@@ -23,15 +25,27 @@ public class HistoryRepositoryTest {
 
   @Autowired private EndpointsRepository endpointsRepository;
 
+  @Autowired AuthenticationStrategyRepository authenticationStrategyRepository;
+
   private HistoryEntity createSampleHistory() {
     String suffix = String.valueOf(System.currentTimeMillis());
 
     UserEntity user =
         userRepository.save(
-            new UserEntity("history+" + suffix + "@autozone.com", true, UserRoleEnum.USER));
+            new UserEntity(
+                "history+" + suffix + "@autozone.com",
+                true,
+                UserRoleEnum.USER,
+                "testPassword123",
+                "historyUser" + suffix));
 
     CategoryEntity category =
         categoryRepository.save(new CategoryEntity("HISTORY_CAT_" + suffix, "#CCCCCC"));
+
+    AuthenticationStrategyEntity authStrategy =
+        authenticationStrategyRepository.save(
+            new AuthenticationStrategyEntity(
+                "HistoryRepositoryTest_" + suffix, AuthStrategyEnum.Bearer, null));
 
     EndpointsEntity endpoint =
         endpointsRepository.save(
@@ -42,7 +56,8 @@ public class HistoryRepositoryTest {
                 "History Endpoint " + suffix,
                 "Description",
                 EndpointMethodEnum.POST,
-                "https://test.history.endpoint"));
+                "https://test.history.endpoint",
+                authStrategy));
 
     HistoryEntity history = new HistoryEntity();
     history.setUser(user);
@@ -54,6 +69,7 @@ public class HistoryRepositoryTest {
   }
 
   @Test
+  @Transactional
   public void givenHistoryRepository_whenSaveAndFind_thenOK() {
     HistoryEntity savedHistory = createSampleHistory();
 
@@ -68,6 +84,7 @@ public class HistoryRepositoryTest {
   }
 
   @Test
+  @Transactional
   public void givenHistoryRepository_whenUpdate_thenOK() {
     HistoryEntity history = createSampleHistory();
     history.setStatusCode(404);
@@ -83,6 +100,7 @@ public class HistoryRepositoryTest {
   }
 
   @Test
+  @Transactional
   public void givenHistoryRepository_whenDelete_thenOK() {
     HistoryEntity history = createSampleHistory();
     Integer id = history.getHistoryId();

@@ -44,7 +44,9 @@ public class AuthenticationStrategyRepositoryTest {
     AuthenticationStrategyEntity authenticationStrategy =
         authenticationStrategyRepository.save(
             new AuthenticationStrategyEntity(
-                savedEndpoint, AuthStrategyEnum.Bearer, new ArrayList<>()));
+                "AuthenticationStrategyRepositoryTest",
+                AuthStrategyEnum.Bearer,
+                new ArrayList<>()));
 
     Optional<AuthenticationStrategyEntity> foundAuthStrategyOptional =
         authenticationStrategyRepository.findById(authenticationStrategy.getAuthStrategyId());

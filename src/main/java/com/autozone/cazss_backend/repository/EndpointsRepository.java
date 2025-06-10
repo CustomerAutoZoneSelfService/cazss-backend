@@ -17,4 +17,6 @@ public interface EndpointsRepository extends JpaRepository<EndpointsEntity, Inte
   Optional<EndpointsEntity> findByName(String name);
 
   Optional<EndpointsEntity> findByEndpointId(Integer id);
+
+  List<EndpointsEntity> findByCategory_CategoryId(Integer categoryId);
 }

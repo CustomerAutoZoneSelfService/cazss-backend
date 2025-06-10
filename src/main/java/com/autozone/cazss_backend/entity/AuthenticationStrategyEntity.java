@@ -2,6 +2,7 @@ package com.autozone.cazss_backend.entity;
 
 import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,21 +14,20 @@ public class AuthenticationStrategyEntity {
   @Column(name = "auth_strategy_id")
   private Integer authStrategyId;
 
-  @ManyToOne
-  @JoinColumn(name = "endpoint_id")
-  private EndpointsEntity endpoint;
+  @Column(nullable = false, unique = true)
+  private String name;
 
   @Enumerated(EnumType.STRING)
   private AuthStrategyEnum strategy;
 
   @OneToMany(mappedBy = "authStrategy", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<AuthenticationStrategyAttributeEntity> attributes;
+  private List<AuthenticationStrategyAttributeEntity> attributes = new ArrayList<>();
 
   public AuthenticationStrategyEntity(
-      EndpointsEntity endpoint,
+      String name,
       AuthStrategyEnum strategy,
       List<AuthenticationStrategyAttributeEntity> attributes) {
-    this.endpoint = endpoint;
+    this.name = name;
     this.strategy = strategy;
     this.attributes = attributes;
   }
@@ -42,12 +42,12 @@ public class AuthenticationStrategyEntity {
     this.authStrategyId = authStrategyId;
   }
 
-  public EndpointsEntity getEndpoint() {
-    return endpoint;
+  public String getName() {
+    return name;
   }
 
-  public void setEndpoint(EndpointsEntity endpoint) {
-    this.endpoint = endpoint;
+  public void setName(String name) {
+    this.name = name;
   }
 
   public AuthStrategyEnum getStrategy() {
@@ -62,21 +62,53 @@ public class AuthenticationStrategyEntity {
     return attributes;
   }
 
+  public void setAttributes(List<AuthenticationStrategyAttributeEntity> attributes) {
+    this.attributes = attributes;
+  }
+
+  public void addAttribute(AuthenticationStrategyAttributeEntity attr) {
+    attr.setAuthStrategy(this);
+    this.attributes.add(attr);
+  }
+
+  public void removeAttribute(AuthenticationStrategyAttributeEntity attr) {
+    attr.setAuthStrategy(null);
+    this.attributes.remove(attr);
+  }
+
+  public void clearAttributes() {
+    for (AuthenticationStrategyAttributeEntity attr : new ArrayList<>(attributes)) {
+      removeAttribute(attr);
+    }
+  }
+
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof AuthenticationStrategyEntity that)) return false;
+    if (o == null || getClass() != o.getClass()) return false;
+    AuthenticationStrategyEntity that = (AuthenticationStrategyEntity) o;
     return Objects.equals(authStrategyId, that.authStrategyId)
-        && Objects.equals(endpoint, that.endpoint)
+        && Objects.equals(name, that.name)
         && strategy == that.strategy
         && Objects.equals(attributes, that.attributes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(authStrategyId, endpoint, strategy, attributes);
+    return Objects.hash(authStrategyId, name, strategy, attributes);
   }
 
-  public void setAttributes(List<AuthenticationStrategyAttributeEntity> attributes) {
-    this.attributes = attributes;
+  @Override
+  public String toString() {
+    return "AuthenticationStrategyEntity{"
+        + "authStrategyId="
+        + authStrategyId
+        + ", name='"
+        + name
+        + '\''
+        + ", strategy="
+        + strategy
+        + ", attributes="
+        + attributes
+        + '}';
   }
 }

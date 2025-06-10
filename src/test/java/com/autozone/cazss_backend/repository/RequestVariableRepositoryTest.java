@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.RequestVariableTypeEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(classes = CazssBackendApplication.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -26,10 +28,15 @@ public class RequestVariableRepositoryTest {
 
   @Autowired UserRepository userRepository;
 
+  @Autowired AuthenticationStrategyRepository authenticationStrategyRepository;
+
   @Test
+  @Transactional
   public void givenRequestVariableRepository_whenSaveAndRetreiveRequestVariable_thenOK() {
     UserEntity user =
-        userRepository.save(new UserEntity("danagtz@autozone.com", true, UserRoleEnum.USER));
+        userRepository.save(
+            new UserEntity(
+                "danagtz@autozone.com", true, UserRoleEnum.USER, "testPassword123", "danagtz"));
 
     Optional<UserEntity> foundUserOptional = userRepository.findById(user.getUserId());
 
@@ -45,6 +52,17 @@ public class RequestVariableRepositoryTest {
     // Assert
     assertTrue(foundCategoryOptional.isPresent(), "Category should be found");
 
+    AuthenticationStrategyEntity authStrategy =
+        authenticationStrategyRepository.save(
+            new AuthenticationStrategyEntity(
+                "RequestVariableRepositoryTest", AuthStrategyEnum.Bearer, null));
+
+    Optional<AuthenticationStrategyEntity> foundAuthStrategyOptional =
+        authenticationStrategyRepository.findByName(authStrategy.getName());
+
+    // Assert
+    assertTrue(foundAuthStrategyOptional.isPresent(), "Authentication strategy should be found");
+
     EndpointsEntity endpoint =
         endpointsRepository.save(
             new EndpointsEntity(
@@ -54,7 +72,8 @@ public class RequestVariableRepositoryTest {
                 "EndpointDANA",
                 "Endpoint description",
                 EndpointMethodEnum.GET,
-                "https://hello.example"));
+                "https://hello.example",
+                authStrategy));
 
     Optional<EndpointsEntity> foundEndpointOptional =
         endpointsRepository.findById(endpoint.getEndpointId());

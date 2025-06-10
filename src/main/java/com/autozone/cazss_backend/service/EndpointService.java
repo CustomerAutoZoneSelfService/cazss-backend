@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -51,6 +53,8 @@ public class EndpointService {
   @Autowired private UserRepository userRepository;
 
   @Autowired private CategoryRepository categoryRepository;
+
+  @Autowired private EndpointAuthenticationUtil endpointAuthenticationUtil;
 
   public List<ServiceDTO> getAllServices() {
     return endpointsRepository.findAllServiceDTOs();
@@ -126,72 +130,120 @@ public class EndpointService {
     return serviceInformation;
   }
 
+  /**
+   * Retrieves ALL the info on a given endpoint ID by ID.
+   *
+   * @param id The ID of the endpoint from which to retrieve all info.
+   * @return A CreateServiceDTO containing ALL info on the endpoint.
+   */
+  public CreateServiceDTO getFullServiceInfoById(Integer id) {
+    System.out.println("ENTERING GET SERVICE BY ID");
+    EndpointsEntity endpoint =
+        endpointsRepository
+            .findByEndpointId(id)
+            .orElseThrow(() -> new ServiceNotFoundException("Endpoint not found with id: " + id));
+
+    CreateServiceDTO serviceInformation = new CreateServiceDTO();
+
+    serviceInformation.setCategoryId(
+        endpoint.getCategory() != null ? endpoint.getCategory().getCategoryId() : null);
+    serviceInformation.setActive(endpoint.getActive());
+    serviceInformation.setName(endpoint.getName());
+    serviceInformation.setDescription(endpoint.getDescription());
+    serviceInformation.setMethod(endpoint.getMethod());
+    serviceInformation.setUrl(endpoint.getUrl());
+
+    RequestBodyEntity requestBody =
+        requestBodyRepository.findByEndpoint_EndpointId(id).orElse(null);
+    serviceInformation.setTemplate(requestBody != null ? requestBody.getTemplate() : "");
+
+    List<RequestVariableEntity> requestVariables =
+        requestVariableRepository.findByEndpoint_EndpointId(endpoint.getEndpointId());
+    serviceInformation.setRequestVariables(
+        requestVariables.stream()
+            .map(
+                requestVariableEntity ->
+                    new CreateRequestVariableDTO(
+                        requestVariableEntity.getType(),
+                        requestVariableEntity.getKeyName(),
+                        requestVariableEntity.getDefaultValue(),
+                        requestVariableEntity.getCustomizable(),
+                        requestVariableEntity.getDescription()))
+            .collect(Collectors.toList()));
+
+    List<ResponseEntity> responses =
+        responseRepository.findByEndpoint_EndpointId(endpoint.getEndpointId());
+    serviceInformation.setResponses(
+        responses.stream()
+            .map(
+                responseEntity ->
+                    new CreateResponseDTO(
+                        responseEntity.getStatusCode(),
+                        responseEntity.getDescription(),
+                        returnCreateResponsePatternDTOListFromResponseId(
+                            responseEntity.getResponseId())))
+            .collect(Collectors.toList()));
+
+    return serviceInformation;
+  }
+
   @Transactional
   public ServiceDTO createCompleteService(CreateServiceDTO serviceDTO) {
     logger.debug("Creating {} service: {}", serviceDTO.getName(), serviceDTO);
 
-    // Category
-    CategoryEntity category =
-        categoryRepository
-            .findById(serviceDTO.getCategoryId())
-            .orElseThrow(
-                () ->
-                    new ServiceNotFoundException(
-                        "Category not found with id " + serviceDTO.getCategoryId()));
+    // Category and User
+    List<Object> independentEntities =
+        getExistingEntitiesIndependentOfService(serviceDTO.getCategoryId());
 
-    // User
-    Integer placeholderUserId = 90; // Placeholder
-    UserEntity user =
-        userRepository
-            .findById(placeholderUserId)
-            .orElseThrow(
-                () -> new ServiceNotFoundException("User not found with id " + placeholderUserId));
+    // Get authenticated user id from security context
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new ServiceNotFoundException("No authenticated user found");
+    }
+
+    String userIdStr = authentication.getName();
+    Integer userId;
+    try {
+      userId = Integer.parseInt(userIdStr);
+    } catch (NumberFormatException e) {
+      logger.error("Invalid user ID format in JWT token: {}", userIdStr);
+      throw new ServiceNotFoundException("Invalid user ID format in authentication token");
+    }
 
     // Endpoint
-    EndpointsEntity endpoint = createService(category, user, serviceDTO);
-    logger.debug("Created endpoint with id {}", endpoint.getEndpointId());
+    EndpointsEntity newEndpoint = new EndpointsEntity();
+    mapDtoToEndpoint(
+        newEndpoint,
+        (CategoryEntity) independentEntities.get(0),
+        (UserEntity) independentEntities.get(1),
+        serviceDTO);
 
-    // Request body
-    if (serviceDTO.getTemplate() != null) {
-      requestBodyService.createRequestBody(endpoint, serviceDTO.getTemplate());
-      logger.debug("Created request body for endpoint id {}", endpoint.getEndpointId());
-    }
+    EndpointsEntity newEndpointEntity = endpointsRepository.save(newEndpoint);
+    logger.debug("Created endpoint with id {}", newEndpointEntity.getEndpointId());
 
-    // Request variables
-    if (serviceDTO.getRequestVariables() != null) {
-      for (CreateRequestVariableDTO requestVariableDTO : serviceDTO.getRequestVariables())
-        requestVariableService.createRequestVariable(endpoint, requestVariableDTO);
-      logger.debug(
-          "Created {} request variable(s) for endpoint id {}",
-          serviceDTO.getRequestVariables().size(),
-          endpoint.getEndpointId());
-    }
-
-    // Responses
-    for (CreateResponseDTO resDTO : serviceDTO.getResponses()) {
-      ResponseEntity responseEntity = responseService.createResponse(endpoint, resDTO);
-      logger.debug(
-          "Created response with id {} for endpoint id {}",
-          responseEntity.getResponseId(),
-          endpoint.getEndpointId());
-
-      logger.debug("{}", resDTO.getPatterns());
-
-      // Response patterns
-      responsePatternService.addPatterns(responseEntity.getResponseId(), resDTO.getPatterns());
-    }
-    logger.debug(
-        "Created {} responses for endpoint id {}",
-        serviceDTO.getResponses().size(),
-        endpoint.getEndpointId());
+    setEntitiesDependentOfService(newEndpointEntity, serviceDTO);
 
     // Result
-    return new ServiceDTO(endpoint.getEndpointId(), endpoint.getName(), endpoint.getDescription());
+    return new ServiceDTO(
+        newEndpointEntity.getEndpointId(),
+        newEndpointEntity.getName(),
+        newEndpointEntity.getDescription());
   }
 
-  private EndpointsEntity createService(
-      CategoryEntity category, UserEntity user, CreateServiceDTO serviceDTO) {
-    EndpointsEntity endpoint = new EndpointsEntity();
+  /**
+   * A shared method to map properties from a DTO to an EndpointsEntity. This handles both creation
+   * and updates, eliminating duplicate code.
+   *
+   * @param endpoint The entity to populate (can be new or existing).
+   * @param serviceDTO The DTO containing the new data.
+   * @param category The associated CategoryEntity.
+   * @param user The associated UserEntity.
+   */
+  private void mapDtoToEndpoint(
+      EndpointsEntity endpoint,
+      CategoryEntity category,
+      UserEntity user,
+      CreateServiceDTO serviceDTO) {
     endpoint.setCategory(category);
     endpoint.setUser(user);
     endpoint.setActive(serviceDTO.getActive());
@@ -199,8 +251,108 @@ public class EndpointService {
     endpoint.setDescription(serviceDTO.getDescription());
     endpoint.setMethod(serviceDTO.getMethod());
     endpoint.setUrl(serviceDTO.getUrl());
+  }
 
-    return endpointsRepository.save(endpoint);
+  /**
+   * Updates an existing service endpoint and its dependent entities in a single transaction.
+   *
+   * @param id The ID of the service to update.
+   * @param updatedService The DTO containing the updated service information.
+   * @return A simplified {@link ServiceDTO} of the updated service.
+   * @throws ServiceNotFoundException if no endpoint with the given ID is found.
+   */
+  @Transactional
+  public ServiceDTO updateCompleteService(final Integer id, CreateServiceDTO updatedService) {
+    System.out.println(updatedService);
+    EndpointsEntity existingEndpoint =
+        endpointsRepository
+            .findByEndpointId(id)
+            .orElseThrow(() -> new ServiceNotFoundException("Service not found with id " + id));
+    logger.debug("Found existing endpoint with id: {}", existingEndpoint.getEndpointId());
+    // Category and User
+    List<Object> independentEntities =
+        getExistingEntitiesIndependentOfService(updatedService.getCategoryId());
+    mapDtoToEndpoint(
+        existingEndpoint,
+        (CategoryEntity) independentEntities.get(0),
+        (UserEntity) independentEntities.get(1),
+        updatedService);
+    setEntitiesDependentOfService(existingEndpoint, updatedService);
+
+    return new ServiceDTO(
+        existingEndpoint.getEndpointId(),
+        existingEndpoint.getName(),
+        existingEndpoint.getDescription());
+  }
+
+  private List<Object> getExistingEntitiesIndependentOfService(Integer categoryId) {
+    List<Object> entities = new ArrayList<>();
+    // Category
+    CategoryEntity category =
+        categoryRepository
+            .findById(categoryId)
+            .orElseThrow(
+                () -> new ServiceNotFoundException("Category not found with id " + categoryId));
+
+    entities.add(category);
+
+    // User
+
+    // Get authenticated user id from security context
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new ServiceNotFoundException("No authenticated user found");
+    }
+
+    String userIdStr = authentication.getName();
+    Integer userId;
+    try {
+      userId = Integer.parseInt(userIdStr);
+    } catch (NumberFormatException e) {
+      logger.error("Invalid user ID format in JWT token: {}", userIdStr);
+      throw new ServiceNotFoundException("Invalid user ID format in authentication token");
+    }
+
+    // User
+    UserEntity user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(
+                () -> {
+                  logger.error("User not found with ID: {}", userId);
+                  return new ServiceNotFoundException("User not found with ID: " + userId);
+                });
+
+    logger.debug("Found user: {}", user.getUserId());
+
+    entities.add(user);
+
+    return entities;
+  }
+
+  private void setEntitiesDependentOfService(
+      EndpointsEntity endpoint, CreateServiceDTO serviceDTO) {
+    // Request body
+    if (serviceDTO.getTemplate() != null) {
+      requestBodyService.createOrUpdateRequestBody(endpoint, serviceDTO.getTemplate());
+      logger.debug("Created request body for endpoint id {}", endpoint.getEndpointId());
+    }
+
+    // Request variables
+    if (serviceDTO.getRequestVariables() != null && !serviceDTO.getRequestVariables().isEmpty()) {
+      for (CreateRequestVariableDTO requestVariableDTO : serviceDTO.getRequestVariables())
+        requestVariableService.updateRequestVariables(endpoint, serviceDTO.getRequestVariables());
+      logger.debug("Updated request variables for endpoint id {}", endpoint.getEndpointId());
+    }
+
+    // Responses
+    if (serviceDTO.getResponses() != null && !serviceDTO.getResponses().isEmpty()) {
+      responseService.updateResponses(endpoint, serviceDTO.getResponses());
+      logger.debug(
+          "Created {} responses for endpoint id {}",
+          serviceDTO.getResponses().size(),
+          endpoint.getEndpointId());
+    }
   }
 
   // Method to execute the service based on the request model
@@ -221,6 +373,14 @@ public class EndpointService {
 
     ServiceInfoDTO serviceInfo = getServiceById(id);
     logger.debug("Información del servicio obtenida: {}", serviceInfo);
+
+    EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
+    AuthenticationStrategyEntity authStrategy = endpoint.getAuthStrategy();
+
+    if (authStrategy != null) {
+      logger.debug("Hooking request with the following authentication strategy: {}", authStrategy);
+      endpointAuthenticationUtil.hookRequest(serviceInfoRequestModel, authStrategy);
+    }
 
     String template =
         templateFiller.returnFilledTemplate(serviceInfoRequestModel.getBody(), serviceInfo.getId());
@@ -254,7 +414,6 @@ public class EndpointService {
     // SAVE IN HISTORY
     UserEntity user =
         userRepository.getReferenceById(90); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
-    EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
     historyService.addHistory(
         user,
         endpoint,
@@ -264,5 +423,37 @@ public class EndpointService {
     // SAVE IN HISTORY - END
 
     return new EndpointServiceDTO(status, parsedResponse);
+  }
+
+  private List<CreateResponsePatternDTO> returnCreateResponsePatternDTOListFromResponseId(
+      Integer responseId) {
+    List<ResponsePatternEntity> responsePatterns =
+        responsePatternRepository.findByResponse_ResponseId(responseId);
+    return (responsePatterns != null
+        ? responsePatterns.stream()
+            .map(
+                responsePatternEntity ->
+                    new CreateResponsePatternDTO(
+                        responsePatternEntity.getResponsePatternId(),
+                        responsePatternEntity.getParentId(),
+                        responsePatternEntity.getName(),
+                        responsePatternEntity.getDescription(),
+                        responsePatternEntity.getPattern(),
+                        responsePatternEntity.getIsLeaf()))
+            .collect(Collectors.toList())
+        : null);
+  }
+
+  /**
+   * Finds an endpoint by its ID or throws a standardized exception.
+   *
+   * @param id The ID of the endpoint to find.
+   * @return The found EndpointsEntity.
+   * @throws ServiceNotFoundException if the endpoint does not exist.
+   */
+  public EndpointsEntity findEndpointById(Integer id) {
+    return endpointsRepository
+        .findById(id)
+        .orElseThrow(() -> new ServiceNotFoundException("Endpoint not found with id: " + id));
   }
 }
