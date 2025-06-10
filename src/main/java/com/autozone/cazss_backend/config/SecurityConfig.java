@@ -1,7 +1,6 @@
 package com.autozone.cazss_backend.config;
 
 import com.autozone.cazss_backend.security.JwtFilter;
-import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,9 +17,6 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -38,9 +34,6 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(AbstractHttpConfigurer::disable)
-        .cors(
-            httpSecurityCorsConfigurer ->
-                httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
@@ -58,19 +51,6 @@ public class SecurityConfig {
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
-  }
-
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration corsConfiguration = new CorsConfiguration();
-    corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
-    corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-    corsConfiguration.setAllowCredentials(true);
-    corsConfiguration.setAllowedHeaders(List.of("*"));
-    corsConfiguration.setMaxAge(3600L);
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", corsConfiguration);
-    return source;
   }
 
   @Bean

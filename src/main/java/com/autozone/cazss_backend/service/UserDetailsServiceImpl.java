@@ -26,7 +26,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
    * Carga un usuario por su email. Este método es el requerido por la interfaz UserDetailsService
    * cuando Spring Security intenta autenticar con email/password. El UserDetails devuelto tendrá el
    * ID del usuario (como String) como el "username" para consistencia interna con cómo se manejarán
-   * los JWTs.
+   * los JWTs en frontend.
    */
   @Override
   @Transactional(readOnly = true)

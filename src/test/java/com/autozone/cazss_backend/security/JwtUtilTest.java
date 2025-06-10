@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import com.autozone.cazss_backend.repository.UserRepository;
@@ -51,7 +52,6 @@ class JwtUtilTest {
 
     List<GrantedAuthority> authorities =
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN"));
-    // UserDetails created as per UserDetailsServiceImpl logic (username is user ID string)
     userDetails =
         new User(String.valueOf(userEntity.getUserId()), userEntity.getPassword(), authorities);
   }
@@ -63,10 +63,11 @@ class JwtUtilTest {
     String token = jwtUtil.generateAccessToken(userDetails);
     assertNotNull(token);
 
-    assertEquals(String.valueOf(userEntity.getUserId()), jwtUtil.extractUserId(token));
-    assertEquals(userEntity.getUsername(), jwtUtil.extractUsername(token));
-    assertEquals(userEntity.getEmail(), jwtUtil.extractEmail(token));
-    assertEquals("ROLE_ADMIN", jwtUtil.extractRole(token));
+    DecodedJWT decodedJWT = jwtUtil.verifyToken(token);
+    assertEquals(String.valueOf(userEntity.getUserId()), decodedJWT.getSubject());
+    assertEquals(userEntity.getUsername(), decodedJWT.getClaim("username").asString());
+    assertEquals(userEntity.getEmail(), decodedJWT.getClaim("email").asString());
+    assertEquals("ROLE_ADMIN", decodedJWT.getClaim("role").asString());
     assertFalse(jwtUtil.isTokenExpired(token));
 
     verify(userRepository).findById(1);
@@ -90,10 +91,9 @@ class JwtUtilTest {
     String token = jwtUtil.generateRefreshToken(userDetails);
     assertNotNull(token);
 
-    assertEquals(String.valueOf(userEntity.getUserId()), jwtUtil.extractUserId(token));
-    assertEquals(
-        userEntity.getUsername(),
-        jwtUtil.extractUsername(token)); // Username is also in refresh token
+    DecodedJWT decodedJWT = jwtUtil.verifyToken(token);
+    assertEquals(String.valueOf(userEntity.getUserId()), decodedJWT.getSubject());
+    assertEquals(userEntity.getUsername(), decodedJWT.getClaim("username").asString());
     assertFalse(jwtUtil.isTokenExpired(token));
 
     verify(userRepository).findById(1);
@@ -133,7 +133,7 @@ class JwtUtilTest {
   @Test
   void validateToken_shouldReturnFalse_forInvalidTokenSignature() {
     String tamperedToken =
-        "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJST0xFX0FETUlOIiwiaWF0IjoxNjc4ODg2NDAwLCJleHAiOjE2Nzg4ODk5OTh9.tamperedSignaturePart";
+        "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInJvbGUiOiJST0xFX0FETUlOIiwiaWF0IjoxNjc4ODg2NDAwLCJleHAiOjE2Nzg4ODk5OTh9.tamperedSignaturePart";
     assertFalse(jwtUtil.validateToken(tamperedToken, userDetails));
     assertThrows(JWTVerificationException.class, () -> jwtUtil.extractUserId(tamperedToken));
   }

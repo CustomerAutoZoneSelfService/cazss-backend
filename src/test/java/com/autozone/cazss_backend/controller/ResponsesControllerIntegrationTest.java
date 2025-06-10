@@ -8,22 +8,64 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.autozone.cazss_backend.DTO.CreateResponsePatternDTO;
+import com.autozone.cazss_backend.entity.UserEntity;
+import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import com.autozone.cazss_backend.repository.UserRepository;
+import com.autozone.cazss_backend.security.JwtUtil;
 import com.autozone.cazss_backend.service.ResponsePatternService;
 import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(ResponsesController.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class ResponsesControllerIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
 
-  @MockitoBean private ResponsePatternService responsePatternService;
+  @Autowired private UserRepository userRepository;
+
+  @Autowired private JwtUtil jwtUtil;
+
+  @MockBean private ResponsePatternService responsePatternService;
+
+  private String authToken;
+  private UserEntity testUser;
+
+  @BeforeEach
+  public void setup() {
+    // Create test user
+    testUser = new UserEntity();
+    testUser.setActive(true);
+    testUser.setEmail("test@example.com");
+    testUser.setUsername("testuser");
+    testUser.setPassword("password");
+    testUser.setRole(UserRoleEnum.ADMIN);
+    testUser = userRepository.save(testUser);
+
+    // Generate JWT token using userId as subject
+    UserDetails userDetails =
+        new User(
+            String.valueOf(testUser.getUserId()),
+            testUser.getPassword(),
+            testUser.getActive(),
+            true,
+            true,
+            true,
+            Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + testUser.getRole().name())));
+    authToken = jwtUtil.generateAccessToken(userDetails);
+  }
 
   @Test
   void whenPostValidPatterns_thenReturnsCreatedAndPatternsList() throws Exception {
@@ -41,6 +83,7 @@ public class ResponsesControllerIntegrationTest {
     mockMvc
         .perform(
             post("/responses/{id}/response-patterns", responseId)
+                .header("Authorization", "Bearer " + authToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
         .andExpect(status().isCreated())

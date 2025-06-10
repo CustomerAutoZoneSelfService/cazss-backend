@@ -176,7 +176,12 @@ public class FavoriteRepositoryTest {
             .orElseGet(
                 () ->
                     userRepository.save(
-                        new UserEntity("johndoe@autozone.com", true, UserRoleEnum.USER)));
+                        new UserEntity(
+                            "johndoe@autozone.com",
+                            true,
+                            UserRoleEnum.USER,
+                            "testPassword123",
+                            "johndoe")));
 
     EndpointsEntity endpoint =
         endpointsRepository.save(

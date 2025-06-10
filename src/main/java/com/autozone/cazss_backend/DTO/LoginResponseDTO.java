@@ -5,6 +5,9 @@ public class LoginResponseDTO {
   private String accessToken;
   private String refreshToken;
 
+  // Added this empty constructor for test purposes
+  public LoginResponseDTO() {}
+
   public LoginResponseDTO(String message) {
     this.message = message;
   }

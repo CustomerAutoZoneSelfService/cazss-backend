@@ -49,6 +49,7 @@ public class AuthController {
     }
   }
 
+  // just to encode them in the database, might delete later or idk xd
   @GetMapping("/encode-password")
   public String encodePassword(@RequestParam String password) {
     return passwordEncoder.encode(password);
