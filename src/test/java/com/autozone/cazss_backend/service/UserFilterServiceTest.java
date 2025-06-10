@@ -95,14 +95,6 @@ class UserFilterServiceTest {
         ValidationException.class, () -> userFilterService.getUserFiltersByServiceId(null));
   }
 
-  /** Test case when user is not found. Should throw ServiceNotFoundException. */
-  @Transactional
-  @Test
-  void getUserFiltersByServiceId_UserNotFound() {
-    // Act & Assert: Verify exception is thrown
-    assertThrows(UserNotFoundException.class, () -> userFilterService.getUserFiltersByServiceId(1));
-  }
-
   // /**
   // * Test successful creation of user filters. Should save new filters without
   // throwing exceptions.

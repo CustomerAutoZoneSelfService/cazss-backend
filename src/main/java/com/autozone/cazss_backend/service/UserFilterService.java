@@ -59,10 +59,6 @@ public class UserFilterService {
         userFilterRepository.findByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
             userId, serviceId);
 
-    if (entities.isEmpty()) {
-      throw new UserNotFoundException(String.format("User with id %s not found", serviceId));
-    }
-
     return entities.stream()
         .map(e -> new UserFilterDTO(e.getId().getResponsePatternId()))
         .collect(Collectors.toList());
