@@ -5,9 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.CategoryEntity;
@@ -22,6 +21,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("dev")
@@ -31,7 +33,6 @@ public class CategoryServiceTest {
   @Mock private CategoryRepository categoryRepository;
   @Mock private UserCategoryRepository userCategoryRepository;
   @Mock private PermissionValidator permissionValidator;
-
   @InjectMocks private CategoryService categoryService;
 
   // DELETE Tests
@@ -48,7 +49,7 @@ public class CategoryServiceTest {
     when(endpointsRepository.findByCategory_CategoryId(anyInt())).thenReturn(endpoints);
     when(permissionValidator.isAdmin(anyInt())).thenReturn(true);
 
-    assertDoesNotThrow(() -> categoryService.deleteCategory(90, 1));
+    assertDoesNotThrow(() -> categoryService.deleteCategory(1));
 
     // Verify that these functions were called
     verify(categoryRepository).deleteByCategoryId(anyInt());
@@ -58,17 +59,27 @@ public class CategoryServiceTest {
 
   @Test
   void deleteCategory_withValidAdminUserIdButInvalidCategoryID_shouldThrowCategoryNotFound() {
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(1));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
     when(categoryRepository.existsById(anyInt())).thenReturn(false);
     when(permissionValidator.isAdmin(anyInt())).thenReturn(true);
 
-    assertThrows(CategoryNotFoundException.class, () -> categoryService.deleteCategory(90, 1));
+    assertThrows(CategoryNotFoundException.class, () -> categoryService.deleteCategory(1));
   }
 
   @Test
   void deleteCategory_withNonAdminUserId_shouldThrowUnauthorizedUserException() {
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(1));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
     when(permissionValidator.isAdmin(anyInt())).thenReturn(false);
 
-    assertThrows(UnauthorizedUserException.class, () -> categoryService.deleteCategory(90, 1));
+    assertThrows(UnauthorizedUserException.class, () -> categoryService.deleteCategory(1));
   }
 
   @Test
@@ -82,11 +93,17 @@ public class CategoryServiceTest {
     existingCategory.setName("Old Name");
     existingCategory.setColor("#123456");
 
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(userId));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
     when(permissionValidator.isAdmin(userId)).thenReturn(true);
     when(categoryRepository.findByCategoryId(categoryId)).thenReturn(Optional.of(existingCategory));
     when(categoryRepository.save(any(CategoryEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    CategoryDTO result = categoryService.updateCategory(userId, categoryId, categoryDTO);
+    CategoryDTO result = categoryService.updateCategory(categoryId, categoryDTO);
 
     assertEquals("Updated Name", result.getName());
     assertEquals("#ABCDEF", result.getColor());
@@ -101,10 +118,16 @@ public class CategoryServiceTest {
 
     when(permissionValidator.isAdmin(userId)).thenReturn(false);
 
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(userId));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
     UnauthorizedUserException exception =
         assertThrows(
             UnauthorizedUserException.class,
-            () -> categoryService.updateCategory(userId, categoryId, categoryDTO));
+            () -> categoryService.updateCategory(categoryId, categoryDTO));
 
     assertEquals("This feature is only available to administrators.", exception.getMessage());
     verify(categoryRepository, never()).save(any());
@@ -116,13 +139,16 @@ public class CategoryServiceTest {
     Integer categoryId = 99;
     CategoryDTO categoryDTO = new CategoryDTO(categoryId, "Ghost Category", "#FAFAFA");
 
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+
     when(permissionValidator.isAdmin(userId)).thenReturn(true);
     when(categoryRepository.findByCategoryId(categoryId)).thenReturn(Optional.empty());
 
     CategoryNotFoundException exception =
         assertThrows(
             CategoryNotFoundException.class,
-            () -> categoryService.updateCategory(userId, categoryId, categoryDTO));
+            () -> categoryService.updateCategory(categoryId, categoryDTO));
 
     assertEquals("No category found with id: " + categoryId, exception.getMessage());
     verify(categoryRepository, never()).save(any());

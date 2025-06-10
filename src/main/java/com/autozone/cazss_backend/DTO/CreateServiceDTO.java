@@ -12,7 +12,6 @@ public class CreateServiceDTO {
   private EndpointMethodEnum method;
   private String url;
   private Integer authenticationStrategy;
-
   // Template
   private String template;
 

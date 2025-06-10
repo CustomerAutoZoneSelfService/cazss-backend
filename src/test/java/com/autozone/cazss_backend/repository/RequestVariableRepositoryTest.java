@@ -29,7 +29,9 @@ public class RequestVariableRepositoryTest {
   @Test
   public void givenRequestVariableRepository_whenSaveAndRetreiveRequestVariable_thenOK() {
     UserEntity user =
-        userRepository.save(new UserEntity("danagtz@autozone.com", true, UserRoleEnum.USER));
+        userRepository.save(
+            new UserEntity(
+                "danagtz@autozone.com", true, UserRoleEnum.USER, "testPassword123", "danagtz"));
 
     Optional<UserEntity> foundUserOptional = userRepository.findById(user.getUserId());
 

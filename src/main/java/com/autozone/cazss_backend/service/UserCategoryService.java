@@ -17,9 +17,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class UserCategoryService {
@@ -30,7 +30,9 @@ public class UserCategoryService {
   @Autowired private PermissionValidator permissionValidator;
   @Autowired private UserRepository userRepository;
 
-  public List<UserCategoryDTO> getUsersWithAccessToCategory(Integer userId, Integer categoryId) {
+  public List<UserCategoryDTO> getUsersWithAccessToCategory(Integer categoryId) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Integer userId = Integer.parseInt(authentication.getName());
     // Verify if user is admin
     if (!permissionValidator.isAdmin(userId)) {
       throw new UnauthorizedUserException("User does not have permission to access this resource.");
@@ -56,15 +58,13 @@ public class UserCategoryService {
 
   @Transactional
   public List<UserCategoryDTO> addPermissionToAccessCategoryToUsers(
-      Integer userId, Integer categoryId, List<Integer> usersToAdd) {
+      Integer categoryId, List<Integer> usersToAdd) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Integer userId = Integer.parseInt(authentication.getName());
 
     if (usersToAdd.isEmpty()) {
       throw new IllegalArgumentException("List of userIds cannot be empty");
     }
-
-    userRepository
-        .findByUserId(userId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
     if (!permissionValidator.isAdmin(userId)) {
       throw new UnauthorizedUserException("This feature is only available to administrators.");
@@ -132,16 +132,14 @@ public class UserCategoryService {
   }
 
   @Transactional
-  public String deleteAccessToCategoryForUsers(
-      Integer userId, Integer categoryId, List<Integer> userIds) {
+  public String deleteAccessToCategoryForUsers(Integer categoryId, List<Integer> userIds) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Integer userId = Integer.parseInt(authentication.getName());
     // verify that userId, categoryId, and userIds are not null or empty
     if (userIds.isEmpty()) {
       throw new IllegalArgumentException("List of userIds cannot be empty");
     }
-    // verify that user exists
-    userRepository
-        .findByUserId(userId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
     // verify that user has admin permissions
     if (!permissionValidator.isAdmin(userId)) {
       throw new UnauthorizedUserException("This feature is only available to administrators.");

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.CategoryEntity;
@@ -18,11 +19,15 @@ import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
 import com.autozone.cazss_backend.repository.*;
 import com.autozone.cazss_backend.util.*;
 import java.util.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("dev")
@@ -47,9 +52,26 @@ public class EndpointServiceTest {
 
   @InjectMocks private EndpointService endpointService;
 
+  private static final Integer TEST_USER_ID = 1;
+  private static final String TEST_USER_EMAIL = "test@example.com";
+
+  @BeforeEach
+  void setUp() {
+    // Limpiar el SecurityContext antes de cada test
+    SecurityContextHolder.clearContext();
+  }
+
   @Test
   void createCompleteService_withValidDTO_shouldReturnServiceDTO() {
     // --- Arrange ---
+    // Configurar el SecurityContext para este test específico
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    given(authentication.getName()).willReturn(String.valueOf(TEST_USER_ID));
+    given(authentication.isAuthenticated()).willReturn(true);
+    SecurityContextHolder.setContext(securityContext);
+
     CreateServiceDTO dto = new CreateServiceDTO();
     dto.setCategoryId(1);
     dto.setActive(true);
@@ -66,7 +88,9 @@ public class EndpointServiceTest {
     given(categoryRepository.findById(1)).willReturn(Optional.of(cat));
 
     UserEntity usr = new UserEntity();
-    given(userRepository.findById(90)).willReturn(Optional.of(usr));
+    usr.setUserId(TEST_USER_ID);
+    usr.setEmail(TEST_USER_EMAIL);
+    given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(usr));
 
     EndpointsEntity saved = new EndpointsEntity();
     saved.setEndpointId(42);
