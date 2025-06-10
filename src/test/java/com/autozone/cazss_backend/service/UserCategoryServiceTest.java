@@ -35,12 +35,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.server.ResponseStatusException;
 
 @ActiveProfiles("dev")
 @ExtendWith(MockitoExtension.class)
@@ -84,7 +82,6 @@ public class UserCategoryServiceTest {
     SecurityContextHolder.setContext(securityContext);
 
     // Arrange
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(adminUser));
     when(permissionValidator.isAdmin(1)).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(userRepository.existsById(2)).thenReturn(true);
@@ -119,28 +116,24 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenUserNotFound_thenThrowUnauthorized() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.empty());
-
     SecurityContext securityContext = mock(SecurityContext.class);
     Authentication authentication = mock(Authentication.class);
     given(authentication.getName()).willReturn(String.valueOf(adminUser.getUserId()));
     given(securityContext.getAuthentication()).willReturn(authentication);
     SecurityContextHolder.setContext(securityContext);
 
-    ResponseStatusException thrown =
+    UnauthorizedUserException thrown =
         assertThrows(
-            ResponseStatusException.class,
+            UnauthorizedUserException.class,
             () -> {
               userCategoryService.deleteAccessToCategoryForUsers(categoryId, List.of(2));
             });
 
-    assertEquals(HttpStatus.UNAUTHORIZED, thrown.getStatusCode());
-    assertEquals("User not found", thrown.getReason());
+    assertEquals("This feature is only available to administrators.", thrown.getMessage());
   }
 
   @Test
   public void whenUserIsNotAdmin_thenThrowUnauthorizedUserException() {
-    when(userRepository.findByUserId(2)).thenReturn(Optional.of(normalUser));
     when(permissionValidator.isAdmin(2)).thenReturn(false);
     SecurityContext securityContext = mock(SecurityContext.class);
     Authentication authentication = mock(Authentication.class);
@@ -160,7 +153,6 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenCategoryNotFound_thenThrowEntityNotFoundException() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(adminUser));
     when(permissionValidator.isAdmin(1)).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(false);
 
@@ -173,7 +165,6 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenTargetUserNotFound_thenSkipUser() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(adminUser));
     when(permissionValidator.isAdmin(1)).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(userRepository.existsById(2)).thenReturn(false); // User doesn't exist
@@ -187,7 +178,6 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenDeleteFailsForUser_thenContinueWithOthers() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(adminUser));
     when(permissionValidator.isAdmin(1)).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(userRepository.existsById(2)).thenReturn(true);
@@ -337,7 +327,6 @@ public class UserCategoryServiceTest {
     CategoryEntity category = new CategoryEntity();
     category.setCategoryId(categoryId);
 
-    when(userRepository.findByUserId(adminId)).thenReturn(Optional.of(admin));
     when(permissionValidator.isAdmin(adminId)).thenReturn(true);
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
@@ -370,7 +359,6 @@ public class UserCategoryServiceTest {
     user2.setUserId(3);
 
     // Mock admin check and category existence
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(admin));
     when(permissionValidator.isAdmin(1)).thenReturn(true);
     when(categoryRepository.existsById(100)).thenReturn(true);
     when(categoryRepository.findById(100)).thenReturn(Optional.of(category));
@@ -398,14 +386,12 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenAdminUserNotFound_thenThrowUnauthorized() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.empty());
-
     Exception exception =
         assertThrows(
-            ResponseStatusException.class,
+            UnauthorizedUserException.class,
             () -> userCategoryService.addPermissionToAccessCategoryToUsers(100, List.of(2)));
 
-    assertEquals("401 UNAUTHORIZED \"User not found\"", exception.getMessage());
+    assertEquals("This feature is only available to administrators.", exception.getMessage());
   }
 
   @Test
@@ -417,7 +403,6 @@ public class UserCategoryServiceTest {
     existingUser.setUserId(2);
 
     // Stubs necesarios
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(admin));
     when(permissionValidator.isAdmin(1)).thenReturn(true);
     when(categoryRepository.existsById(100)).thenReturn(true);
     when(userRepository.findByUserId(2)).thenReturn(Optional.of(existingUser));
@@ -444,21 +429,18 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenAdminUserDoesNotExist_thenThrowsUnauthorized() {
-    when(userRepository.findByUserId(1)).thenReturn(Optional.empty());
-
-    ResponseStatusException ex =
+    UnauthorizedUserException ex =
         assertThrows(
-            ResponseStatusException.class,
+            UnauthorizedUserException.class,
             () -> userCategoryService.addPermissionToAccessCategoryToUsers(100, List.of(2)));
 
-    assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    assertEquals("This feature is only available to administrators.", ex.getMessage());
   }
 
   @Test
   public void whenCategoryDoesNotExist_thenThrowsEntityNotFound() {
     UserEntity admin = new UserEntity();
     admin.setUserId(1);
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(admin));
     when(permissionValidator.isAdmin(1)).thenReturn(true);
     when(categoryRepository.existsById(999)).thenReturn(false);
 
@@ -484,7 +466,6 @@ public class UserCategoryServiceTest {
     existing.setUser(targetUser);
     existing.setCategory(category);
 
-    when(userRepository.findByUserId(1)).thenReturn(Optional.of(admin));
     when(permissionValidator.isAdmin(1)).thenReturn(true);
     when(categoryRepository.existsById(100)).thenReturn(true);
     when(userRepository.findByUserId(2)).thenReturn(Optional.of(targetUser));
