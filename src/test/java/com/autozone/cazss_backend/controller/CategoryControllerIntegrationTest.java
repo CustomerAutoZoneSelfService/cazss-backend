@@ -15,12 +15,17 @@ import com.autozone.cazss_backend.repository.CategoryRepository;
 import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.UserCategoryRepository;
 import com.autozone.cazss_backend.repository.UserRepository;
+import com.autozone.cazss_backend.security.JwtUtil;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +37,10 @@ public class CategoryControllerIntegrationTest {
   @Autowired private CategoryRepository categoryRepository;
   @Autowired private UserRepository userRepository;
   @Autowired private UserCategoryRepository userCategoryRepository;
+  @Autowired private JwtUtil jwtUtil;
+
+  String adminUserAuthToken;
+  String normalUserAuthToken;
 
   @Transactional
   @Test
@@ -45,7 +54,22 @@ public class CategoryControllerIntegrationTest {
     userToSave.setEmail("CategoryControllerIntegration" + UUID.randomUUID() + "@autozone.com");
     userToSave.setActive(true);
     userToSave.setRole(UserRoleEnum.ADMIN);
+    userToSave.setUsername("opqijwer");
+    userToSave.setPassword("wiwiwiwi");
     userRepository.save(userToSave);
+
+    // Generate JWT token
+    UserDetails userDetails =
+        new User(
+            String.valueOf(userToSave.getUserId()),
+            userToSave.getPassword(),
+            userToSave.getActive(),
+            true,
+            true,
+            true,
+            Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + userToSave.getRole().name())));
+    adminUserAuthToken = jwtUtil.generateAccessToken(userDetails);
 
     System.out.println("My user ID is " + userToSave.getUserId());
 
@@ -81,7 +105,8 @@ public class CategoryControllerIntegrationTest {
     mockMvc
         .perform(
             delete("/categories/{categoryId}", categoryToSave.getCategoryId())
-                .header("userId", userToSave.getUserId()))
+                .header("userId", userToSave.getUserId())
+                .header("Authorization", "Bearer " + adminUserAuthToken))
         .andExpect(status().isOk());
 
     Optional<EndpointsEntity> postDeleteFoundEndpoint =
@@ -109,14 +134,44 @@ public class CategoryControllerIntegrationTest {
     adminUser.setEmail("adminGetTest@autozone.com");
     adminUser.setActive(true);
     adminUser.setRole(UserRoleEnum.ADMIN);
+    adminUser.setUsername("jijijji");
+    adminUser.setPassword("ojiqewi");
     userRepository.save(adminUser);
+
+    // Generate JWT token
+    UserDetails adminUserDetails =
+        new User(
+            String.valueOf(adminUser.getUserId()),
+            adminUser.getPassword(),
+            adminUser.getActive(),
+            true,
+            true,
+            true,
+            Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + adminUser.getRole().name())));
+    adminUserAuthToken = jwtUtil.generateAccessToken(adminUserDetails);
 
     // Crea usuario normal
     UserEntity normalUser = new UserEntity();
     normalUser.setEmail("normalGetTest@autozone.com");
     normalUser.setActive(true);
     normalUser.setRole(UserRoleEnum.USER);
+    normalUser.setUsername("qwpeoir");
+    normalUser.setPassword("ojiqewi");
     userRepository.save(normalUser);
+
+    // Generate JWT token
+    UserDetails normalUserDetails =
+        new User(
+            String.valueOf(normalUser.getUserId()),
+            normalUser.getPassword(),
+            normalUser.getActive(),
+            true,
+            true,
+            true,
+            Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + normalUser.getRole().name())));
+    normalUserAuthToken = jwtUtil.generateAccessToken(normalUserDetails);
 
     // Crea categorías y asigna a usuario normal
     CategoryEntity cat1 = new CategoryEntity();
@@ -140,14 +195,20 @@ public class CategoryControllerIntegrationTest {
 
     // Test para admin - debería obtener ambas categorías
     mockMvc
-        .perform(get("/categories").header("userId", adminUser.getUserId()))
+        .perform(
+            get("/categories")
+                .header("userId", adminUser.getUserId())
+                .header("Authorization", "Bearer " + adminUserAuthToken))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$").isArray())
         .andExpect(jsonPath("$.length()").value(2));
 
     // Test para usuario normal - debería obtener solo una categoría
     mockMvc
-        .perform(get("/categories").header("userId", normalUser.getUserId()))
+        .perform(
+            get("/categories")
+                .header("userId", normalUser.getUserId())
+                .header("Authorization", "Bearer " + normalUserAuthToken))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$").isArray())
         .andExpect(jsonPath("$.length()").value(1));
@@ -158,16 +219,31 @@ public class CategoryControllerIntegrationTest {
   public void testDeleteCategory_CategoryNotFound_ShouldReturnNotFound() throws Exception {
     UserEntity user = new UserEntity();
     user.setEmail("notfound" + UUID.randomUUID() + "@autozone.com");
+    user.setUsername("opqijwer");
+    user.setPassword("ijijiji");
     user.setActive(true);
     user.setRole(UserRoleEnum.ADMIN);
     userRepository.save(user);
+
+    // Generate JWT token
+    UserDetails adminUserDetails =
+        new User(
+            String.valueOf(user.getUserId()),
+            user.getPassword(),
+            user.getActive(),
+            true,
+            true,
+            true,
+            Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
+    adminUserAuthToken = jwtUtil.generateAccessToken(adminUserDetails);
 
     int nonExistentCategoryId = 999999;
 
     mockMvc
         .perform(
             delete("/categories/{categoryId}", nonExistentCategoryId)
-                .header("userId", user.getUserId()))
+                .header("userId", user.getUserId())
+                .header("Authorization", "Bearer " + adminUserAuthToken))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.message").value("No category found")); // Ajusta según tu handler
   }
@@ -182,7 +258,6 @@ public class CategoryControllerIntegrationTest {
 
     mockMvc
         .perform(delete("/categories/{categoryId}", category.getCategoryId()))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").exists());
+        .andExpect(status().isForbidden());
   }
 }

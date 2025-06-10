@@ -30,9 +30,8 @@ public class CategoryController {
    * @return List&ltCategoryDTO&gt which contains category ids, names and colors
    */
   @GetMapping("")
-  public ResponseEntity<List<CategoryDTO>> getCategories(
-      @RequestHeader @NotNull @Positive Integer userId) {
-    return new ResponseEntity<>(categoryService.getAvailableCategories(userId), HttpStatus.OK);
+  public ResponseEntity<List<CategoryDTO>> getCategories() {
+    return new ResponseEntity<>(categoryService.getAvailableCategories(), HttpStatus.OK);
   }
 
   /**
@@ -43,10 +42,8 @@ public class CategoryController {
    */
   @PostMapping("")
   public ResponseEntity<CategoryDTO> createCategory(
-      @RequestHeader("userId") @NotNull @Positive Integer userId,
       @Valid @RequestBody @NotNull CategoryDTO categoryDTO) {
-    return new ResponseEntity<>(
-        categoryService.createCategory(userId, categoryDTO), HttpStatus.CREATED);
+    return new ResponseEntity<>(categoryService.createCategory(categoryDTO), HttpStatus.CREATED);
   }
 
   /**
@@ -62,7 +59,7 @@ public class CategoryController {
       @RequestHeader @NotNull @Positive Integer userId,
       @PathVariable @NotNull @Positive Integer categoryId,
       @RequestBody @Valid @NotNull CategoryDTO categoryDTO) {
-    CategoryDTO updatedCategory = categoryService.updateCategory(userId, categoryId, categoryDTO);
+    CategoryDTO updatedCategory = categoryService.updateCategory(categoryId, categoryDTO);
     return new ResponseEntity<>(updatedCategory, HttpStatus.OK);
   }
 
@@ -73,9 +70,8 @@ public class CategoryController {
    * @return String saying the deletion went through
    */
   @DeleteMapping("/{categoryId}")
-  public ResponseEntity<String> deleteCategory(
-      @RequestHeader @NotNull Integer userId, @PathVariable @NotNull Integer categoryId) {
-    return new ResponseEntity<>(categoryService.deleteCategory(userId, categoryId), HttpStatus.OK);
+  public ResponseEntity<String> deleteCategory(@PathVariable @NotNull Integer categoryId) {
+    return new ResponseEntity<>(categoryService.deleteCategory(categoryId), HttpStatus.OK);
   }
 
   /**

@@ -10,20 +10,27 @@ import com.autozone.cazss_backend.exceptions.UnauthorizedUserException;
 import com.autozone.cazss_backend.repository.CategoryRepository;
 import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.UserCategoryRepository;
+import com.autozone.cazss_backend.security.JwtUtil;
 import com.autozone.cazss_backend.util.PermissionValidator;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CategoryService {
+  private static final Logger logger = LoggerFactory.getLogger(EndpointService.class);
   @Autowired private CategoryRepository categoryRepository;
   @Autowired private UserCategoryRepository userCategoryRepository;
   @Autowired private EndpointsRepository endpointsRepository;
   @Autowired private PermissionValidator permissionValidator;
+  @Autowired private JwtUtil jwtUtil;
 
   public List<CategoryDTO> getAllCategories() {
     System.out.println("User is admin, returning all categories");
@@ -45,7 +52,9 @@ public class CategoryService {
         .collect(Collectors.toList());
   }
 
-  public List<CategoryDTO> getAvailableCategories(Integer userId) {
+  public List<CategoryDTO> getAvailableCategories() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Integer userId = Integer.parseInt(authentication.getName());
     System.out.println("Checking categories for userId: " + userId);
     if (permissionValidator.isAdmin(userId)) {
       return getAllCategories();
@@ -55,7 +64,9 @@ public class CategoryService {
   }
 
   @Transactional
-  public CategoryDTO createCategory(Integer userId, CategoryDTO categoryDTO) {
+  public CategoryDTO createCategory(CategoryDTO categoryDTO) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Integer userId = Integer.parseInt(authentication.getName());
     // Check if category name already exists
     if (categoryRepository.findByName(categoryDTO.getName()).isPresent()) {
       throw new CategoryAlreadyExistsException(
@@ -70,7 +81,9 @@ public class CategoryService {
   }
 
   @Transactional
-  public CategoryDTO updateCategory(Integer userId, Integer categoryId, CategoryDTO categoryDTO) {
+  public CategoryDTO updateCategory(Integer categoryId, CategoryDTO categoryDTO) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Integer userId = Integer.parseInt(authentication.getName());
     if (!permissionValidator.isAdmin(userId)) {
       throw new UnauthorizedUserException("This feature is only available to administrators.");
     }
@@ -90,7 +103,9 @@ public class CategoryService {
   }
 
   @Transactional
-  public String deleteCategory(Integer userId, Integer categoryId) {
+  public String deleteCategory(Integer categoryId) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Integer userId = Integer.parseInt(authentication.getName());
     if (permissionValidator.isAdmin(userId)) {
       if (categoryRepository.existsById(categoryId)) {
         // Delete user access to the categoryId
