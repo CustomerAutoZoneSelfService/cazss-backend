@@ -10,12 +10,16 @@ import com.autozone.cazss_backend.entity.HistoryEntity;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.HistoryDataTypeEnum;
 import com.autozone.cazss_backend.exceptions.HistoryNotFoundException;
+import com.autozone.cazss_backend.exceptions.ParseJSONException;
 import com.autozone.cazss_backend.projections.HistoryDetailedProjection;
 import com.autozone.cazss_backend.projections.HistoryProjection;
 import com.autozone.cazss_backend.repository.HistoryDataRepository;
 import com.autozone.cazss_backend.repository.HistoryRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -73,8 +77,35 @@ public class HistoryService {
             historyRequest.getName(),
             historyRequest.getDescription());
 
-    HistoryDataDTO historyData =
-        new HistoryDataDTO(historyRequest.getContent(), historyResponse.getContent());
+    ObjectMapper objectMapper = new ObjectMapper();
+    Object requestContent;
+    try {
+      requestContent = objectMapper.readValue(historyRequest.getContent(), Object.class);
+    } catch (Exception e) {
+      throw new ParseJSONException("Failed to parse history content");
+    }
+
+    // PRARSE OBJECT INTO MORE PARSED REQUEST OBJECT FOR FRONTEND
+
+    Map<String, Object> parsedRequestContent = new HashMap<>();
+    if (requestContent instanceof List<?> list) {
+      for (Object obj : list) {
+        if (obj instanceof Map<?, ?> entry) {
+          Object k = entry.get("key");
+          Object v = entry.get("value");
+          if (k != null) {
+            parsedRequestContent.put(k.toString(), v);
+          }
+        }
+      }
+    }
+
+    // PRARSE OBJECT END
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("response", historyResponse.getContent());
+
+    HistoryDataDTO historyData = new HistoryDataDTO(parsedRequestContent, response);
 
     return new HistoryDetailedDTO(
         historyRequest.getHistoryId(), historyRequest.getStatusCode(), endpoint, historyData);
