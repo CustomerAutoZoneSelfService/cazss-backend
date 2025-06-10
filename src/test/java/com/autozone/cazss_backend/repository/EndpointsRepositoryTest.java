@@ -27,9 +27,19 @@ public class EndpointsRepositoryTest {
     categoryRepository.save(new CategoryEntity("TEST02", "#000000"));
 
     userRepository.save(
-        new UserEntity("endpointRepoTestUser01@autozone.com", true, UserRoleEnum.ADMIN));
+        new UserEntity(
+            "endpointRepoTestUser01@autozone.com",
+            true,
+            UserRoleEnum.ADMIN,
+            "testPassword123",
+            "endpointRepoTestUser01"));
     userRepository.save(
-        new UserEntity("endpointRepoTestUser02@autozone.com", true, UserRoleEnum.ADMIN));
+        new UserEntity(
+            "endpointRepoTestUser02@autozone.com",
+            true,
+            UserRoleEnum.ADMIN,
+            "testPassword123",
+            "endpointRepoTestUser02"));
   }
 
   @Transactional
