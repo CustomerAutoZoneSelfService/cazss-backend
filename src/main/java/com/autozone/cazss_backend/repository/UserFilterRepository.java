@@ -16,4 +16,6 @@ public interface UserFilterRepository
 
   List<ResponsePatternEntity> findByResponsePattern_Response_Endpoint_EndpointId(
       Integer endpointId);
+
+  void deleteByResponsePattern_Response_ResponseId(Integer responseId);
 }

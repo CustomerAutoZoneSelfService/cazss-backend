@@ -5,6 +5,7 @@ import com.autozone.cazss_backend.entity.ResponseEntity;
 import com.autozone.cazss_backend.entity.ResponsePatternEntity;
 import com.autozone.cazss_backend.repository.ResponsePatternRepository;
 import com.autozone.cazss_backend.repository.ResponseRepository;
+import com.autozone.cazss_backend.repository.UserFilterRepository;
 import com.autozone.cazss_backend.util.ResponsePatternParser;
 import com.autozone.cazss_backend.util.ResponsePatternTreeValidator;
 import java.util.ArrayList;
@@ -29,15 +30,19 @@ public class ResponsePatternService {
 
   private final ResponsePatternParser regexParser;
 
+  private final UserFilterRepository userFilterRepository;
+
   private static final Logger logger = LoggerFactory.getLogger(ResponsePatternService.class);
 
   public ResponsePatternService(
       ResponsePatternRepository responsePatternRepository,
       ResponsePatternParser regexParser,
-      ResponseRepository responseRepository) {
+      ResponseRepository responseRepository,
+      UserFilterRepository userFilterRepository) {
     this.responsePatternRepository = responsePatternRepository;
     this.regexParser = regexParser;
     this.responseRepository = responseRepository;
+    this.userFilterRepository = userFilterRepository;
   }
 
   /**
@@ -451,6 +456,7 @@ public class ResponsePatternService {
       Integer responseId, List<CreateResponsePatternDTO> responsePatterns) {
     logger.debug("Entering replacePatterns by response id");
 
+    userFilterRepository.deleteByResponsePattern_Response_ResponseId(responseId);
     responsePatternRepository.deleteByResponse_ResponseId(responseId);
 
     if (!ResponsePatternTreeValidator.isValid(responsePatterns)) {
