@@ -1,17 +1,20 @@
 package com.autozone.cazss_backend.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 import com.autozone.cazss_backend.DTO.*;
+import com.autozone.cazss_backend.entity.*;
 import com.autozone.cazss_backend.entity.CategoryEntity;
 import com.autozone.cazss_backend.entity.EndpointsEntity;
 import com.autozone.cazss_backend.entity.ResponseEntity;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
+import com.autozone.cazss_backend.enumerator.RequestVariableTypeEnum;
+import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
 import com.autozone.cazss_backend.exceptions.ValidationException;
 import com.autozone.cazss_backend.model.BodyModel;
 import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
@@ -28,7 +31,6 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("dev")
 @ExtendWith(MockitoExtension.class)
 public class EndpointServiceTest {
-
   @Mock private EndpointsRepository endpointsRepository;
   @Mock private UserRepository userRepository;
   @Mock private ResponseRepository responseRepository;
@@ -47,10 +49,9 @@ public class EndpointServiceTest {
 
   @InjectMocks private EndpointService endpointService;
 
-  @Test
-  void createCompleteService_withValidDTO_shouldReturnServiceDTO() {
-    // --- Arrange ---
+  public CreateServiceDTO saveAndReturnCreatedServiceDTO() {
     CreateServiceDTO dto = new CreateServiceDTO();
+
     dto.setCategoryId(1);
     dto.setActive(true);
     dto.setName("Test Service");
@@ -60,6 +61,14 @@ public class EndpointServiceTest {
     dto.setTemplate(null);
     dto.setRequestVariables(Collections.emptyList());
     dto.setResponses(Collections.emptyList());
+
+    return dto;
+  }
+
+  @Test
+  void createCompleteService_withValidDTO_shouldReturnServiceDTO() {
+    // --- Arrange ---
+    CreateServiceDTO serviceToCreate = saveAndReturnCreatedServiceDTO();
 
     // Simula repositorios
     CategoryEntity cat = new CategoryEntity();
@@ -75,7 +84,7 @@ public class EndpointServiceTest {
     given(endpointsRepository.save(any(EndpointsEntity.class))).willReturn(saved);
 
     // --- Act ---
-    ServiceDTO result = endpointService.createCompleteService(dto);
+    ServiceDTO result = endpointService.createCompleteService(serviceToCreate);
 
     // --- Assert ---
     assertEquals(42, result.getEndpointId());
@@ -175,5 +184,87 @@ public class EndpointServiceTest {
             ValidationException.class, () -> endpointService.executeService(endpointId, request));
 
     assertThat(exception.getMessage()).contains("Error de validación");
+  }
+
+  @Test
+  void testGetFullServiceInfoById_withValidRequest_shouldReturnResponse() {
+    // Arrange
+    final int ENDPOINT_ID = 1;
+    final String ENDPOINT_NAME = "getFullServiceInfoTest";
+    final int REQUEST_VARIABLE_ID = 93;
+    final String REQUEST_VARIABLE_KEY_NAME = "VariableOneForFetchAllInfo";
+    final int CATEGORY_ID = 12;
+    final int USER_ID = 10;
+
+    CategoryEntity mockCategory = new CategoryEntity();
+    mockCategory.setCategoryId(CATEGORY_ID);
+    mockCategory.setName("NameForFetchFullInfoTestCategory");
+    mockCategory.setColor("#FFFFFF");
+
+    UserEntity mockUser = new UserEntity();
+    mockUser.setUserId(USER_ID);
+    mockUser.setActive(true);
+    mockUser.setRole(UserRoleEnum.ADMIN);
+    mockUser.setEmail("exampleFetchAllInfoTestEmail@autozone.com");
+
+    EndpointsEntity mockEndpoint = new EndpointsEntity();
+    mockEndpoint.setEndpointId(ENDPOINT_ID);
+    mockEndpoint.setCategory(mockCategory);
+    mockEndpoint.setName(ENDPOINT_NAME);
+    mockEndpoint.setUser(mockUser);
+    mockEndpoint.setDescription("Test Description");
+    mockEndpoint.setMethod(EndpointMethodEnum.GET);
+    mockEndpoint.setUrl("http://testservice.com");
+
+    given(endpointsRepository.findByEndpointId(1)).willReturn(Optional.of(mockEndpoint));
+
+    RequestVariableEntity mockVar = new RequestVariableEntity();
+    mockVar.setRequestVariableId(REQUEST_VARIABLE_ID);
+    mockVar.setEndpoint(mockEndpoint);
+    mockVar.setKeyName(REQUEST_VARIABLE_KEY_NAME);
+    mockVar.setDefaultValue("ijjoijopjl");
+    mockVar.setType(RequestVariableTypeEnum.HEADER);
+    mockVar.setDescription("A test variable");
+
+    List<RequestVariableEntity> mockRequestVariables = new ArrayList<>();
+    mockRequestVariables.add(mockVar);
+
+    given(requestVariableRepository.findByEndpoint_EndpointId(ENDPOINT_ID))
+        .willReturn(mockRequestVariables);
+
+    ResponseEntity mockResponse = new ResponseEntity();
+    mockResponse.setEndpoint(mockEndpoint);
+    mockResponse.setStatusCode(200);
+    mockResponse.setDescription("Success");
+
+    List<ResponseEntity> mockResponses = new ArrayList<>();
+    mockResponses.add(mockResponse);
+
+    given(responseRepository.findByEndpoint_EndpointId(ENDPOINT_ID)).willReturn(mockResponses);
+
+    // Act
+    CreateServiceDTO result = endpointService.getFullServiceInfoById(ENDPOINT_ID);
+
+    // Assert
+    assertNotNull(result);
+    assertEquals(ENDPOINT_NAME, result.getName());
+    assertEquals(EndpointMethodEnum.GET, result.getMethod());
+    assertEquals(
+        REQUEST_VARIABLE_ID,
+        requestVariableRepository
+            .findByEndpoint_EndpointId(ENDPOINT_ID)
+            .getFirst()
+            .getRequestVariableId());
+    assertEquals(REQUEST_VARIABLE_KEY_NAME, result.getRequestVariables().getFirst().getKey());
+  }
+
+  @Test
+  void testGetFullServiceInfoById_withInvalidRequest_shouldThrow() {
+    // Act & Assert
+    ServiceNotFoundException exception =
+        assertThrows(
+            ServiceNotFoundException.class, () -> endpointService.getFullServiceInfoById(1));
+
+    assertThat(exception.getMessage()).contains("Endpoint not found with id");
   }
 }

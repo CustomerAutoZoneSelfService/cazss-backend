@@ -1,5 +1,6 @@
 package com.autozone.cazss_backend.repository;
 
+import com.autozone.cazss_backend.entity.EndpointsEntity;
 import com.autozone.cazss_backend.entity.ResponseEntity;
 import java.util.List;
 import java.util.Optional;
@@ -16,4 +17,6 @@ public interface ResponseRepository extends JpaRepository<ResponseEntity, Intege
       @Param("endpointId") Integer endpointId, @Param("statusCode") Integer statusCode);
 
   void deleteByEndpoint_EndpointId(Integer endpointId);
+
+  List<ResponseEntity> findByEndpoint(EndpointsEntity endpoint);
 }

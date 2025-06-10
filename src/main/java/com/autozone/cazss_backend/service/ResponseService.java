@@ -3,7 +3,6 @@ package com.autozone.cazss_backend.service;
 import com.autozone.cazss_backend.DTO.CreateResponseDTO;
 import com.autozone.cazss_backend.entity.EndpointsEntity;
 import com.autozone.cazss_backend.entity.ResponseEntity;
-import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
 import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.ResponseRepository;
 import jakarta.transaction.Transactional;
@@ -19,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class ResponseService {
   @Autowired private ResponseRepository responseRepository;
   @Autowired private EndpointsRepository endpointsRepository;
+  @Autowired private ResponsePatternService responsePatternService;
 
   public ResponseEntity createResponse(EndpointsEntity endpoint, CreateResponseDTO responseDTO) {
     ResponseEntity responseEntity = new ResponseEntity();
@@ -30,7 +30,7 @@ public class ResponseService {
   }
 
   @Transactional
-  public void updateResponses(Integer endpointId, List<CreateResponseDTO> dtos) {
+  public void updateResponses(EndpointsEntity endpoint, List<CreateResponseDTO> dtos) {
     Set<Integer> codeSet = new HashSet<>();
     for (CreateResponseDTO dto : dtos) {
       if (!codeSet.add(dto.getStatusCode())) {
@@ -38,26 +38,25 @@ public class ResponseService {
       }
     }
 
-    EndpointsEntity endpoint =
-        endpointsRepository
-            .findById(endpointId)
-            .orElseThrow(
-                () -> new ServiceNotFoundException("Endpoint not found with id: " + endpointId));
-
-    List<ResponseEntity> existingResponses =
-        responseRepository.findByEndpoint_EndpointId(endpointId);
+    List<ResponseEntity> existingResponses = responseRepository.findByEndpoint(endpoint);
     Map<Integer, ResponseEntity> existingMap =
         existingResponses.stream().collect(Collectors.toMap(ResponseEntity::getStatusCode, r -> r));
     Set<Integer> incomingCodes =
         dtos.stream().map(CreateResponseDTO::getStatusCode).collect(Collectors.toSet());
 
     for (CreateResponseDTO dto : dtos) {
-      ResponseEntity existing = existingMap.get(dto.getStatusCode());
-      if (existing != null) {
-        existing.setDescription(dto.getDescription());
-        responseRepository.save(existing);
+      ResponseEntity responseEntity = existingMap.get(dto.getStatusCode());
+      ResponseEntity savedResponseEntity;
+      if (responseEntity == null) {
+        savedResponseEntity = createResponse(endpoint, dto);
       } else {
-        createResponse(endpoint, dto);
+        responseEntity.setDescription(dto.getDescription());
+        savedResponseEntity = responseRepository.save(responseEntity);
+      }
+
+      if (dto.getPatterns() != null && !dto.getPatterns().isEmpty()) {
+        responsePatternService.replacePatterns(
+                savedResponseEntity.getResponseId(), dto.getPatterns());
       }
     }
     for (ResponseEntity existingRes : existingResponses) {
