@@ -52,6 +52,7 @@ public class EndpointServiceTest {
 
   @InjectMocks private EndpointService endpointService;
 
+  private static final Integer TEST_USER_ID = 1;
   private static final String TEST_USER_EMAIL = "test@example.com";
 
   @BeforeEach
@@ -67,7 +68,8 @@ public class EndpointServiceTest {
     SecurityContext securityContext = mock(SecurityContext.class);
     Authentication authentication = mock(Authentication.class);
     given(securityContext.getAuthentication()).willReturn(authentication);
-    given(authentication.getName()).willReturn(TEST_USER_EMAIL);
+    given(authentication.getName()).willReturn(String.valueOf(TEST_USER_ID));
+    given(authentication.isAuthenticated()).willReturn(true);
     SecurityContextHolder.setContext(securityContext);
 
     CreateServiceDTO dto = new CreateServiceDTO();
@@ -86,8 +88,9 @@ public class EndpointServiceTest {
     given(categoryRepository.findById(1)).willReturn(Optional.of(cat));
 
     UserEntity usr = new UserEntity();
+    usr.setUserId(TEST_USER_ID);
     usr.setEmail(TEST_USER_EMAIL);
-    given(userRepository.findByEmail(TEST_USER_EMAIL)).willReturn(Optional.of(usr));
+    given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(usr));
 
     EndpointsEntity saved = new EndpointsEntity();
     saved.setEndpointId(42);

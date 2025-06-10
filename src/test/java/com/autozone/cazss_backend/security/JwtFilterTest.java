@@ -37,14 +37,14 @@ class JwtFilterTest {
   @Mock private FilterChain filterChain;
 
   private UserDetails mockUserDetails;
-  private final String testEmail = "test@example.com";
+  private final String testUserId = "1";
 
   @BeforeEach
   void setUp() {
     SecurityContextHolder.clearContext();
     mockUserDetails =
         new User(
-            testEmail,
+            testUserId,
             "password",
             Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
   }
@@ -76,14 +76,14 @@ class JwtFilterTest {
     String jwt = "valid.jwt.token";
 
     when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-    when(jwtUtil.extractEmail(jwt)).thenReturn(testEmail);
-    when(userDetailsService.loadUserByUsername(testEmail)).thenReturn(mockUserDetails);
+    when(jwtUtil.extractUserId(jwt)).thenReturn(testUserId);
+    when(userDetailsService.loadUserById(Integer.parseInt(testUserId))).thenReturn(mockUserDetails);
     when(jwtUtil.validateToken(jwt, mockUserDetails)).thenReturn(true);
 
     jwtFilter.doFilterInternal(request, response, filterChain);
 
     assertNotNull(SecurityContextHolder.getContext().getAuthentication());
-    assertEquals(testEmail, SecurityContextHolder.getContext().getAuthentication().getName());
+    assertEquals(testUserId, SecurityContextHolder.getContext().getAuthentication().getName());
     verify(filterChain).doFilter(request, response);
   }
 
@@ -93,8 +93,8 @@ class JwtFilterTest {
     String jwt = "invalid.jwt.token";
 
     when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-    when(jwtUtil.extractEmail(jwt)).thenReturn(testEmail);
-    when(userDetailsService.loadUserByUsername(testEmail)).thenReturn(mockUserDetails);
+    when(jwtUtil.extractUserId(jwt)).thenReturn(testUserId);
+    when(userDetailsService.loadUserById(Integer.parseInt(testUserId))).thenReturn(mockUserDetails);
     when(jwtUtil.validateToken(jwt, mockUserDetails)).thenReturn(false);
 
     jwtFilter.doFilterInternal(request, response, filterChain);
@@ -108,7 +108,7 @@ class JwtFilterTest {
       throws ServletException, IOException {
     String jwt = "exception.causing.token";
     when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-    when(jwtUtil.extractEmail(jwt)).thenThrow(new RuntimeException("JWT parsing error"));
+    when(jwtUtil.extractUserId(jwt)).thenThrow(new RuntimeException("JWT parsing error"));
 
     jwtFilter.doFilterInternal(request, response, filterChain);
 
@@ -117,17 +117,16 @@ class JwtFilterTest {
   }
 
   @Test
-  void doFilterInternal_emailNullFromToken_shouldNotSetAuthentication()
+  void doFilterInternal_userIdNullFromToken_shouldNotSetAuthentication()
       throws ServletException, IOException {
-    String jwt = "token.with.null.email";
+    String jwt = "token.with.null.userid";
     when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-    when(jwtUtil.extractEmail(jwt)).thenReturn(null);
+    when(jwtUtil.extractUserId(jwt)).thenReturn(null);
 
     jwtFilter.doFilterInternal(request, response, filterChain);
 
     assertNull(SecurityContextHolder.getContext().getAuthentication());
-    verify(filterChain).doFilter(request, response);
-    verify(userDetailsService, never()).loadUserByUsername(anyString());
+    verify(userDetailsService, never()).loadUserById(anyInt());
   }
 
   @Test
@@ -139,11 +138,11 @@ class JwtFilterTest {
     String jwt = "valid.jwt.token";
 
     when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-    when(jwtUtil.extractEmail(jwt)).thenReturn(testEmail);
+    when(jwtUtil.extractUserId(jwt)).thenReturn(testUserId);
 
     jwtFilter.doFilterInternal(request, response, filterChain);
 
-    verify(userDetailsService, never()).loadUserByUsername(anyString());
+    verify(userDetailsService, never()).loadUserById(anyInt());
     verify(jwtUtil, never()).validateToken(anyString(), any(UserDetails.class));
     verify(filterChain).doFilter(request, response);
   }
