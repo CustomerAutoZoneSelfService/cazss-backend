@@ -12,7 +12,6 @@ public class CreateServiceDTO {
   private EndpointMethodEnum method;
   private String url;
   private Integer authenticationStrategy;
-  private Integer userId;
   // Template
   private String template;
 
@@ -79,14 +78,6 @@ public class CreateServiceDTO {
     this.authenticationStrategy = authenticationStrategy;
   }
 
-  public Integer getUserId() {
-    return userId;
-  }
-
-  public void setUserId(Integer userId) {
-    this.userId = userId;
-  }
-
   public String getTemplate() {
     return template;
   }
@@ -132,8 +123,6 @@ public class CreateServiceDTO {
         + '\''
         + ", authenticationStrategy="
         + authenticationStrategy
-        + ", userId="
-        + userId
         + ", template='"
         + template
         + '\''
