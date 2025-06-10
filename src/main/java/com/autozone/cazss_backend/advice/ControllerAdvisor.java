@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class ControllerAdvisor {
 
-  @ExceptionHandler(ServiceNotFoundException.class)
+  @ExceptionHandler({ServiceNotFoundException.class, UserNotFoundException.class})
   public ResponseEntity<ErrorResponseTemplate> handleNotFoundException(
       ServiceNotFoundException ex) {
     ErrorResponseTemplate error =

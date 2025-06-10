@@ -96,7 +96,6 @@ public class EndpointServiceTest {
     given(endpointsRepository.findByEndpointId(1)).willReturn(Optional.of(endpoint));
     given(requestVariableRepository.findByEndpoint_EndpointId(1)).willReturn(List.of());
     given(responseRepository.findByEndpoint_EndpointId(1)).willReturn(List.of());
-    given(responsePatternRepository.findByResponse_ResponseIdIn(Set.of())).willReturn(List.of());
     given(requestBodyRepository.findByEndpoint_EndpointId(1)).willReturn(Optional.empty());
 
     ServiceInfoDTO result = endpointService.getServiceById(1);
@@ -129,7 +128,6 @@ public class EndpointServiceTest {
     given(endpointsRepository.findByEndpointId(endpointId)).willReturn(Optional.of(endpoint));
     given(requestVariableRepository.findByEndpoint_EndpointId(endpointId)).willReturn(List.of());
     given(responseRepository.findByEndpoint_EndpointId(endpointId)).willReturn(List.of());
-    given(responsePatternRepository.findByResponse_ResponseIdIn(Set.of())).willReturn(List.of());
     given(requestBodyRepository.findByEndpoint_EndpointId(endpointId)).willReturn(Optional.empty());
 
     ServiceInfoRequestModel request = new ServiceInfoRequestModel();
