@@ -2,6 +2,7 @@ package com.autozone.cazss_backend.service;
 
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.exceptions.AuthenticationStrategyNotFoundException;
 import com.autozone.cazss_backend.exceptions.ServiceNotActiveException;
 import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
 import com.autozone.cazss_backend.exceptions.ValidationException;
@@ -55,6 +56,8 @@ public class EndpointService {
   @Autowired private CategoryRepository categoryRepository;
 
   @Autowired private EndpointAuthenticationUtil endpointAuthenticationUtil;
+
+  @Autowired private AuthenticationStrategyRepository authenticationStrategyRepository;
 
   public List<ServiceDTO> getAllServices() {
     return endpointsRepository.findAllServiceDTOs();
@@ -244,6 +247,7 @@ public class EndpointService {
       CategoryEntity category,
       UserEntity user,
       CreateServiceDTO serviceDTO) {
+    AuthenticationStrategyEntity authenticationStrategyEntity = authenticationStrategyRepository.findById(serviceDTO.getAuthenticationStrategy()).orElseThrow(() -> new AuthenticationStrategyNotFoundException("Authentication strategy not found with id: " + serviceDTO.getAuthenticationStrategy()));
     endpoint.setCategory(category);
     endpoint.setUser(user);
     endpoint.setActive(serviceDTO.getActive());
@@ -251,6 +255,7 @@ public class EndpointService {
     endpoint.setDescription(serviceDTO.getDescription());
     endpoint.setMethod(serviceDTO.getMethod());
     endpoint.setUrl(serviceDTO.getUrl());
+    endpoint.setAuthStrategy(authenticationStrategyEntity);
   }
 
   /**
