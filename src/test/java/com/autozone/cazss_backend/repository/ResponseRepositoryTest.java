@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(classes = CazssBackendApplication.class)
 public class ResponseRepositoryTest {
@@ -21,6 +23,8 @@ public class ResponseRepositoryTest {
   @Autowired private CategoryRepository categoryRepository;
 
   @Autowired private UserRepository userRepository;
+
+  @Autowired private AuthenticationStrategyRepository authenticationStrategyRepository;
 
   private ResponseEntity createSampleResponse() {
     String uniqueSuffix = String.valueOf(System.currentTimeMillis());
@@ -37,6 +41,11 @@ public class ResponseRepositoryTest {
     CategoryEntity category =
         categoryRepository.save(new CategoryEntity("RESPONSE_" + uniqueSuffix, "#C2F0C2"));
 
+    AuthenticationStrategyEntity authStrategy =
+        authenticationStrategyRepository.save(
+            new AuthenticationStrategyEntity(
+                "ResponseRepositoryTest_" + uniqueSuffix, AuthStrategyEnum.Bearer, null));
+
     EndpointsEntity endpoint =
         endpointsRepository.save(
             new EndpointsEntity(
@@ -46,7 +55,8 @@ public class ResponseRepositoryTest {
                 "Sample Endpoint " + uniqueSuffix,
                 "This is a test endpoint",
                 EndpointMethodEnum.POST,
-                "https://sample.endpoint"));
+                "https://sample.endpoint",
+                authStrategy));
 
     ResponseEntity response = new ResponseEntity();
     response.setEndpoint(endpoint);
@@ -57,6 +67,7 @@ public class ResponseRepositoryTest {
   }
 
   @Test
+  @Transactional
   public void givenResponseRepository_whenSaveAndFind_thenOK() {
     ResponseEntity saved = createSampleResponse();
 
@@ -70,6 +81,7 @@ public class ResponseRepositoryTest {
   }
 
   @Test
+  @Transactional
   public void givenResponseRepository_whenUpdate_thenOK() {
     ResponseEntity response = createSampleResponse();
     response.setDescription("Updated Description");
@@ -84,6 +96,7 @@ public class ResponseRepositoryTest {
   }
 
   @Test
+  @Transactional
   public void givenResponseRepository_whenDelete_thenOK() {
     ResponseEntity response = createSampleResponse();
     Integer id = response.getResponseId();

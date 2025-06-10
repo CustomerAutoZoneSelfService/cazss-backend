@@ -63,7 +63,7 @@ public class AuthenticationStrategyAttributeRepositoryTest {
 
     // Crear estrategia de autenticación
     authStrategy = new AuthenticationStrategyEntity();
-    authStrategy.setEndpoint(endpoint);
+    authStrategy.setName("AuthenticationStrategyAttributeRepositoryTest");
     authStrategy.setStrategy(AuthStrategyEnum.Bearer);
     authStrategy = authenticationStrategyRepository.save(authStrategy);
   }

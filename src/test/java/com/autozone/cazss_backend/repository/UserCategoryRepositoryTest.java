@@ -8,11 +8,11 @@ import com.autozone.cazss_backend.entity.UserCategoryEntity;
 import com.autozone.cazss_backend.entity.UserCategoryEntity.UserCategoryId;
 import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
-import jakarta.transaction.Transactional;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(classes = CazssBackendApplication.class)
 public class UserCategoryRepositoryTest {

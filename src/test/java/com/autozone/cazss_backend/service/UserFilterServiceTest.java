@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test class for UserFilterService. Uses Mockito for mocking dependencies and JUnit 5 for testing.
@@ -88,6 +89,7 @@ class UserFilterServiceTest {
    * Test successful retrieval of user filters by service ID. Should return a list containing one
    * filter.
    */
+  @Transactional
   @Test
   void getUserFiltersByServiceId_Success() {
     // Arrange: Set up mock repository responses
@@ -106,6 +108,7 @@ class UserFilterServiceTest {
   }
 
   /** Test validation when endpoint ID is null. Should throw ValidationException. */
+  @Transactional
   @Test
   void getUserFiltersByServiceId_NullEndpointId() {
     assertThrows(
@@ -113,6 +116,7 @@ class UserFilterServiceTest {
   }
 
   /** Test case when user is not found. Should throw ServiceNotFoundException. */
+  @Transactional
   @Test
   void getUserFiltersByServiceId_UserNotFound() {
     // Arrange: Mock user repository to return empty
@@ -126,6 +130,7 @@ class UserFilterServiceTest {
   /**
    * Test successful creation of user filters. Should save new filters without throwing exceptions.
    */
+  @Transactional
   @Test
   void createUserFilters_Success() {
     // Arrange: Create request DTO and set up mock responses
@@ -148,6 +153,7 @@ class UserFilterServiceTest {
   }
 
   /** Test validation when request contains null values. Should throw ValidationException. */
+  @Transactional
   @Test
   void createUserFilters_ValidationFailure() {
     RequestUserFilterDTO request = new RequestUserFilterDTO();
@@ -160,6 +166,7 @@ class UserFilterServiceTest {
   /**
    * Test validation when request contains duplicate pattern IDs. Should throw ValidationException.
    */
+  @Transactional
   @Test
   void createUserFilters_DuplicatePatternIds() {
     RequestUserFilterDTO request = new RequestUserFilterDTO();
@@ -173,6 +180,7 @@ class UserFilterServiceTest {
    * Test validation when request contains invalid pattern IDs. Should throw
    * ServiceNotFoundException.
    */
+  @Transactional
   @Test
   void createUserFilters_InvalidPatternIds() {
     // Arrange: Create request with pattern IDs where one doesn't exist
@@ -192,6 +200,7 @@ class UserFilterServiceTest {
   /**
    * Test successful deletion of a user filter. Should delete filter without throwing exceptions.
    */
+  @Transactional
   @Test
   void deleteUserFilter_Success() {
     when(userFilterRepository.existsById(any(UserFilterId.class))).thenReturn(true);
@@ -201,12 +210,14 @@ class UserFilterServiceTest {
   }
 
   /** Test validation when delete request contains null values. Should throw ValidationException. */
+  @Transactional
   @Test
   void deleteUserFilter_ValidationFailure() {
     assertThrows(ValidationException.class, () -> userFilterService.deleteUserFilter(null, null));
   }
 
   /** Test deletion when filter doesn't exist. Should throw ServiceNotFoundException. */
+  @Transactional
   @Test
   void deleteUserFilter_NotFound() {
     when(userFilterRepository.existsById(any(UserFilterId.class))).thenReturn(false);

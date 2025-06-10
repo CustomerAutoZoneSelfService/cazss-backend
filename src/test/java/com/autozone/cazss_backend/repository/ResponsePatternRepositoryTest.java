@@ -4,13 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
-import jakarta.transaction.Transactional;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(classes = CazssBackendApplication.class)
 public class ResponsePatternRepositoryTest {
@@ -24,6 +25,8 @@ public class ResponsePatternRepositoryTest {
   @Autowired private UserRepository userRepository;
 
   @Autowired private CategoryRepository categoryRepository;
+
+  @Autowired private AuthenticationStrategyRepository authenticationStrategyRepository;
 
   private ResponsePatternEntity createSampleResponsePattern() {
     String uniqueSuffix = String.valueOf(System.currentTimeMillis());
@@ -40,6 +43,11 @@ public class ResponsePatternRepositoryTest {
     CategoryEntity category =
         categoryRepository.save(new CategoryEntity("PATTERN_" + uniqueSuffix, "#FAFAFA"));
 
+    AuthenticationStrategyEntity authStrategy =
+        authenticationStrategyRepository.save(
+            new AuthenticationStrategyEntity(
+                "ResponsePatternRepositoryTest_" + uniqueSuffix, AuthStrategyEnum.Bearer, null));
+
     EndpointsEntity endpoint =
         endpointsRepository.save(
             new EndpointsEntity(
@@ -49,7 +57,8 @@ public class ResponsePatternRepositoryTest {
                 "Pattern Endpoint " + uniqueSuffix,
                 "Pattern Endpoint Description",
                 EndpointMethodEnum.GET,
-                "https://pattern.endpoint"));
+                "https://pattern.endpoint",
+                authStrategy));
 
     ResponseEntity response =
         responseRepository.save(new ResponseEntity(null, endpoint, 200, "OK Response"));
@@ -65,8 +74,8 @@ public class ResponsePatternRepositoryTest {
     return responsePatternRepository.save(pattern);
   }
 
-  @Transactional
   @Test
+  @Transactional
   public void givenResponsePatternRepository_whenSaveAndFind_thenOK() {
     ResponsePatternEntity saved = createSampleResponsePattern();
 
@@ -81,8 +90,8 @@ public class ResponsePatternRepositoryTest {
     assertEquals(200, found.getResponse().getStatusCode());
   }
 
-  @Transactional
   @Test
+  @Transactional
   public void givenResponsePatternRepository_whenUpdate_thenOK() {
     ResponsePatternEntity pattern = createSampleResponsePattern();
     pattern.setPattern("$.data.items[*].id");
@@ -95,8 +104,8 @@ public class ResponsePatternRepositoryTest {
     assertEquals("$.data.items[*].id", foundOpt.get().getPattern());
   }
 
-  @Transactional
   @Test
+  @Transactional
   public void givenResponsePatternRepository_whenDelete_thenOK() {
     ResponsePatternEntity pattern = createSampleResponsePattern();
     Integer id = pattern.getResponsePatternId();

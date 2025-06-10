@@ -10,6 +10,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /** Handles framework-level, validation, integration, and unknown exceptions. */
 @ControllerAdvice
@@ -103,7 +105,7 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
   }
 
-  @ExceptionHandler(MethodArgumentNotValidException.class) // Excepción de bad request
+  @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<Object> handleMethodArgumentNotValid(
       final MethodArgumentNotValidException ex) {
     // Obtener el mensaje de error de validación
@@ -142,6 +144,40 @@ public class GlobalExceptionHandler {
             "INVALID_REQUEST",
             ex.getMessage(),
             "Check your request fields.",
+            LocalDateTime.now(),
+            UUID.randomUUID().toString());
+
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(HandlerMethodValidationException.class)
+  public ResponseEntity<Object> handleMethodArgumentNotValid(
+      final HandlerMethodValidationException ex) {
+    // Obtener el mensaje de error de validación
+    String defaultMessage = ex.getMessage();
+    // Crear el objeto ErrorResponse
+    ErrorResponseTemplate error =
+        new ErrorResponseTemplate(
+            "VALIDATION_ERROR",
+            defaultMessage,
+            ex.getAllErrors().getLast().getDefaultMessage(),
+            LocalDateTime.now(),
+            UUID.randomUUID().toString());
+
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<Object> handleMethodArgumentNotValid(
+      final MethodArgumentTypeMismatchException ex) {
+    // Obtener el mensaje de error de validación
+    String defaultMessage = ex.getMessage();
+    // Crear el objeto ErrorResponse
+    ErrorResponseTemplate error =
+        new ErrorResponseTemplate(
+            "VALIDATION_ERROR",
+            "Check your parameters",
+            defaultMessage,
             LocalDateTime.now(),
             UUID.randomUUID().toString());
 

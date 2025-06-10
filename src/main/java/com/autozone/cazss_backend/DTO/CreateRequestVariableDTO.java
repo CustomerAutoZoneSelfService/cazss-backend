@@ -9,6 +9,19 @@ public class CreateRequestVariableDTO {
   private Boolean customizable;
   private String description;
 
+  public CreateRequestVariableDTO(
+      RequestVariableTypeEnum type,
+      String key,
+      String defaultValue,
+      Boolean customizable,
+      String description) {
+    this.type = type;
+    this.key = key;
+    this.defaultValue = defaultValue;
+    this.customizable = customizable;
+    this.description = description;
+  }
+
   public RequestVariableTypeEnum getType() {
     return type;
   }
