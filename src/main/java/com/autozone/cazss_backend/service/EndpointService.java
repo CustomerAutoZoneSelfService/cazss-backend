@@ -51,6 +51,8 @@ public class EndpointService {
 
   @Autowired private CategoryRepository categoryRepository;
 
+  @Autowired private EndpointAuthenticationUtil endpointAuthenticationUtil;
+
   public List<ServiceDTO> getAllServices() {
     return endpointsRepository.findAllServiceDTOs();
   }
@@ -329,6 +331,14 @@ public class EndpointService {
     ServiceInfoDTO serviceInfo = getServiceById(id);
     logger.debug("Información del servicio obtenida: {}", serviceInfo);
 
+    EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
+    AuthenticationStrategyEntity authStrategy = endpoint.getAuthStrategy();
+
+    if (authStrategy != null) {
+      logger.debug("Hooking request with the following authentication strategy: {}", authStrategy);
+      endpointAuthenticationUtil.hookRequest(serviceInfoRequestModel, authStrategy);
+    }
+
     String template =
         templateFiller.returnFilledTemplate(serviceInfoRequestModel.getBody(), serviceInfo.getId());
 
@@ -361,7 +371,6 @@ public class EndpointService {
     // SAVE IN HISTORY
     UserEntity user =
         userRepository.getReferenceById(90); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
-    EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
     historyService.addHistory(
         user, endpoint, status.getCode(), serviceInfoRequestModel.toString(), "");
     // SAVE IN HISTORY - END

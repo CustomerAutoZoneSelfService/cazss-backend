@@ -56,7 +56,7 @@ public class ResponseService {
 
       if (dto.getPatterns() != null && !dto.getPatterns().isEmpty()) {
         responsePatternService.replacePatterns(
-                savedResponseEntity.getResponseId(), dto.getPatterns());
+            savedResponseEntity.getResponseId(), dto.getPatterns());
       }
     }
     for (ResponseEntity existingRes : existingResponses) {

@@ -140,6 +140,7 @@ public class EndpointServiceTest {
     given(responseRepository.findByEndpoint_EndpointId(endpointId)).willReturn(List.of());
     given(responsePatternRepository.findByResponse_ResponseIdIn(Set.of())).willReturn(List.of());
     given(requestBodyRepository.findByEndpoint_EndpointId(endpointId)).willReturn(Optional.empty());
+    given(endpointsRepository.getReferenceById(endpointId)).willReturn(endpoint);
 
     ServiceInfoRequestModel request = new ServiceInfoRequestModel();
     request.setBody(List.of(new BodyModel("name", "John")));

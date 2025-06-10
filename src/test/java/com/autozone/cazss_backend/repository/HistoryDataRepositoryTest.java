@@ -4,14 +4,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.HistoryDataTypeEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(classes = CazssBackendApplication.class)
 public class HistoryDataRepositoryTest {
@@ -26,6 +29,8 @@ public class HistoryDataRepositoryTest {
 
   @Autowired private CategoryRepository categoryRepository;
 
+  @Autowired private AuthenticationStrategyRepository authenticationStrategyRepository;
+
   private HistoryDataEntity createSampleHistoryData() {
     String suffix = String.valueOf(System.currentTimeMillis()); // Generar un sufijo único
 
@@ -36,6 +41,11 @@ public class HistoryDataRepositoryTest {
     CategoryEntity category =
         categoryRepository.save(new CategoryEntity("HISTORY_DATA_" + suffix, "#FFFFFF"));
 
+    AuthenticationStrategyEntity authStrategy =
+        authenticationStrategyRepository.save(
+            new AuthenticationStrategyEntity(
+                "HistoryDataRepositoryTest_" + suffix, AuthStrategyEnum.Bearer, new ArrayList<>()));
+
     EndpointsEntity endpoint =
         endpointsRepository.save(
             new EndpointsEntity(
@@ -45,7 +55,8 @@ public class HistoryDataRepositoryTest {
                 "History Endpoint " + suffix,
                 "Test endpoint for history data",
                 EndpointMethodEnum.GET,
-                "https://historydata.example"));
+                "https://historydata.example",
+                authStrategy));
 
     HistoryEntity history = new HistoryEntity();
     history.setUser(user);
@@ -94,6 +105,7 @@ public class HistoryDataRepositoryTest {
   }
 
   @Test
+  @Transactional
   public void givenHistoryDataRepository_whenDelete_thenOK() {
     HistoryDataEntity historyData = createSampleHistoryData();
     Integer id = historyData.getHistoryDataId();

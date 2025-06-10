@@ -1,6 +1,7 @@
 package com.autozone.cazss_backend.entity;
 
 import jakarta.persistence.*;
+import java.util.Objects;
 
 @Entity
 @Table(name = "Authentication_strategy_attributes", schema = "cazss")
@@ -63,5 +64,36 @@ public class AuthenticationStrategyAttributeEntity {
 
   public void setValue(String value) {
     this.value = value;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    AuthenticationStrategyAttributeEntity that = (AuthenticationStrategyAttributeEntity) o;
+    return Objects.equals(authStrategyAttributeId, that.authStrategyAttributeId)
+        && Objects.equals(authStrategy, that.authStrategy)
+        && Objects.equals(keyName, that.keyName)
+        && Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(authStrategyAttributeId, authStrategy, keyName, value);
+  }
+
+  @Override
+  public String toString() {
+    return "AuthenticationStrategyAttributeEntity{"
+        + "authStrategyAttributeId="
+        + authStrategyAttributeId
+        + ", authStrategy="
+        + authStrategy
+        + ", keyName='"
+        + keyName
+        + '\''
+        + ", value='"
+        + value
+        + '\''
+        + '}';
   }
 }
