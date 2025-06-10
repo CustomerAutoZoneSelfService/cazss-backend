@@ -185,10 +185,9 @@ public class EndpointService {
   public ServiceDTO createCompleteService(CreateServiceDTO serviceDTO) {
     logger.debug("Creating {} service: {}", serviceDTO.getName(), serviceDTO);
 
-    Integer placeHolderUser = 90;
     // Category and User
     List<Object> independentEntities =
-        getExistingEntitiesIndependentOfService(serviceDTO.getCategoryId(), placeHolderUser);
+        getExistingEntitiesIndependentOfService(serviceDTO.getCategoryId());
 
     // Get authenticated user id from security context
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -264,10 +263,9 @@ public class EndpointService {
             .findByEndpointId(id)
             .orElseThrow(() -> new ServiceNotFoundException("Service not found with id " + id));
     logger.debug("Found existing endpoint with id: {}", existingEndpoint.getEndpointId());
-    Integer placeHolderUser = 90;
     // Category and User
     List<Object> independentEntities =
-        getExistingEntitiesIndependentOfService(updatedService.getCategoryId(), placeHolderUser);
+        getExistingEntitiesIndependentOfService(updatedService.getCategoryId());
     mapDtoToEndpoint(
         existingEndpoint,
         (CategoryEntity) independentEntities.get(0),
@@ -281,7 +279,7 @@ public class EndpointService {
         existingEndpoint.getDescription());
   }
 
-  private List<Object> getExistingEntitiesIndependentOfService(Integer categoryId, Integer userId) {
+  private List<Object> getExistingEntitiesIndependentOfService(Integer categoryId) {
     List<Object> entities = new ArrayList<>();
     // Category
     CategoryEntity category =
@@ -293,10 +291,33 @@ public class EndpointService {
     entities.add(category);
 
     // User
+
+    // Get authenticated user id from security context
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new ServiceNotFoundException("No authenticated user found");
+    }
+
+    String userIdStr = authentication.getName();
+    Integer userId;
+    try {
+      userId = Integer.parseInt(userIdStr);
+    } catch (NumberFormatException e) {
+      logger.error("Invalid user ID format in JWT token: {}", userIdStr);
+      throw new ServiceNotFoundException("Invalid user ID format in authentication token");
+    }
+
+    // User
     UserEntity user =
         userRepository
             .findById(userId)
-            .orElseThrow(() -> new ServiceNotFoundException("User not found with id " + userId));
+            .orElseThrow(
+                () -> {
+                  logger.error("User not found with ID: {}", userId);
+                  return new ServiceNotFoundException("User not found with ID: " + userId);
+                });
+
+    logger.debug("Found user: {}", user.getUserId());
 
     entities.add(user);
 
@@ -315,18 +336,17 @@ public class EndpointService {
     if (serviceDTO.getRequestVariables() != null && !serviceDTO.getRequestVariables().isEmpty()) {
       for (CreateRequestVariableDTO requestVariableDTO : serviceDTO.getRequestVariables())
         requestVariableService.updateRequestVariables(endpoint, serviceDTO.getRequestVariables());
+      logger.debug("Updated request variables for endpoint id {}", endpoint.getEndpointId());
     }
-    logger.debug("Updated request variables for endpoint id {}", endpoint.getEndpointId());
 
     // Responses
     if (serviceDTO.getResponses() != null && !serviceDTO.getResponses().isEmpty()) {
       responseService.updateResponses(endpoint, serviceDTO.getResponses());
+      logger.debug(
+          "Created {} responses for endpoint id {}",
+          serviceDTO.getResponses().size(),
+          endpoint.getEndpointId());
     }
-
-    logger.debug(
-        "Created {} responses for endpoint id {}",
-        serviceDTO.getResponses().size(),
-        endpoint.getEndpointId());
   }
 
   // Method to execute the service based on the request model
