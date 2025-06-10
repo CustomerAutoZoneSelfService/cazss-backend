@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -35,6 +36,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -71,6 +75,14 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenValidInputs_thenDeleteAccessSuccess() {
+    when(permissionValidator.isAdmin(adminUser.getUserId())).thenReturn(false);
+
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(adminUser.getUserId()));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
     // Arrange
     when(userRepository.findByUserId(1)).thenReturn(Optional.of(adminUser));
     when(permissionValidator.isAdmin(1)).thenReturn(true);
@@ -80,7 +92,7 @@ public class UserCategoryServiceTest {
         .thenReturn(1L);
 
     // Act
-    String result = userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, List.of(2));
+    String result = userCategoryService.deleteAccessToCategoryForUsers(categoryId, List.of(2));
 
     // Assert
     assertNotNull(result);
@@ -90,11 +102,17 @@ public class UserCategoryServiceTest {
 
   @Test
   public void whenUserIdsListIsEmpty_thenThrowIllegalArgumentException() {
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(adminUser.getUserId()));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
     IllegalArgumentException thrown =
         assertThrows(
             IllegalArgumentException.class,
             () -> {
-              userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, new ArrayList<>());
+              userCategoryService.deleteAccessToCategoryForUsers(categoryId, new ArrayList<>());
             });
     assertEquals("List of userIds cannot be empty", thrown.getMessage());
   }
@@ -103,11 +121,17 @@ public class UserCategoryServiceTest {
   public void whenUserNotFound_thenThrowUnauthorized() {
     when(userRepository.findByUserId(1)).thenReturn(Optional.empty());
 
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(adminUser.getUserId()));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
     ResponseStatusException thrown =
         assertThrows(
             ResponseStatusException.class,
             () -> {
-              userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, List.of(2));
+              userCategoryService.deleteAccessToCategoryForUsers(categoryId, List.of(2));
             });
 
     assertEquals(HttpStatus.UNAUTHORIZED, thrown.getStatusCode());
@@ -118,12 +142,17 @@ public class UserCategoryServiceTest {
   public void whenUserIsNotAdmin_thenThrowUnauthorizedUserException() {
     when(userRepository.findByUserId(2)).thenReturn(Optional.of(normalUser));
     when(permissionValidator.isAdmin(2)).thenReturn(false);
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(normalUser.getUserId()));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
 
     UnauthorizedUserException thrown =
         assertThrows(
             UnauthorizedUserException.class,
             () -> {
-              userCategoryService.deleteAccessToCategoryForUsers(2, categoryId, List.of(3));
+              userCategoryService.deleteAccessToCategoryForUsers(categoryId, List.of(3));
             });
 
     assertEquals("This feature is only available to administrators.", thrown.getMessage());
@@ -138,7 +167,7 @@ public class UserCategoryServiceTest {
     assertThrows(
         EntityNotFoundException.class,
         () -> {
-          userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, List.of(2));
+          userCategoryService.deleteAccessToCategoryForUsers(categoryId, List.of(2));
         });
   }
 
@@ -149,7 +178,7 @@ public class UserCategoryServiceTest {
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(userRepository.existsById(2)).thenReturn(false); // User doesn't exist
 
-    String result = userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, List.of(2));
+    String result = userCategoryService.deleteAccessToCategoryForUsers(categoryId, List.of(2));
 
     assertNotNull(result);
     verify(userCategoryRepository, never())
@@ -172,8 +201,7 @@ public class UserCategoryServiceTest {
     when(userCategoryRepository.deleteByUser_UserIdAndCategory_CategoryId(3, categoryId))
         .thenReturn(1L);
 
-    String result =
-        userCategoryService.deleteAccessToCategoryForUsers(1, categoryId, List.of(2, 3));
+    String result = userCategoryService.deleteAccessToCategoryForUsers(categoryId, List.of(2, 3));
 
     assertNotNull(result);
 
@@ -203,8 +231,7 @@ public class UserCategoryServiceTest {
     when(userCategoryRepository.findByCategory_CategoryId(categoryId)).thenReturn(entities);
 
     // Act
-    List<UserCategoryDTO> result =
-        userCategoryService.getUsersWithAccessToCategory(adminUserId, categoryId);
+    List<UserCategoryDTO> result = userCategoryService.getUsersWithAccessToCategory(categoryId);
 
     // Assert
     assertEquals(1, result.size());
@@ -222,7 +249,7 @@ public class UserCategoryServiceTest {
     var exception =
         org.junit.jupiter.api.Assertions.assertThrows(
             UnauthorizedUserException.class,
-            () -> userCategoryService.getUsersWithAccessToCategory(adminUserId, categoryId));
+            () -> userCategoryService.getUsersWithAccessToCategory(categoryId));
 
     assertEquals("User does not have permission to access this resource.", exception.getMessage());
   }
@@ -238,7 +265,7 @@ public class UserCategoryServiceTest {
     var exception =
         org.junit.jupiter.api.Assertions.assertThrows(
             CategoryNotFoundException.class,
-            () -> userCategoryService.getUsersWithAccessToCategory(adminUserId, categoryId));
+            () -> userCategoryService.getUsersWithAccessToCategory(categoryId));
 
     assertEquals("Category not found with ID: " + categoryId, exception.getMessage());
   }
@@ -252,8 +279,7 @@ public class UserCategoryServiceTest {
     when(userCategoryRepository.findByCategory_CategoryId(categoryId)).thenReturn(List.of());
 
     // Act
-    List<UserCategoryDTO> result =
-        userCategoryService.getUsersWithAccessToCategory(adminUserId, categoryId);
+    List<UserCategoryDTO> result = userCategoryService.getUsersWithAccessToCategory(categoryId);
 
     // Assert
     assertEquals(0, result.size());
@@ -287,8 +313,7 @@ public class UserCategoryServiceTest {
     when(userCategoryRepository.findByCategory_CategoryId(categoryId)).thenReturn(entities);
 
     // Act
-    List<UserCategoryDTO> result =
-        userCategoryService.getUsersWithAccessToCategory(adminUserId, categoryId);
+    List<UserCategoryDTO> result = userCategoryService.getUsersWithAccessToCategory(categoryId);
 
     // Assert
     assertEquals(2, result.size());
@@ -323,8 +348,7 @@ public class UserCategoryServiceTest {
 
     // Act
     List<UserCategoryDTO> result =
-        userCategoryService.addPermissionToAccessCategoryToUsers(
-            adminId, categoryId, List.of(targetUserId));
+        userCategoryService.addPermissionToAccessCategoryToUsers(categoryId, List.of(targetUserId));
 
     // Assert
     assertEquals(1, result.size());
@@ -365,7 +389,7 @@ public class UserCategoryServiceTest {
     when(userCategoryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     List<UserCategoryDTO> result =
-        userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of(2, 3));
+        userCategoryService.addPermissionToAccessCategoryToUsers(100, List.of(2, 3));
 
     assertEquals(2, result.size());
     assertEquals(2, result.get(0).getUserId());
@@ -379,7 +403,7 @@ public class UserCategoryServiceTest {
     Exception exception =
         assertThrows(
             ResponseStatusException.class,
-            () -> userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of(2)));
+            () -> userCategoryService.addPermissionToAccessCategoryToUsers(100, List.of(2)));
 
     assertEquals("401 UNAUTHORIZED \"User not found\"", exception.getMessage());
   }
@@ -402,7 +426,7 @@ public class UserCategoryServiceTest {
 
     // Ejecuta
     List<UserCategoryDTO> result =
-        userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of(2));
+        userCategoryService.addPermissionToAccessCategoryToUsers(100, List.of(2));
 
     // No se añadió nada
     assertEquals(0, result.size());
@@ -413,7 +437,7 @@ public class UserCategoryServiceTest {
     IllegalArgumentException ex =
         assertThrows(
             IllegalArgumentException.class,
-            () -> userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of()));
+            () -> userCategoryService.addPermissionToAccessCategoryToUsers(100, List.of()));
 
     assertEquals("List of userIds cannot be empty", ex.getMessage());
   }
@@ -425,7 +449,7 @@ public class UserCategoryServiceTest {
     ResponseStatusException ex =
         assertThrows(
             ResponseStatusException.class,
-            () -> userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of(2)));
+            () -> userCategoryService.addPermissionToAccessCategoryToUsers(100, List.of(2)));
 
     assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
   }
@@ -441,7 +465,7 @@ public class UserCategoryServiceTest {
     EntityNotFoundException ex =
         assertThrows(
             EntityNotFoundException.class,
-            () -> userCategoryService.addPermissionToAccessCategoryToUsers(1, 999, List.of(2)));
+            () -> userCategoryService.addPermissionToAccessCategoryToUsers(999, List.of(2)));
 
     assertEquals("Category with ID 999 not found", ex.getMessage());
   }
@@ -468,7 +492,7 @@ public class UserCategoryServiceTest {
         .thenReturn(Optional.of(existing));
 
     List<UserCategoryDTO> result =
-        userCategoryService.addPermissionToAccessCategoryToUsers(1, 100, List.of(2));
+        userCategoryService.addPermissionToAccessCategoryToUsers(100, List.of(2));
 
     assertEquals(0, result.size()); // No new user was added
   }
