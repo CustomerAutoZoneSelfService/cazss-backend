@@ -52,29 +52,30 @@ class JwtUtilTest {
 
     List<GrantedAuthority> authorities =
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN"));
-    userDetails = new User(userEntity.getEmail(), userEntity.getPassword(), authorities);
+    userDetails =
+        new User(String.valueOf(userEntity.getUserId()), userEntity.getPassword(), authorities);
   }
 
   @Test
   void generateAccessToken_shouldCreateValidTokenWithCorrectClaims() {
-    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(userEntity));
+    when(userRepository.findById(1)).thenReturn(Optional.of(userEntity));
 
     String token = jwtUtil.generateAccessToken(userDetails);
     assertNotNull(token);
 
     DecodedJWT decodedJWT = jwtUtil.verifyToken(token);
-    assertEquals(userEntity.getEmail(), decodedJWT.getSubject());
-    assertEquals(userEntity.getUserId(), decodedJWT.getClaim("userId").asInt());
+    assertEquals(String.valueOf(userEntity.getUserId()), decodedJWT.getSubject());
     assertEquals(userEntity.getUsername(), decodedJWT.getClaim("username").asString());
+    assertEquals(userEntity.getEmail(), decodedJWT.getClaim("email").asString());
     assertEquals("ROLE_ADMIN", decodedJWT.getClaim("role").asString());
     assertFalse(jwtUtil.isTokenExpired(token));
 
-    verify(userRepository).findByEmail("test@example.com");
+    verify(userRepository).findById(1);
   }
 
   @Test
   void generateAccessToken_shouldThrowUsernameNotFoundException_whenUserNotInRepository() {
-    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.empty());
+    when(userRepository.findById(1)).thenReturn(Optional.empty());
 
     assertThrows(
         UsernameNotFoundException.class,
@@ -85,23 +86,22 @@ class JwtUtilTest {
 
   @Test
   void generateRefreshToken_shouldCreateValidToken() {
-    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(userEntity));
+    when(userRepository.findById(1)).thenReturn(Optional.of(userEntity));
 
     String token = jwtUtil.generateRefreshToken(userDetails);
     assertNotNull(token);
 
     DecodedJWT decodedJWT = jwtUtil.verifyToken(token);
-    assertEquals(userEntity.getEmail(), decodedJWT.getSubject());
-    assertEquals(userEntity.getUserId(), decodedJWT.getClaim("userId").asInt());
+    assertEquals(String.valueOf(userEntity.getUserId()), decodedJWT.getSubject());
     assertEquals(userEntity.getUsername(), decodedJWT.getClaim("username").asString());
     assertFalse(jwtUtil.isTokenExpired(token));
 
-    verify(userRepository).findByEmail("test@example.com");
+    verify(userRepository).findById(1);
   }
 
   @Test
   void validateToken_shouldReturnTrue_forValidTokenAndMatchingUserDetails() {
-    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(userEntity));
+    when(userRepository.findById(1)).thenReturn(Optional.of(userEntity));
     String token = jwtUtil.generateAccessToken(userDetails);
 
     assertTrue(jwtUtil.validateToken(token, userDetails));
@@ -112,7 +112,7 @@ class JwtUtilTest {
     // Create a token with very short lifespan for testing expiration
     JwtUtil shortLivedJwtUtil =
         new JwtUtil(testSecret, 1, testRefreshTokenExpirationMs, userRepository);
-    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(userEntity));
+    when(userRepository.findById(1)).thenReturn(Optional.of(userEntity));
 
     String token = shortLivedJwtUtil.generateAccessToken(userDetails);
     Thread.sleep(50); // Wait for token to expire
@@ -122,19 +122,18 @@ class JwtUtilTest {
   }
 
   @Test
-  void validateToken_shouldReturnFalse_forMismatchedEmailInUserDetails() {
-    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(userEntity));
+  void validateToken_shouldReturnFalse_forMismatchedUserIdInUserDetails() {
+    when(userRepository.findById(1)).thenReturn(Optional.of(userEntity));
     String token = jwtUtil.generateAccessToken(userDetails);
 
-    UserDetails differentUserDetails =
-        new User("different@example.com", "password", Collections.emptyList());
+    UserDetails differentUserDetails = new User("2", "password", Collections.emptyList());
     assertFalse(jwtUtil.validateToken(token, differentUserDetails));
   }
 
   @Test
   void validateToken_shouldReturnFalse_forInvalidTokenSignature() {
     String tamperedToken =
-        "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0QGV4YW1wbGUuY29tIiwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInJvbGUiOiJST0xFX0FETUlOIiwiaWF0IjoxNjc4ODg2NDAwLCJleHAiOjE2Nzg4ODk5OTh9.tamperedSignaturePart";
+        "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInJvbGUiOiJST0xFX0FETUlOIiwiaWF0IjoxNjc4ODg2NDAwLCJleHAiOjE2Nzg4ODk5OTh9.tamperedSignaturePart";
     assertFalse(jwtUtil.validateToken(tamperedToken, userDetails));
     assertThrows(JWTVerificationException.class, () -> jwtUtil.extractUserId(tamperedToken));
   }

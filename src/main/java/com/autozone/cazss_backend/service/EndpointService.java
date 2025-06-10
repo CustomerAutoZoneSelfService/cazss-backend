@@ -135,16 +135,32 @@ public class EndpointService {
                     new ServiceNotFoundException(
                         "Category not found with id " + serviceDTO.getCategoryId()));
 
-    // Get authenticated user email from security context
+    // Get authenticated user id from security context
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    String userEmail = authentication.getName();
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new ServiceNotFoundException("No authenticated user found");
+    }
+
+    String userIdStr = authentication.getName();
+    Integer userId;
+    try {
+      userId = Integer.parseInt(userIdStr);
+    } catch (NumberFormatException e) {
+      logger.error("Invalid user ID format in JWT token: {}", userIdStr);
+      throw new ServiceNotFoundException("Invalid user ID format in authentication token");
+    }
 
     // User
     UserEntity user =
         userRepository
-            .findByEmail(userEmail)
+            .findById(userId)
             .orElseThrow(
-                () -> new ServiceNotFoundException("User not found with email " + userEmail));
+                () -> {
+                  logger.error("User not found with ID: {}", userId);
+                  return new ServiceNotFoundException("User not found with ID: " + userId);
+                });
+
+    logger.debug("Found user: {}", user.getUserId());
 
     // Endpoint
     EndpointsEntity endpoint = createService(category, user, serviceDTO);
@@ -157,34 +173,30 @@ public class EndpointService {
     }
 
     // Request variables
-    if (serviceDTO.getRequestVariables() != null) {
-      for (CreateRequestVariableDTO requestVariableDTO : serviceDTO.getRequestVariables())
+    if (serviceDTO.getRequestVariables() != null && !serviceDTO.getRequestVariables().isEmpty()) {
+      for (CreateRequestVariableDTO requestVariableDTO : serviceDTO.getRequestVariables()) {
         requestVariableService.createRequestVariable(endpoint, requestVariableDTO);
-      logger.debug(
-          "Created {} request variable(s) for endpoint id {}",
-          serviceDTO.getRequestVariables().size(),
-          endpoint.getEndpointId());
+      }
+      logger.debug("Created request variables for endpoint id {}", endpoint.getEndpointId());
     }
 
     // Responses
-    for (CreateResponseDTO resDTO : serviceDTO.getResponses()) {
-      ResponseEntity responseEntity = responseService.createResponse(endpoint, resDTO);
-      logger.debug(
-          "Created response with id {} for endpoint id {}",
-          responseEntity.getResponseId(),
-          endpoint.getEndpointId());
+    if (serviceDTO.getResponses() != null && !serviceDTO.getResponses().isEmpty()) {
+      for (CreateResponseDTO resDTO : serviceDTO.getResponses()) {
+        ResponseEntity responseEntity = responseService.createResponse(endpoint, resDTO);
+        logger.debug(
+            "Created response with id {} for endpoint id {}",
+            responseEntity.getResponseId(),
+            endpoint.getEndpointId());
 
-      logger.debug("{}", resDTO.getPatterns());
-
-      // Response patterns
-      responsePatternService.addPatterns(responseEntity.getResponseId(), resDTO.getPatterns());
+        // Response patterns
+        if (resDTO.getPatterns() != null && !resDTO.getPatterns().isEmpty()) {
+          responsePatternService.addPatterns(responseEntity.getResponseId(), resDTO.getPatterns());
+        }
+      }
+      logger.debug("Created responses for endpoint id {}", endpoint.getEndpointId());
     }
-    logger.debug(
-        "Created {} responses for endpoint id {}",
-        serviceDTO.getResponses().size(),
-        endpoint.getEndpointId());
 
-    // Result
     return new ServiceDTO(endpoint.getEndpointId(), endpoint.getName(), endpoint.getDescription());
   }
 

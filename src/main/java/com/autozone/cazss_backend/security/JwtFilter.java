@@ -34,7 +34,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     final String authHeader = request.getHeader("Authorization");
     final String jwt;
-    final String email;
+    final String userIdAsString;
 
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
       filterChain.doFilter(request, response);
@@ -43,10 +43,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
     jwt = authHeader.substring(7);
     try {
-      email = jwtUtil.extractEmail(jwt);
+      userIdAsString = jwtUtil.extractUserId(jwt);
 
-      if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-        UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
+      if (userIdAsString != null
+          && SecurityContextHolder.getContext().getAuthentication() == null) {
+        Integer userId = Integer.parseInt(userIdAsString);
+        UserDetails userDetails = this.userDetailsService.loadUserById(userId);
         if (jwtUtil.validateToken(jwt, userDetails)) {
           UsernamePasswordAuthenticationToken authToken =
               new UsernamePasswordAuthenticationToken(
@@ -55,6 +57,9 @@ public class JwtFilter extends OncePerRequestFilter {
           SecurityContextHolder.getContext().setAuthentication(authToken);
         }
       }
+    } catch (NumberFormatException e) {
+      logger.warn("Invalid User ID format in JWT: " + e.getMessage());
+      SecurityContextHolder.clearContext();
     } catch (Exception e) {
       logger.warn("Cannot set user authentication: " + e.getMessage());
       SecurityContextHolder.clearContext();

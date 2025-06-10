@@ -53,11 +53,12 @@ public class HistoryControllerIntegrationTest {
   private HistoryDataEntity savedHistoryDataEntityRequest;
   private HistoryDataEntity savedHistoryDataEntityResponse;
   private String authToken;
+  private UserEntity user;
 
   @BeforeEach
   public void setup() {
     // Create test user
-    UserEntity user = new UserEntity();
+    user = new UserEntity();
     user.setActive(true);
     user.setEmail("test@example.com");
     user.setUsername("testuser");
@@ -84,9 +85,9 @@ public class HistoryControllerIntegrationTest {
     // Create test history
     HistoryEntity history = new HistoryEntity();
     history.setUser(user);
+    history.setEndpoint(endpoint);
     history.setStatusCode(200);
     history.setCreatedAt(LocalDateTime.now());
-    history.setEndpoint(endpoint);
     savedHistory = historyRepository.save(history);
 
     // Create test history data
@@ -105,7 +106,7 @@ public class HistoryControllerIntegrationTest {
     // Generate JWT token
     UserDetails userDetails =
         new User(
-            user.getEmail(),
+            String.valueOf(user.getUserId()),
             user.getPassword(),
             user.getActive(),
             true,

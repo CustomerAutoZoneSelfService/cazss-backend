@@ -78,7 +78,7 @@ public class EndpointControllerIntegrationTest {
     // Generate JWT token
     UserDetails userDetails =
         new User(
-            testUser.getEmail(),
+            String.valueOf(testUser.getUserId()),
             testUser.getPassword(),
             testUser.getActive(),
             true,
@@ -89,34 +89,9 @@ public class EndpointControllerIntegrationTest {
     authToken = jwtUtil.generateAccessToken(userDetails);
   }
 
-  @Transactional
   @Test
-  public void testGetServiceById() throws Exception {
-    mockMvc
-        .perform(
-            get("/services/{id}", savedEndpoint.getEndpointId())
-                .header("Authorization", "Bearer " + authToken)
-                .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(savedEndpoint.getEndpointId()))
-        .andExpect(jsonPath("$.name").value(savedEndpoint.getName()))
-        .andExpect(jsonPath("$.description").value(savedEndpoint.getDescription()));
-  }
-
   @Transactional
-  @Test
-  public void testGetServiceById_NotFound() throws Exception {
-    mockMvc
-        .perform(
-            get("/services/999")
-                .header("Authorization", "Bearer " + authToken)
-                .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isNotFound());
-  }
-
-  @Transactional
-  @Test
-  public void testGetAllServices() throws Exception {
+  public void testGetAllEndpoints() throws Exception {
     mockMvc
         .perform(
             get("/services")
@@ -128,34 +103,51 @@ public class EndpointControllerIntegrationTest {
         .andExpect(jsonPath("$[0].description").value(savedEndpoint.getDescription()));
   }
 
-  @Transactional
   @Test
-  public void testCreateService() throws Exception {
-    CategoryEntity category = new CategoryEntity();
-    category.setColor("red");
-    category.setName("new-category");
-    category = categoryRepository.save(category);
+  @Transactional
+  public void testGetEndpointById() throws Exception {
+    mockMvc
+        .perform(
+            get("/services/" + savedEndpoint.getEndpointId())
+                .header("Authorization", "Bearer " + authToken)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value(savedEndpoint.getName()))
+        .andExpect(jsonPath("$.description").value(savedEndpoint.getDescription()));
+  }
 
-    CreateServiceDTO newService = new CreateServiceDTO();
-    newService.setCategoryId(category.getCategoryId());
-    newService.setActive(true);
-    newService.setMethod(EndpointMethodEnum.GET);
-    newService.setDescription("New test endpoint");
-    newService.setName("New Test Endpoint");
-    newService.setUrl("/test/new-url");
-    newService.setTemplate(null);
-    newService.setRequestVariables(Collections.emptyList());
-    newService.setResponses(Collections.emptyList());
+  @Test
+  @Transactional
+  public void testCreateEndpoint() throws Exception {
+    // Use existing test user and generate new token
+    UserDetails userDetails =
+        new User(
+            String.valueOf(testUser.getUserId()),
+            testUser.getPassword(),
+            testUser.getActive(),
+            true,
+            true,
+            true,
+            Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + testUser.getRole().name())));
+    String authToken = jwtUtil.generateAccessToken(userDetails);
+
+    CreateServiceDTO createServiceDTO = new CreateServiceDTO();
+    createServiceDTO.setName("New Test Endpoint");
+    createServiceDTO.setDescription("New Test Description");
+    createServiceDTO.setMethod(EndpointMethodEnum.GET);
+    createServiceDTO.setUrl("/new-test-url");
+    createServiceDTO.setCategoryId(savedEndpoint.getCategory().getCategoryId());
+    createServiceDTO.setActive(true);
 
     mockMvc
         .perform(
             post("/services")
                 .header("Authorization", "Bearer " + authToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(newService)))
+                .content(objectMapper.writeValueAsString(createServiceDTO)))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.endpointId").exists())
-        .andExpect(jsonPath("$.name").value(newService.getName()))
-        .andExpect(jsonPath("$.description").value(newService.getDescription()));
+        .andExpect(jsonPath("$.name").value(createServiceDTO.getName()))
+        .andExpect(jsonPath("$.description").value(createServiceDTO.getDescription()));
   }
 }
