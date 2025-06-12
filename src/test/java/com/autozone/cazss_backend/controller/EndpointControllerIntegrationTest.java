@@ -117,9 +117,12 @@ public class EndpointControllerIntegrationTest {
                 .header("Authorization", "Bearer " + authToken)
                 .contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].endpointId").value(savedEndpoint.getEndpointId()))
-        .andExpect(jsonPath("$[0].name").value(savedEndpoint.getName()))
-        .andExpect(jsonPath("$[0].description").value(savedEndpoint.getDescription()));
+        .andExpect(
+            jsonPath("$[0].category.categoryId").value(savedEndpoint.getCategory().getCategoryId()))
+        .andExpect(jsonPath("$[0].category.name").value(savedEndpoint.getCategory().getName()))
+        .andExpect(jsonPath("$[0].services[0].endpointId").value(savedEndpoint.getEndpointId()))
+        .andExpect(jsonPath("$[0].services[0].name").value(savedEndpoint.getName()))
+        .andExpect(jsonPath("$[0].services[0].description").value(savedEndpoint.getDescription()));
   }
 
   @Test

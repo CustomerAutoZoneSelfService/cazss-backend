@@ -8,10 +8,6 @@ import static org.mockito.Mockito.mock;
 
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.*;
-import com.autozone.cazss_backend.entity.CategoryEntity;
-import com.autozone.cazss_backend.entity.EndpointsEntity;
-import com.autozone.cazss_backend.entity.ResponseEntity;
-import com.autozone.cazss_backend.entity.UserEntity;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.RequestVariableTypeEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
@@ -87,6 +83,9 @@ public class EndpointServiceTest {
 
     // Simula repositorios
     CategoryEntity cat = new CategoryEntity();
+    cat.setCategoryId(1);
+    cat.setName("Test Category");
+    cat.setColor("#FF00FF");
     given(categoryRepository.findById(1)).willReturn(Optional.of(cat));
 
     UserEntity usr = new UserEntity();
@@ -98,6 +97,7 @@ public class EndpointServiceTest {
     saved.setEndpointId(42);
     saved.setName("Test Service");
     saved.setDescription("Test Desc");
+    saved.setCategory(cat);
     given(endpointsRepository.save(any(EndpointsEntity.class))).willReturn(saved);
 
     // --- Act ---
