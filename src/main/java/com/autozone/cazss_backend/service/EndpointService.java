@@ -155,7 +155,7 @@ public class EndpointService {
     serviceInformation.setDescription(endpoint.getDescription());
     serviceInformation.setMethod(endpoint.getMethod());
     serviceInformation.setUrl(endpoint.getUrl());
-    serviceInformation.setAuthenticationStrategy(endpoint.getAuthStrategy().getAuthStrategyId());
+    serviceInformation.setAuthenticationStrategy(endpoint.getAuthStrategy() != null ? endpoint.getAuthStrategy().getAuthStrategyId() : null);
 
     RequestBodyEntity requestBody =
         requestBodyRepository.findByEndpoint_EndpointId(id).orElse(null);
