@@ -57,6 +57,19 @@ public class EndpointService {
   @Autowired private AuthenticationStrategyRepository authenticationStrategyRepository;
   @Autowired private PermissionValidator permissionValidator;
 
+  public List<ServiceDTO> getAvailableServices() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Integer userId = Integer.parseInt(authentication.getName());
+
+    if (permissionValidator.isAdmin(userId)) {
+      return endpointsRepository.findAllServiceDTOs();
+    } else if (permissionValidator.isConfigurator(userId)) {
+      return endpointsRepository.findUserSpecificAndNullCategoryServices(userId);
+    } else {
+      return endpointsRepository.findUserSpecificServices(userId);
+    }
+  }
+
   public List<ServiceDTO> getAllServices() {
     return endpointsRepository.findAllServiceDTOs();
   }
