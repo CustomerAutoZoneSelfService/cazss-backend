@@ -10,21 +10,11 @@ public class ServiceInfoDTO {
   private boolean active;
   private EndpointMethodEnum method;
   private String url;
+  private CategoryDTO category;
   private List<ServiceResponseDTO> responses;
   private List<FilterDTO> filters;
   private List<RequestVariableDTO> variables;
   private String template;
-
-  public ServiceInfoDTO(
-      String name, String description, boolean active, EndpointMethodEnum method, String url) {
-    this.name = name;
-    this.description = description;
-    this.active = active;
-    this.method = method;
-    this.url = url;
-  }
-
-  public ServiceInfoDTO() {}
 
   public ServiceInfoDTO(
       String name,
@@ -32,20 +22,16 @@ public class ServiceInfoDTO {
       boolean active,
       EndpointMethodEnum method,
       String url,
-      List<ServiceResponseDTO> responses,
-      List<FilterDTO> filters,
-      List<RequestVariableDTO> variables,
-      String template) {
+      CategoryDTO category) {
     this.name = name;
     this.description = description;
     this.active = active;
     this.method = method;
     this.url = url;
-    this.responses = responses;
-    this.filters = filters;
-    this.variables = variables;
-    this.template = template;
+    this.category = category;
   }
+
+  public ServiceInfoDTO() {}
 
   public Integer getId() {
     return id;
@@ -125,5 +111,13 @@ public class ServiceInfoDTO {
 
   public void setTemplate(String template) {
     this.template = template;
+  }
+
+  public CategoryDTO getCategory() {
+    return category;
+  }
+
+  public void setCategory(CategoryDTO category) {
+    this.category = category;
   }
 }
