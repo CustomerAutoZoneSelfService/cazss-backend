@@ -1,9 +1,11 @@
 package com.autozone.cazss_backend.DTO;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import java.util.List;
 
 public class CategoryServicesDTO {
-  private CategoryDTO category;
+
+  @JsonUnwrapped private CategoryDTO category;
   private List<ServiceDTO> services;
 
   public CategoryServicesDTO(CategoryDTO category, List<ServiceDTO> services) {
