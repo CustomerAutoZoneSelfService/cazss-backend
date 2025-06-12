@@ -77,7 +77,7 @@ public class EndpointService {
 
     CategoryDTO categoryDTO =
         new CategoryDTO(
-            endpoint.getCategoryId(),
+            endpoint.getCategory().getCategoryId(),
             endpoint.getCategory().getName(),
             endpoint.getCategory().getColor());
 
