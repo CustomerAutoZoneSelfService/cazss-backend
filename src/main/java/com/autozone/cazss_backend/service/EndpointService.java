@@ -2,10 +2,7 @@ package com.autozone.cazss_backend.service;
 
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.*;
-import com.autozone.cazss_backend.exceptions.AuthenticationStrategyNotFoundException;
-import com.autozone.cazss_backend.exceptions.ServiceNotActiveException;
-import com.autozone.cazss_backend.exceptions.ServiceNotFoundException;
-import com.autozone.cazss_backend.exceptions.ValidationException;
+import com.autozone.cazss_backend.exceptions.*;
 import com.autozone.cazss_backend.model.ServiceInfoRequestModel;
 import com.autozone.cazss_backend.model.StatusModel;
 import com.autozone.cazss_backend.repository.*;
@@ -58,6 +55,7 @@ public class EndpointService {
   @Autowired private EndpointAuthenticationUtil endpointAuthenticationUtil;
 
   @Autowired private AuthenticationStrategyRepository authenticationStrategyRepository;
+  @Autowired private PermissionValidator permissionValidator;
 
   public List<ServiceDTO> getAllServices() {
     return endpointsRepository.findAllServiceDTOs();
@@ -375,72 +373,83 @@ public class EndpointService {
 
   // Method to execute the service based on the request model
   public EndpointServiceDTO executeService(
-      Integer id, ServiceInfoRequestModel serviceInfoRequestModel) {
-    logger.debug("=== INICIO EJECUCIÓN SERVICIO ===");
-    logger.debug("Request recibido: {}", serviceInfoRequestModel);
+      Integer serviceId, ServiceInfoRequestModel serviceInfoRequestModel) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    Integer userId = Integer.parseInt(authentication.getName());
+    if (permissionValidator.canUserExecuteService(userId, serviceId)) {
 
-    // Validate request using RequestValidatorUtil
-    logger.debug("Iniciando validación del request...");
-    RequestValidatorUtil.ValidationResponse validationResponse =
-        requestValidatorUtil.validateRequest(serviceInfoRequestModel, id);
-    logger.debug("Resultado de la validación: {}", validationResponse);
-    if (!"true".equals(validationResponse.getStatus())) {
-      logger.error("Validación fallida: {}", validationResponse.getErrores());
-      throw new ValidationException("Error de validación: " + validationResponse.getErrores());
-    }
+      logger.debug("=== INICIO EJECUCIÓN SERVICIO ===");
+      logger.debug("Request recibido: {}", serviceInfoRequestModel);
 
-    ServiceInfoDTO serviceInfo = getServiceById(id);
-    logger.debug("Información del servicio obtenida: {}", serviceInfo);
+      // Validate request using RequestValidatorUtil
+      logger.debug("Iniciando validación del request...");
+      RequestValidatorUtil.ValidationResponse validationResponse =
+          requestValidatorUtil.validateRequest(serviceInfoRequestModel, serviceId);
+      logger.debug("Resultado de la validación: {}", validationResponse);
+      if (!"true".equals(validationResponse.getStatus())) {
+        logger.error("Validación fallida: {}", validationResponse.getErrores());
+        throw new ValidationException("Error de validación: " + validationResponse.getErrores());
+      }
 
-    EndpointsEntity endpoint = endpointsRepository.getReferenceById(id);
-    AuthenticationStrategyEntity authStrategy = endpoint.getAuthStrategy();
+      ServiceInfoDTO serviceInfo = getServiceById(serviceId);
+      logger.debug("Información del servicio obtenida: {}", serviceInfo);
 
-    if (authStrategy != null) {
-      logger.debug("Hooking request with the following authentication strategy: {}", authStrategy);
-      endpointAuthenticationUtil.hookRequest(serviceInfoRequestModel, authStrategy);
-    }
+      EndpointsEntity endpoint = endpointsRepository.getReferenceById(serviceId);
+      AuthenticationStrategyEntity authStrategy = endpoint.getAuthStrategy();
 
-    String template =
-        templateFiller.returnFilledTemplate(serviceInfoRequestModel.getBody(), serviceInfo.getId());
+      if (authStrategy != null) {
+        logger.debug(
+            "Hooking request with the following authentication strategy: {}", authStrategy);
+        endpointAuthenticationUtil.hookRequest(serviceInfoRequestModel, authStrategy);
+      }
 
-    serviceInfo.setTemplate(template);
+      String template =
+          templateFiller.returnFilledTemplate(
+              serviceInfoRequestModel.getBody(), serviceInfo.getId());
 
-    ServiceResponseDTO serviceResponse = azClient.callService(serviceInfo, serviceInfoRequestModel);
+      serviceInfo.setTemplate(template);
 
-    int code = serviceResponse.getStatusCode();
+      ServiceResponseDTO serviceResponse =
+          azClient.callService(serviceInfo, serviceInfoRequestModel);
 
-    Optional<ResponseEntity> resRepo = responseRepository.findByEndpointIdAndStatusCode(id, code);
+      int code = serviceResponse.getStatusCode();
 
-    String description =
-        resRepo.isPresent()
-            ? resRepo.get().getDescription()
-            : HttpStatus.valueOf(code).getReasonPhrase(); // OK, Bad Request, etc
-    StatusModel status = new StatusModel(code, description);
+      Optional<ResponseEntity> resRepo =
+          responseRepository.findByEndpointIdAndStatusCode(serviceId, code);
 
-    // regexparser Lou/edgar
-    Map<Integer, List<String>> parsedResponse = new HashMap<>();
-    if (serviceResponse.getResponse() != null
-        && !serviceResponse.getResponse().trim().isEmpty()
-        && resRepo.isPresent()) {
-      parsedResponse =
-          responsePatternService.getMatchesForEndpoint(
-              resRepo.get().getResponseId(), serviceResponse.getResponse());
+      String description =
+          resRepo.isPresent()
+              ? resRepo.get().getDescription()
+              : HttpStatus.valueOf(code).getReasonPhrase(); // OK, Bad Request, etc
+      StatusModel status = new StatusModel(code, description);
+
+      // regexparser Lou/edgar
+      Map<Integer, List<String>> parsedResponse = new HashMap<>();
+      if (serviceResponse.getResponse() != null
+          && !serviceResponse.getResponse().trim().isEmpty()
+          && resRepo.isPresent()) {
+        parsedResponse =
+            responsePatternService.getMatchesForEndpoint(
+                resRepo.get().getResponseId(), serviceResponse.getResponse());
+      } else {
+        logger.warn("Empty or null response description for endpoint {}", serviceInfo.getId());
+      }
+
+      // SAVE IN HISTORY
+      UserEntity user =
+          userRepository.getReferenceById(90); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
+      historyService.addHistory(
+          user,
+          endpoint,
+          status.getCode(),
+          serviceInfoRequestModel.getBody().toString(),
+          parsedResponse.toString());
+      // SAVE IN HISTORY - END
+
+      return new EndpointServiceDTO(status, parsedResponse);
     } else {
-      logger.warn("Empty or null response description for endpoint {}", serviceInfo.getId());
+      throw new UnauthorizedUserException("User does not have access to this endpoint");
     }
-
-    // SAVE IN HISTORY
-    UserEntity user =
-        userRepository.getReferenceById(90); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
-    historyService.addHistory(
-        user,
-        endpoint,
-        status.getCode(),
-        serviceInfoRequestModel.getBody().toString(),
-        parsedResponse.toString());
-    // SAVE IN HISTORY - END
-
-    return new EndpointServiceDTO(status, parsedResponse);
   }
 
   private List<CreateResponsePatternDTO> returnCreateResponsePatternDTOListFromResponseId(

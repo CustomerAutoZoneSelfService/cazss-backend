@@ -331,8 +331,9 @@ public class UserCategoryServiceTest {
     when(categoryRepository.existsById(categoryId)).thenReturn(true);
     when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
     when(userRepository.findByUserId(targetUserId)).thenReturn(Optional.of(targetUser));
-    when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(categoryId, targetUserId))
-        .thenReturn(Optional.empty());
+    // when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(categoryId,
+    // targetUserId))
+    //     .thenReturn(Optional.empty());
     when(userCategoryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     // Act
@@ -365,13 +366,13 @@ public class UserCategoryServiceTest {
 
     // Mock user 1
     when(userRepository.findByUserId(2)).thenReturn(Optional.of(user1));
-    when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(100, 2))
-        .thenReturn(Optional.empty());
+    //    when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(100, 2))
+    //        .thenReturn(Optional.empty());
 
     // Mock user 2
     when(userRepository.findByUserId(3)).thenReturn(Optional.of(user2));
-    when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(100, 3))
-        .thenReturn(Optional.empty());
+    //    when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(100, 3))
+    //        .thenReturn(Optional.empty());
 
     // Mock save
     when(userCategoryRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -406,8 +407,8 @@ public class UserCategoryServiceTest {
     when(permissionValidator.isAdmin(1)).thenReturn(true);
     when(categoryRepository.existsById(100)).thenReturn(true);
     when(userRepository.findByUserId(2)).thenReturn(Optional.of(existingUser));
-    when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(100, 2))
-        .thenReturn(Optional.of(new UserCategoryEntity()));
+    //    when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(100, 2))
+    //        .thenReturn(Optional.of(new UserCategoryEntity()));
 
     // Ejecuta
     List<UserCategoryDTO> result =
@@ -469,8 +470,8 @@ public class UserCategoryServiceTest {
     when(permissionValidator.isAdmin(1)).thenReturn(true);
     when(categoryRepository.existsById(100)).thenReturn(true);
     when(userRepository.findByUserId(2)).thenReturn(Optional.of(targetUser));
-    when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(100, 2))
-        .thenReturn(Optional.of(existing));
+    //    when(userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(100, 2))
+    //       .thenReturn(Optional.of(existing));
 
     List<UserCategoryDTO> result =
         userCategoryService.addPermissionToAccessCategoryToUsers(100, List.of(2));
