@@ -118,6 +118,7 @@ public class EndpointServiceTest {
     endpoint.setActive(true);
     endpoint.setMethod(EndpointMethodEnum.GET);
     endpoint.setUrl("http://localhost/test");
+    endpoint.setCategory(new CategoryEntity(1, "Production", "#ffeeff"));
 
     given(endpointsRepository.findByEndpointId(1)).willReturn(Optional.of(endpoint));
     given(requestVariableRepository.findByEndpoint_EndpointId(1)).willReturn(List.of());
@@ -150,6 +151,7 @@ public class EndpointServiceTest {
     endpoint.setMethod(EndpointMethodEnum.POST);
     endpoint.setActive(true);
     endpoint.setUrl("http://service");
+    endpoint.setCategory(new CategoryEntity(1, "Production", "#ffeeff"));
 
     given(endpointsRepository.findByEndpointId(endpointId)).willReturn(Optional.of(endpoint));
     given(requestVariableRepository.findByEndpoint_EndpointId(endpointId)).willReturn(List.of());
