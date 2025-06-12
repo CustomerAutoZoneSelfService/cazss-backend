@@ -33,7 +33,6 @@ public class CategoryService {
   @Autowired private JwtUtil jwtUtil;
 
   public List<CategoryDTO> getAllCategories() {
-    System.out.println("User is admin, returning all categories");
     return categoryRepository.findAllCategoryDTOs();
   }
 

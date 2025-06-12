@@ -7,6 +7,8 @@ public interface HistoryDetailedProjection {
 
   Integer getEndpointId();
 
+  Integer getCategoryId();
+
   String getName();
 
   String getDescription();

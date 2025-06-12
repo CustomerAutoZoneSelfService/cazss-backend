@@ -11,7 +11,7 @@ public interface EndpointsRepository extends JpaRepository<EndpointsEntity, Inte
   List<EndpointsEntity> findAll();
 
   @Query(
-      "SELECT new com.autozone.cazss_backend.DTO.ServiceDTO(e.endpointId, e.name, e.description) FROM EndpointsEntity e")
+      "SELECT new com.autozone.cazss_backend.DTO.ServiceDTO(e.endpointId, e.name, e.description, e.category.categoryId) FROM EndpointsEntity e")
   List<ServiceDTO> findAllServiceDTOs();
 
   Optional<EndpointsEntity> findByName(String name);

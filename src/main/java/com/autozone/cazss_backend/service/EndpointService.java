@@ -55,12 +55,31 @@ public class EndpointService {
 
   @Autowired private CategoryRepository categoryRepository;
 
+  @Autowired private CategoryService categoryService;
+
   @Autowired private EndpointAuthenticationUtil endpointAuthenticationUtil;
 
   @Autowired private AuthenticationStrategyRepository authenticationStrategyRepository;
 
-  public List<ServiceDTO> getAllServices() {
-    return endpointsRepository.findAllServiceDTOs();
+  public List<CategoryServicesDTO> getAllServices() {
+    List<ServiceDTO> services = endpointsRepository.findAllServiceDTOs();
+    List<CategoryDTO> categories = categoryService.getAllCategories();
+
+    List<CategoryServicesDTO> servicesByCategory = new ArrayList<>();
+
+    for (CategoryDTO category : categories) {
+      List<ServiceDTO> servicesForCategory =
+          services.stream()
+              .filter(
+                  service -> {
+                    return category.getCategoryId().equals(service.getCategoryId());
+                  })
+              .collect(Collectors.toList());
+
+      servicesByCategory.add(new CategoryServicesDTO(category, servicesForCategory));
+    }
+
+    return servicesByCategory;
   }
 
   // TODO validate if endpoint is active
@@ -232,7 +251,8 @@ public class EndpointService {
     return new ServiceDTO(
         newEndpointEntity.getEndpointId(),
         newEndpointEntity.getName(),
-        newEndpointEntity.getDescription());
+        newEndpointEntity.getDescription(),
+        newEndpointEntity.getCategoryId());
   }
 
   /**
@@ -300,7 +320,8 @@ public class EndpointService {
     return new ServiceDTO(
         existingEndpoint.getEndpointId(),
         existingEndpoint.getName(),
-        existingEndpoint.getDescription());
+        existingEndpoint.getDescription(),
+        existingEndpoint.getCategoryId());
   }
 
   private List<Object> getExistingEntitiesIndependentOfService(Integer categoryId) {

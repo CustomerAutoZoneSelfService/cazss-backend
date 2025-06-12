@@ -81,6 +81,10 @@ public class EndpointsEntity {
     return endpointId;
   }
 
+  public Integer getCategoryId() {
+    return category.getCategoryId();
+  }
+
   public void setEndpointId(Integer endpointId) {
     this.endpointId = endpointId;
   }

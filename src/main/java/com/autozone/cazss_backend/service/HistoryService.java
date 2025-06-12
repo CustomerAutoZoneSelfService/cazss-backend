@@ -75,7 +75,8 @@ public class HistoryService {
         new ServiceDTO(
             historyRequest.getEndpointId(),
             historyRequest.getName(),
-            historyRequest.getDescription());
+            historyRequest.getDescription(),
+            historyRequest.getCategoryId());
 
     ObjectMapper objectMapper = new ObjectMapper();
     Object requestContent;

@@ -1,5 +1,6 @@
 package com.autozone.cazss_backend.controller;
 
+import com.autozone.cazss_backend.DTO.CategoryServicesDTO;
 import com.autozone.cazss_backend.DTO.CreateRequestVariableDTO;
 import com.autozone.cazss_backend.DTO.CreateResponseDTO;
 import com.autozone.cazss_backend.DTO.CreateServiceDTO;
@@ -35,7 +36,7 @@ public class ServiceController {
    * @return List<ServiceDTO> which contains endpoint id, name and description
    */
   @GetMapping("")
-  public ResponseEntity<List<ServiceDTO>> getAllServices() {
+  public ResponseEntity<List<CategoryServicesDTO>> getAllServices() {
     return ResponseEntity.status(200).body(endpointService.getAllServices());
   }
 
