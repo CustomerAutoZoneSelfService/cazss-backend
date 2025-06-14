@@ -1,18 +1,20 @@
 package com.autozone.cazss_backend.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.autozone.cazss_backend.DTO.CreateRequestVariableDTO;
+import com.autozone.cazss_backend.DTO.CreateResponseDTO;
 import com.autozone.cazss_backend.DTO.CreateServiceDTO;
 import com.autozone.cazss_backend.entity.*;
 import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
+import com.autozone.cazss_backend.enumerator.RequestVariableTypeEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
-import com.autozone.cazss_backend.repository.AuthenticationStrategyRepository;
-import com.autozone.cazss_backend.repository.CategoryRepository;
-import com.autozone.cazss_backend.repository.EndpointsRepository;
-import com.autozone.cazss_backend.repository.UserRepository;
+import com.autozone.cazss_backend.repository.*;
 import com.autozone.cazss_backend.security.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
@@ -47,6 +49,10 @@ public class EndpointControllerIntegrationTest {
   @Autowired private ObjectMapper objectMapper;
 
   @Autowired private JwtUtil jwtUtil;
+
+  @Autowired private RequestVariableRepository requestVariableRepository;
+
+  @Autowired private ResponseRepository responseRepository;
 
   private EndpointsEntity savedEndpoint;
   private String authToken;
@@ -169,5 +175,70 @@ public class EndpointControllerIntegrationTest {
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.name").value(createServiceDTO.getName()))
         .andExpect(jsonPath("$.description").value(createServiceDTO.getDescription()));
+  }
+
+  @Test
+  @Transactional
+  public void testUpdateEndpoint() throws Exception {
+    // ARRANGE
+    // use existing saved endpoint
+    CreateServiceDTO updatedEndpoint = new CreateServiceDTO();
+
+    updatedEndpoint.setName("Updated Service");
+    updatedEndpoint.setDescription("Updated Service Description");
+    updatedEndpoint.setUrl("https://updated-endpoint");
+    updatedEndpoint.setActive(true);
+    updatedEndpoint.setCategoryId(savedEndpoint.getCategory().getCategoryId());
+    updatedEndpoint.setAuthenticationStrategy(testAuthStrategy.getAuthStrategyId());
+    updatedEndpoint.setMethod(EndpointMethodEnum.GET);
+
+    List<CreateRequestVariableDTO> newVariables = new ArrayList<>();
+    newVariables.add(
+        new CreateRequestVariableDTO(
+            RequestVariableTypeEnum.HEADER,
+            "Test header",
+            "Test value",
+            true,
+            "Request Variable for testing"));
+    updatedEndpoint.setRequestVariables(newVariables);
+
+    List<CreateResponseDTO> newResponses = new ArrayList<>();
+    newResponses.add(new CreateResponseDTO(404, "Not Found", Collections.emptyList()));
+    updatedEndpoint.setResponses(newResponses);
+
+    // THEN
+    mockMvc
+        .perform(
+            put("/services/" + savedEndpoint.getEndpointId())
+                .header("Authorization", "Bearer " + authToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updatedEndpoint)))
+        .andExpect(status().isOk());
+
+    // ASSERT
+
+    EndpointsEntity updatedEntity =
+        endpointsRepository.findById(savedEndpoint.getEndpointId()).get();
+    assertThat(updatedEntity.getName()).isEqualTo("Updated Service");
+    assertThat(updatedEntity.getDescription()).isEqualTo("Updated Service Description");
+    assertThat(updatedEntity.getActive()).isTrue();
+    assertThat(updatedEntity.getUrl()).isEqualTo("https://updated-endpoint");
+
+    List<RequestVariableEntity> updatedVariables =
+        requestVariableRepository.findByEndpoint_EndpointId(updatedEntity.getEndpointId());
+    assertThat(updatedVariables).hasSize(1);
+
+    RequestVariableEntity variable = updatedVariables.getFirst();
+    assertThat(variable.getKeyName()).isEqualTo("Test header");
+    assertThat(variable.getType()).isEqualTo(RequestVariableTypeEnum.HEADER);
+    assertThat(variable.getDefaultValue()).isEqualTo("Test value");
+
+    List<ResponseEntity> updatedResponses =
+        responseRepository.findByEndpoint_EndpointId(updatedEntity.getEndpointId());
+    assertThat(updatedResponses).hasSize(1);
+
+    ResponseEntity response = updatedResponses.get(0);
+    assertThat(response.getStatusCode()).isEqualTo(404);
+    assertThat(response.getDescription()).isEqualTo("Not Found");
   }
 }

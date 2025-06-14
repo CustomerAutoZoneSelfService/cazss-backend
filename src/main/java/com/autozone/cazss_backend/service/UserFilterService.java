@@ -12,6 +12,7 @@ import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.ResponsePatternRepository;
 import com.autozone.cazss_backend.repository.UserFilterRepository;
 import com.autozone.cazss_backend.repository.UserRepository;
+import com.autozone.cazss_backend.util.UserDataUtil;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +29,7 @@ public class UserFilterService {
   @Autowired private ResponsePatternRepository responsePatternRepository;
   @Autowired private UserRepository userRepository;
   @Autowired private EndpointsRepository endpointsRepository;
+  @Autowired private UserDataUtil userDataUtil;
 
   /** Helper method to validate request parameters. */
   private void validateInputs(Integer serviceId, List<Integer> patternIds) {
@@ -50,10 +52,10 @@ public class UserFilterService {
    * @throws ServiceNotFoundException If the user is not found.
    */
   public List<UserFilterDTO> getUserFiltersByServiceId(Integer serviceId) {
-    Integer userId = 90; // Replace with actual user retrieval
     if (serviceId == null) {
       throw new ValidationException("EndpointId cannot be null");
     }
+    Integer userId = userDataUtil.getUserEntity().getUserId();
 
     List<UserFilterEntity> entities =
         userFilterRepository.findByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
@@ -79,9 +81,8 @@ public class UserFilterService {
   @Transactional
   public List<UserFilterDTO> createUserFilters(
       Integer serviceId, List<Integer> responsePatternIds) {
-    Integer userId = 90;
-
     validateInputs(serviceId, responsePatternIds);
+    Integer userId = userDataUtil.getUserEntity().getUserId();
 
     // Load user reference
     UserEntity user =
@@ -157,7 +158,7 @@ public class UserFilterService {
   @Transactional
   public List<UserFilterDTO> updateUserFilters(
       Integer serviceId, List<Integer> responsePatternIds) {
-    Integer userId = 90;
+    Integer userId = userDataUtil.getUserEntity().getUserId();
 
     validateInputs(serviceId, responsePatternIds);
 
@@ -188,7 +189,7 @@ public class UserFilterService {
    */
   @Transactional
   public void deleteUserFilter(Integer serviceId, Integer responsePatternId) {
-    Integer userId = 90;
+    Integer userId = userDataUtil.getUserEntity().getUserId();
 
     if (serviceId == null || responsePatternId == null) {
       throw new ValidationException("Service ID and Pattern ID cannot be null.");
