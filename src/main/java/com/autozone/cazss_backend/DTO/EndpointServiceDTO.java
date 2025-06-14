@@ -10,25 +10,25 @@ import java.util.Map;
     description = "DTO representing the result of executing a service",
     example =
         """
-        {
-          "status": {
-            "code": 200,
-            "description": "OK"
-          },
-          "response": {
-            "CMSTINVC_locale": ["en_US"],
-            "CMSTINVC_revision": ["6"]
-          }
-        }
-        """)
+    {
+      "status": {
+        "code": 200,
+        "description": "OK"
+      },
+      "response": {
+        "CMSTINVC_locale": ["en_US"],
+        "CMSTINVC_revision": ["6"]
+      }
+    }
+    """)
 public class EndpointServiceDTO {
   @Schema(description = "Status object containing HTTP code and message")
   private StatusModel status;
 
   @Schema(description = "Parsed response content from the endpoint")
-  private Map<String, List<String>> response;
+  private Map<Integer, List<String>> response;
 
-  public EndpointServiceDTO(StatusModel status, Map<String, List<String>> response) {
+  public EndpointServiceDTO(StatusModel status, Map<Integer, List<String>> response) {
     this.status = status;
     this.response = response;
   }
@@ -41,11 +41,11 @@ public class EndpointServiceDTO {
     this.status = status;
   }
 
-  public Map<String, List<String>> getResponse() {
+  public Map<Integer, List<String>> getResponse() {
     return response;
   }
 
-  public void setResponse(Map<String, List<String>> response) {
+  public void setResponse(Map<Integer, List<String>> response) {
     this.response = response;
   }
 }

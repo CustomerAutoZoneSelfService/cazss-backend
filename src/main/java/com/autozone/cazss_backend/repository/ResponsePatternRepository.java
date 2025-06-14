@@ -8,5 +8,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ResponsePatternRepository extends JpaRepository<ResponsePatternEntity, Integer> {
   List<ResponsePatternEntity> findByResponse_ResponseIdIn(Set<Integer> responseIds);
 
+  List<ResponsePatternEntity> findByResponse_ResponseIdInAndIsLeafTrue(Set<Integer> responseIds);
+
   List<ResponsePatternEntity> findByResponse_ResponseId(Integer id);
+
+  void deleteByResponse_ResponseId(Integer id);
+
+  // Added to fetch by endpoint
+  List<ResponsePatternEntity> findByResponse_Endpoint_EndpointId(Integer endpointId);
 }

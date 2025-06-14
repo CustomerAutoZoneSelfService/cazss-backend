@@ -18,7 +18,7 @@ public class HistoryDataEntity {
   @Enumerated(EnumType.STRING)
   private HistoryDataTypeEnum type;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "LONGTEXT")
   @Lob
   private String content;
 

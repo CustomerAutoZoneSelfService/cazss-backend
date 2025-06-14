@@ -24,6 +24,12 @@ public class CategoryEntity {
 
   public CategoryEntity() {}
 
+  public CategoryEntity(Integer categoryId, String name, String color) {
+    this.categoryId = categoryId;
+    this.name = name;
+    this.color = color;
+  }
+
   public Integer getCategoryId() {
     return categoryId;
   }

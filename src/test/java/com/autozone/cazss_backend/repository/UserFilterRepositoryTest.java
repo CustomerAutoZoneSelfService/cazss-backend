@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.autozone.cazss_backend.CazssBackendApplication;
 import com.autozone.cazss_backend.entity.*;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,24 +27,26 @@ public class UserFilterRepositoryTest {
   private ResponsePatternEntity responsePattern;
 
   @BeforeEach
-  public void setUp() {
-    // Crear un correo electrónico único para evitar duplicidad
-    String email = "test" + System.currentTimeMillis() + "@example.com";
+  void setUp() {
+    String timestamp = String.valueOf(System.currentTimeMillis());
 
-    // Crear usuario
-    user = new UserEntity();
-    user.setEmail(email);
-    user.setActive(true);
-    user.setRole(UserRoleEnum.USER);
+    // Create user with all required fields
+    user =
+        new UserEntity(
+            "test" + timestamp + "@autozone.com",
+            true,
+            UserRoleEnum.USER,
+            "testPassword123",
+            "testUser" + timestamp);
     user = userRepository.save(user);
 
-    // Crear categoría con un nombre único
+    // Create category with unique name
     category = new CategoryEntity();
-    category.setName("Test Category " + System.currentTimeMillis()); // Nombre único con timestamp
+    category.setName("Test Category " + timestamp);
     category.setColor("#FFFFFF");
     category = categoryRepository.save(category);
 
-    // Crear patrón de respuesta con un valor no nulo para "pattern"
+    // Create response pattern
     responsePattern = new ResponsePatternEntity();
     responsePattern.setName("Test Pattern");
     responsePattern.setDescription("Test Pattern Description");
@@ -53,24 +56,25 @@ public class UserFilterRepositoryTest {
     responsePattern = responsePatternRepository.save(responsePattern);
   }
 
+  @Transactional
   @Test
   public void givenUserFilterRepository_whenSavedAndRetrieved_thenOK() {
-    // Crear UserFilter con los valores apropiados
+    // Create UserFilter with appropriate values
     UserFilterEntity userFilter = new UserFilterEntity();
 
-    // Crear la clave compuesta
+    // Create composite key
     UserFilterEntity.UserFilterId userFilterId =
         new UserFilterEntity.UserFilterId(user.getUserId(), responsePattern.getResponsePatternId());
-    userFilter.setId(userFilterId); // Asignar la clave compuesta
+    userFilter.setId(userFilterId);
 
-    // Asignar usuario y patrón de respuesta
+    // Assign user and response pattern
     userFilter.setUser(user);
     userFilter.setResponsePattern(responsePattern);
 
-    // Guardar en el repositorio
+    // Save to repository
     userFilter = userFilterRepository.save(userFilter);
 
-    // Verificar que se ha guardado correctamente
+    // Verify it was saved correctly
     assertNotNull(userFilter.getId());
     assertEquals(user.getUserId(), userFilter.getUser().getUserId());
     assertEquals(
@@ -78,47 +82,49 @@ public class UserFilterRepositoryTest {
         userFilter.getResponsePattern().getResponsePatternId());
   }
 
+  @Transactional
   @Test
   public void givenUserFilterRepository_whenUpdated_thenOK() {
-    // Crear y guardar un UserFilter
+    // Create and save a UserFilter
     UserFilterEntity userFilter = new UserFilterEntity();
     UserFilterEntity.UserFilterId userFilterId =
         new UserFilterEntity.UserFilterId(user.getUserId(), responsePattern.getResponsePatternId());
-    userFilter.setId(userFilterId); // Asignar la clave compuesta
+    userFilter.setId(userFilterId);
     userFilter.setUser(user);
     userFilter.setResponsePattern(responsePattern);
     userFilter = userFilterRepository.save(userFilter);
 
-    // Actualizar el nombre del patrón de respuesta
+    // Update response pattern name
     responsePattern.setName("Updated Pattern Name");
 
-    // Guardar el patrón de respuesta actualizado
+    // Save updated response pattern
     responsePattern = responsePatternRepository.save(responsePattern);
 
-    // Verificar que el patrón se actualizó correctamente
+    // Verify pattern was updated correctly
     assertEquals("Updated Pattern Name", responsePattern.getName());
 
-    // Verificar que la entidad UserFilter también refleja la actualización
+    // Verify UserFilter entity also reflects the update
     UserFilterEntity updatedUserFilter =
         userFilterRepository.findById(userFilter.getId()).orElseThrow();
     assertEquals("Updated Pattern Name", updatedUserFilter.getResponsePattern().getName());
   }
 
+  @Transactional
   @Test
   public void givenUserFilterRepository_whenDeleted_thenOK() {
-    // Crear y guardar un UserFilter
+    // Create and save a UserFilter
     UserFilterEntity userFilter = new UserFilterEntity();
     UserFilterEntity.UserFilterId userFilterId =
         new UserFilterEntity.UserFilterId(user.getUserId(), responsePattern.getResponsePatternId());
-    userFilter.setId(userFilterId); // Asignar la clave compuesta
+    userFilter.setId(userFilterId);
     userFilter.setUser(user);
     userFilter.setResponsePattern(responsePattern);
     userFilter = userFilterRepository.save(userFilter);
 
-    // Eliminar el UserFilter
+    // Delete the UserFilter
     userFilterRepository.delete(userFilter);
 
-    // Verificar que se ha eliminado correctamente
+    // Verify it was deleted correctly
     assertFalse(userFilterRepository.existsById(userFilter.getId()));
   }
 }

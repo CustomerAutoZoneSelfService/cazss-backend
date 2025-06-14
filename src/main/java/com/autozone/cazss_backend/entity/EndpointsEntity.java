@@ -37,6 +37,10 @@ public class EndpointsEntity {
   @Column(nullable = false, length = 2048)
   private String url;
 
+  @ManyToOne
+  @JoinColumn(name = "auth_strategy_id")
+  private AuthenticationStrategyEntity authStrategy;
+
   // Add bidirectional relationship
   @OneToOne(mappedBy = "endpoint", cascade = CascadeType.ALL, orphanRemoval = true)
   private RequestBodyEntity requestBody;
@@ -59,7 +63,8 @@ public class EndpointsEntity {
       String name,
       String description,
       EndpointMethodEnum method,
-      String url) {
+      String url,
+      AuthenticationStrategyEntity authStrategy) {
     this.category = category;
     this.user = user;
     this.active = active;
@@ -67,6 +72,7 @@ public class EndpointsEntity {
     this.description = description;
     this.method = method;
     this.url = url;
+    this.authStrategy = authStrategy;
   }
 
   public EndpointsEntity() {}
@@ -135,6 +141,14 @@ public class EndpointsEntity {
     this.url = url;
   }
 
+  public AuthenticationStrategyEntity getAuthStrategy() {
+    return authStrategy;
+  }
+
+  public void setAuthStrategy(AuthenticationStrategyEntity authStrategyId) {
+    this.authStrategy = authStrategyId;
+  }
+
   public RequestBodyEntity getRequestBody() {
     return requestBody;
   }
@@ -145,19 +159,33 @@ public class EndpointsEntity {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof EndpointsEntity that)) return false;
-    return Objects.equals(endpointId, that.endpointId)
-        && Objects.equals(category, that.category)
-        && Objects.equals(user, that.user)
-        && Objects.equals(active, that.active)
-        && Objects.equals(name, that.name)
-        && Objects.equals(description, that.description)
-        && method == that.method
-        && Objects.equals(url, that.url);
+    if (!(o instanceof EndpointsEntity endpoints)) return false;
+    return Objects.equals(endpointId, endpoints.endpointId)
+        && Objects.equals(category, endpoints.category)
+        && Objects.equals(user, endpoints.user)
+        && Objects.equals(active, endpoints.active)
+        && Objects.equals(name, endpoints.name)
+        && Objects.equals(description, endpoints.description)
+        && method == endpoints.method
+        && Objects.equals(url, endpoints.url)
+        && Objects.equals(authStrategy, endpoints.authStrategy)
+        && Objects.equals(requestBody, endpoints.requestBody)
+        && Objects.equals(responses, endpoints.responses);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(endpointId, category, user, active, name, description, method, url);
+    return Objects.hash(
+        endpointId,
+        category,
+        user,
+        active,
+        name,
+        description,
+        method,
+        url,
+        authStrategy,
+        requestBody,
+        responses);
   }
 }

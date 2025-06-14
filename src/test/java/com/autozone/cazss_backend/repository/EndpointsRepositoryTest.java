@@ -3,15 +3,15 @@ package com.autozone.cazss_backend.repository;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.autozone.cazss_backend.CazssBackendApplication;
-import com.autozone.cazss_backend.entity.CategoryEntity;
-import com.autozone.cazss_backend.entity.EndpointsEntity;
-import com.autozone.cazss_backend.entity.UserEntity;
+import com.autozone.cazss_backend.entity.*;
+import com.autozone.cazss_backend.enumerator.AuthStrategyEnum;
 import com.autozone.cazss_backend.enumerator.EndpointMethodEnum;
 import com.autozone.cazss_backend.enumerator.UserRoleEnum;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(classes = CazssBackendApplication.class)
 public class EndpointsRepositoryTest {
@@ -21,18 +21,33 @@ public class EndpointsRepositoryTest {
 
   @Autowired EndpointsRepository endpointsRepository;
 
+  @Autowired AuthenticationStrategyRepository authenticationStrategyRepository;
+
   public void setUpData() {
     categoryRepository.save(new CategoryEntity("TEST01", "#FFFFFF"));
     categoryRepository.save(new CategoryEntity("TEST02", "#000000"));
 
     userRepository.save(
-        new UserEntity("endpointRepoTestUser01@autozone.com", true, UserRoleEnum.ADMIN));
+        new UserEntity(
+            "endpointRepoTestUser01@autozone.com",
+            true,
+            UserRoleEnum.ADMIN,
+            "testPassword123",
+            "endpointRepoTestUser01"));
     userRepository.save(
-        new UserEntity("endpointRepoTestUser02@autozone.com", true, UserRoleEnum.ADMIN));
+        new UserEntity(
+            "endpointRepoTestUser02@autozone.com",
+            true,
+            UserRoleEnum.ADMIN,
+            "testPassword123",
+            "endpointRepoTestUser02"));
+    authenticationStrategyRepository.save(
+        new AuthenticationStrategyEntity("EndpointsRepositoryTest", AuthStrategyEnum.Bearer, null));
   }
 
+  @Transactional
   @Test
-  public void givenEndpointRepository_whenSaveAndRetreiveEndpoint_thenOK() {
+  public void givenEndpointRepository_whenSaveAndRetrieveEndpoint_thenOK() {
     setUpData();
 
     Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST01");
@@ -44,6 +59,11 @@ public class EndpointsRepositoryTest {
     assertTrue(userOptional.isPresent(), "User should be present");
     UserEntity user = userOptional.get();
 
+    Optional<AuthenticationStrategyEntity> authStrategyOptional =
+        authenticationStrategyRepository.findByName("EndpointsRepositoryTest");
+    assertTrue(authStrategyOptional.isPresent());
+    AuthenticationStrategyEntity authStrategy = authStrategyOptional.get();
+
     EndpointsEntity endpoint =
         endpointsRepository.save(
             new EndpointsEntity(
@@ -53,7 +73,8 @@ public class EndpointsRepositoryTest {
                 "EndpointOne",
                 "Endpoint description",
                 EndpointMethodEnum.GET,
-                "https://hello.example"));
+                "https://hello.example",
+                authStrategy));
 
     Optional<EndpointsEntity> foundEndpointOptional =
         endpointsRepository.findById(endpoint.getEndpointId());
@@ -65,7 +86,10 @@ public class EndpointsRepositoryTest {
   }
 
   @Test
+  @Transactional
   public void givenEndpointRepository_whenUpdateEndpoint_thenOK() {
+    setUpData();
+
     Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST02");
     assertTrue(categoryOptional.isPresent(), "Category should be present");
     CategoryEntity category = categoryOptional.get();
@@ -74,6 +98,11 @@ public class EndpointsRepositoryTest {
         userRepository.findByEmail("endpointRepoTestUser02@autozone.com");
     assertTrue(userOptional.isPresent(), "User should be present");
     UserEntity user = userOptional.get();
+
+    Optional<AuthenticationStrategyEntity> authStrategyOptional =
+        authenticationStrategyRepository.findByName("EndpointsRepositoryTest");
+    assertTrue(authStrategyOptional.isPresent());
+    AuthenticationStrategyEntity authStrategy = authStrategyOptional.get();
 
     EndpointsEntity endpoint =
         endpointsRepository.save(
@@ -84,7 +113,8 @@ public class EndpointsRepositoryTest {
                 "EndpointTwo",
                 "Endpoint description",
                 EndpointMethodEnum.GET,
-                "https://autozone.example"));
+                "https://autozone.example",
+                authStrategy));
 
     // Modificar datos
     endpoint.setActive(false);
@@ -109,8 +139,11 @@ public class EndpointsRepositoryTest {
     assertEquals("https://datazone.example", foundEndpoint.getUrl());
   }
 
+  @Transactional
   @Test
   public void givenEndpointRepository_whenDeleteEndpoint_thenOK() {
+    setUpData();
+
     Optional<CategoryEntity> categoryOptional = categoryRepository.findByName("TEST02");
     assertTrue(categoryOptional.isPresent(), "Category should be present");
     CategoryEntity category = categoryOptional.get();
@@ -119,6 +152,11 @@ public class EndpointsRepositoryTest {
         userRepository.findByEmail("endpointRepoTestUser01@autozone.com");
     assertTrue(userOptional.isPresent(), "User should be present");
     UserEntity user = userOptional.get();
+
+    Optional<AuthenticationStrategyEntity> authStrategyOptional =
+        authenticationStrategyRepository.findByName("EndpointsRepositoryTest");
+    assertTrue(authStrategyOptional.isPresent());
+    AuthenticationStrategyEntity authStrategy = authStrategyOptional.get();
 
     EndpointsEntity endpoint =
         endpointsRepository.save(
@@ -129,7 +167,8 @@ public class EndpointsRepositoryTest {
                 "EndpointToDelete",
                 "Endpoint to delete",
                 EndpointMethodEnum.GET,
-                "https://autozone.example"));
+                "https://autozone.example",
+                authStrategy));
 
     Integer endpointId = endpoint.getEndpointId();
 
