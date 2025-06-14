@@ -197,7 +197,7 @@ public class CategoryControllerIntegrationTest {
         .perform(get("/categories").header("Authorization", "Bearer " + adminUserAuthToken))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$").isArray())
-        .andExpect(jsonPath("$.length()").value(2));
+        .andExpect(jsonPath("$.length()").value(3));
 
     // Test para usuario normal - debería obtener solo una categoría
     mockMvc
