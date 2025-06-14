@@ -88,13 +88,20 @@ public class EndpointService {
       throw new ServiceNotActiveException(id);
     }
 
+    CategoryDTO categoryDTO =
+        new CategoryDTO(
+            endpoint.getCategory().getCategoryId(),
+            endpoint.getCategory().getName(),
+            endpoint.getCategory().getColor());
+
     ServiceInfoDTO serviceInformation =
         new ServiceInfoDTO(
             endpoint.getName(),
             endpoint.getDescription(),
             endpoint.getActive(),
             endpoint.getMethod(),
-            endpoint.getUrl());
+            endpoint.getUrl(),
+            categoryDTO);
 
     serviceInformation.setId(endpoint.getEndpointId());
 
