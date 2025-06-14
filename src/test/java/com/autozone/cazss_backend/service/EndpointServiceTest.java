@@ -3,8 +3,10 @@ package com.autozone.cazss_backend.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.*;
@@ -44,6 +46,7 @@ public class EndpointServiceTest {
   @Mock private ResponsePatternRepository responsePatternRepository;
   @Mock private AZClient azClient;
   @Mock private TemplateFiller templateFiller;
+  @Mock private PermissionValidator permissionValidator;
   @Mock private RequestValidatorUtil requestValidatorUtil;
   @Mock private CategoryRepository categoryRepository;
   @Mock private RequestBodyService requestBodyService;
@@ -151,6 +154,13 @@ public class EndpointServiceTest {
     endpoint.setMethod(EndpointMethodEnum.POST);
     endpoint.setActive(true);
     endpoint.setUrl("http://service");
+    when(permissionValidator.canUserExecuteService(anyInt(), anyInt())).thenReturn(true);
+
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(1));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
 
     UserEntity usr = new UserEntity();
     usr.setUserId(TEST_USER_ID);
@@ -192,10 +202,16 @@ public class EndpointServiceTest {
     int endpointId = 1;
     ServiceInfoRequestModel request = new ServiceInfoRequestModel();
 
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(1));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
     Map<String, Map<String, String>> errors = new HashMap<>();
     Map<String, String> generalError = new HashMap<>();
     generalError.put("general", "Validation error");
     errors.put("general", generalError);
+    when(permissionValidator.canUserExecuteService(anyInt(), anyInt())).thenReturn(true);
 
     given(requestValidatorUtil.validateRequest(request, endpointId))
         .willReturn(new RequestValidatorUtil.ValidationResponse("false", errors));
