@@ -44,7 +44,7 @@ public class EndpointAuthenticationUtil {
 
     String authorization =
         Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
-    request.getHeaders().add(new HeaderModel("Authorization", "Basic" + authorization));
+    request.getHeaders().add(new HeaderModel("Authorization", "Basic " + authorization));
   }
 
   private void bearerAuthentication(
