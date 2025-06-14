@@ -36,7 +36,7 @@ public class ServiceController {
    */
   @GetMapping("")
   public ResponseEntity<List<ServiceDTO>> getAllServices() {
-    return ResponseEntity.status(200).body(endpointService.getAllServices());
+    return ResponseEntity.status(200).body(endpointService.getAvailableServices());
   }
 
   /**

@@ -12,6 +12,9 @@ public interface UserCategoryRepository
   Optional<UserCategoryEntity> findByCategory_CategoryIdAndUser_UserId(
       Integer userId, Integer categoryId);
 
+  Optional<UserCategoryEntity> findByUser_UserIdAndCategory_CategoryId(
+      Integer userId, Integer categoryId);
+
   List<UserCategoryEntity> findByCategory_CategoryId(Integer categoryId);
 
   Long deleteByUser_UserIdAndCategory_CategoryId(Integer userId, Integer categoryId);

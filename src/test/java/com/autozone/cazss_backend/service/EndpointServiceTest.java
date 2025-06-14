@@ -3,8 +3,10 @@ package com.autozone.cazss_backend.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.autozone.cazss_backend.DTO.*;
 import com.autozone.cazss_backend.entity.*;
@@ -44,6 +46,7 @@ public class EndpointServiceTest {
   @Mock private ResponsePatternRepository responsePatternRepository;
   @Mock private AZClient azClient;
   @Mock private TemplateFiller templateFiller;
+  @Mock private PermissionValidator permissionValidator;
   @Mock private RequestValidatorUtil requestValidatorUtil;
   @Mock private CategoryRepository categoryRepository;
   @Mock private RequestBodyService requestBodyService;
@@ -51,6 +54,7 @@ public class EndpointServiceTest {
   @Mock private ResponseService responseService;
   @Mock private ResponsePatternService responsePatternService;
   @Mock private HistoryService historyService;
+  @Mock private UserDataUtil userDataUtil;
 
   @InjectMocks private EndpointService endpointService;
 
@@ -92,7 +96,7 @@ public class EndpointServiceTest {
     UserEntity usr = new UserEntity();
     usr.setUserId(TEST_USER_ID);
     usr.setEmail(TEST_USER_EMAIL);
-    given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(usr));
+    given(userDataUtil.getUserEntity()).willReturn(usr);
 
     EndpointsEntity saved = new EndpointsEntity();
     saved.setEndpointId(42);
@@ -152,6 +156,18 @@ public class EndpointServiceTest {
     endpoint.setActive(true);
     endpoint.setUrl("http://service");
     endpoint.setCategory(new CategoryEntity(1, "Production", "#ffeeff"));
+    when(permissionValidator.canUserExecuteService(anyInt(), anyInt())).thenReturn(true);
+
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(1));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
+    UserEntity usr = new UserEntity();
+    usr.setUserId(TEST_USER_ID);
+    usr.setEmail(TEST_USER_EMAIL);
+    given(userDataUtil.getUserEntity()).willReturn(usr);
 
     given(endpointsRepository.findByEndpointId(endpointId)).willReturn(Optional.of(endpoint));
     given(requestVariableRepository.findByEndpoint_EndpointId(endpointId)).willReturn(List.of());
@@ -188,10 +204,16 @@ public class EndpointServiceTest {
     int endpointId = 1;
     ServiceInfoRequestModel request = new ServiceInfoRequestModel();
 
+    SecurityContext securityContext = mock(SecurityContext.class);
+    Authentication authentication = mock(Authentication.class);
+    given(authentication.getName()).willReturn(String.valueOf(1));
+    given(securityContext.getAuthentication()).willReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
     Map<String, Map<String, String>> errors = new HashMap<>();
     Map<String, String> generalError = new HashMap<>();
     generalError.put("general", "Validation error");
     errors.put("general", generalError);
+    when(permissionValidator.canUserExecuteService(anyInt(), anyInt())).thenReturn(true);
 
     given(requestValidatorUtil.validateRequest(request, endpointId))
         .willReturn(new RequestValidatorUtil.ValidationResponse("false", errors));
@@ -283,5 +305,62 @@ public class EndpointServiceTest {
             ServiceNotFoundException.class, () -> endpointService.getFullServiceInfoById(1));
 
     assertThat(exception.getMessage()).contains("Endpoint not found with id");
+  }
+
+  @Test
+  void testUpdateCompleteService_withValidRequest_shouldReturnServiceDTOWithUpdatedInformation() {
+    // Arrange
+    // Configure security context and user
+    SecurityContext securityContext = mock(SecurityContext.class);
+    SecurityContextHolder.setContext(securityContext);
+
+    UserEntity testUser = new UserEntity();
+    testUser.setUserId(TEST_USER_ID);
+    testUser.setEmail(TEST_USER_EMAIL);
+    given(userDataUtil.getUserEntity()).willReturn(testUser);
+
+    EndpointsEntity existingEndpoint = createDefaultExistingEntity(testUser);
+    CreateServiceDTO updatedService = createDefaultServiceDto();
+
+    given(endpointsRepository.findByEndpointId(existingEndpoint.getEndpointId()))
+        .willReturn(Optional.of(existingEndpoint));
+
+    given(categoryRepository.findById(updatedService.getCategoryId()))
+        .willReturn(Optional.of(existingEndpoint.getCategory()));
+
+    // Act
+    ServiceDTO result =
+        endpointService.updateCompleteService(existingEndpoint.getEndpointId(), updatedService);
+
+    // Assert
+    assertThat(result.getName()).isEqualTo(updatedService.getName());
+    assertThat(result.getDescription()).isEqualTo(updatedService.getDescription());
+  }
+
+  private EndpointsEntity createDefaultExistingEntity(UserEntity testUser) {
+    EndpointsEntity entity = new EndpointsEntity();
+    entity.setEndpointId(1);
+    entity.setName("New Service Name");
+    entity.setDescription("New Service Description");
+    entity.setActive(true);
+    entity.setUser(testUser);
+    CategoryEntity category = new CategoryEntity();
+    category.setCategoryId(1);
+    entity.setCategory(category);
+
+    return entity;
+  }
+
+  private CreateServiceDTO createDefaultServiceDto() {
+    CreateServiceDTO dto = new CreateServiceDTO();
+    dto.setName("Test Service");
+    dto.setDescription("Test description");
+    dto.setMethod(EndpointMethodEnum.GET);
+    dto.setUrl("https://test.com/test");
+    dto.setCategoryId(1);
+    dto.setActive(true);
+    dto.setRequestVariables(Collections.emptyList());
+    dto.setResponses(Collections.emptyList());
+    return dto;
   }
 }

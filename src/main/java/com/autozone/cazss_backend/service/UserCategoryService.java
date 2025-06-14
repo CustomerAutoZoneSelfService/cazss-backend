@@ -94,7 +94,7 @@ public class UserCategoryService {
                 + userOpt.get().getActive());
 
         Optional<UserCategoryEntity> existing =
-            userCategoryRepository.findByCategory_CategoryIdAndUser_UserId(
+            userCategoryRepository.findByUser_UserIdAndCategory_CategoryId(
                 categoryId, targetUserId);
         if (existing.isPresent()) {
           log.info("User {} already has access to category {}", targetUserId, categoryId);
