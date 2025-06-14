@@ -54,6 +54,7 @@ public class EndpointServiceTest {
   @Mock private ResponseService responseService;
   @Mock private ResponsePatternService responsePatternService;
   @Mock private HistoryService historyService;
+  @Mock private UserDataUtil userDataUtil;
 
   @InjectMocks private EndpointService endpointService;
 
@@ -95,7 +96,7 @@ public class EndpointServiceTest {
     UserEntity usr = new UserEntity();
     usr.setUserId(TEST_USER_ID);
     usr.setEmail(TEST_USER_EMAIL);
-    given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.of(usr));
+    given(userDataUtil.getUserEntity()).willReturn(usr);
 
     EndpointsEntity saved = new EndpointsEntity();
     saved.setEndpointId(42);
@@ -160,6 +161,11 @@ public class EndpointServiceTest {
     given(authentication.getName()).willReturn(String.valueOf(1));
     given(securityContext.getAuthentication()).willReturn(authentication);
     SecurityContextHolder.setContext(securityContext);
+
+    UserEntity usr = new UserEntity();
+    usr.setUserId(TEST_USER_ID);
+    usr.setEmail(TEST_USER_EMAIL);
+    given(userDataUtil.getUserEntity()).willReturn(usr);
 
     given(endpointsRepository.findByEndpointId(endpointId)).willReturn(Optional.of(endpoint));
     given(requestVariableRepository.findByEndpoint_EndpointId(endpointId)).willReturn(List.of());
@@ -297,5 +303,62 @@ public class EndpointServiceTest {
             ServiceNotFoundException.class, () -> endpointService.getFullServiceInfoById(1));
 
     assertThat(exception.getMessage()).contains("Endpoint not found with id");
+  }
+
+  @Test
+  void testUpdateCompleteService_withValidRequest_shouldReturnServiceDTOWithUpdatedInformation() {
+    // Arrange
+    // Configure security context and user
+    SecurityContext securityContext = mock(SecurityContext.class);
+    SecurityContextHolder.setContext(securityContext);
+
+    UserEntity testUser = new UserEntity();
+    testUser.setUserId(TEST_USER_ID);
+    testUser.setEmail(TEST_USER_EMAIL);
+    given(userDataUtil.getUserEntity()).willReturn(testUser);
+
+    EndpointsEntity existingEndpoint = createDefaultExistingEntity(testUser);
+    CreateServiceDTO updatedService = createDefaultServiceDto();
+
+    given(endpointsRepository.findByEndpointId(existingEndpoint.getEndpointId()))
+        .willReturn(Optional.of(existingEndpoint));
+
+    given(categoryRepository.findById(updatedService.getCategoryId()))
+        .willReturn(Optional.of(existingEndpoint.getCategory()));
+
+    // Act
+    ServiceDTO result =
+        endpointService.updateCompleteService(existingEndpoint.getEndpointId(), updatedService);
+
+    // Assert
+    assertThat(result.getName()).isEqualTo(updatedService.getName());
+    assertThat(result.getDescription()).isEqualTo(updatedService.getDescription());
+  }
+
+  private EndpointsEntity createDefaultExistingEntity(UserEntity testUser) {
+    EndpointsEntity entity = new EndpointsEntity();
+    entity.setEndpointId(1);
+    entity.setName("New Service Name");
+    entity.setDescription("New Service Description");
+    entity.setActive(true);
+    entity.setUser(testUser);
+    CategoryEntity category = new CategoryEntity();
+    category.setCategoryId(1);
+    entity.setCategory(category);
+
+    return entity;
+  }
+
+  private CreateServiceDTO createDefaultServiceDto() {
+    CreateServiceDTO dto = new CreateServiceDTO();
+    dto.setName("Test Service");
+    dto.setDescription("Test description");
+    dto.setMethod(EndpointMethodEnum.GET);
+    dto.setUrl("https://test.com/test");
+    dto.setCategoryId(1);
+    dto.setActive(true);
+    dto.setRequestVariables(Collections.emptyList());
+    dto.setResponses(Collections.emptyList());
+    return dto;
   }
 }

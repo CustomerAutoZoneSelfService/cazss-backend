@@ -70,6 +70,8 @@ public class EndpointService {
     }
   }
 
+  @Autowired private UserDataUtil userDataUtil;
+
   public List<ServiceDTO> getAllServices() {
     return endpointsRepository.findAllServiceDTOs();
   }
@@ -292,7 +294,6 @@ public class EndpointService {
    */
   @Transactional
   public ServiceDTO updateCompleteService(final Integer id, CreateServiceDTO updatedService) {
-    System.out.println(updatedService);
     EndpointsEntity existingEndpoint =
         endpointsRepository
             .findByEndpointId(id)
@@ -303,8 +304,8 @@ public class EndpointService {
         getExistingEntitiesIndependentOfService(updatedService.getCategoryId());
     mapDtoToEndpoint(
         existingEndpoint,
-        (CategoryEntity) independentEntities.get(0),
-        (UserEntity) independentEntities.get(1),
+        (CategoryEntity) independentEntities.getFirst(),
+        existingEndpoint.getUser(), // The user should be the one that created it originally
         updatedService);
     setEntitiesDependentOfService(existingEndpoint, updatedService);
 
@@ -326,31 +327,7 @@ public class EndpointService {
     entities.add(category);
 
     // User
-
-    // Get authenticated user id from security context
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || !authentication.isAuthenticated()) {
-      throw new ServiceNotFoundException("No authenticated user found");
-    }
-
-    String userIdStr = authentication.getName();
-    Integer userId;
-    try {
-      userId = Integer.parseInt(userIdStr);
-    } catch (NumberFormatException e) {
-      logger.error("Invalid user ID format in JWT token: {}", userIdStr);
-      throw new ServiceNotFoundException("Invalid user ID format in authentication token");
-    }
-
-    // User
-    UserEntity user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(
-                () -> {
-                  logger.error("User not found with ID: {}", userId);
-                  return new ServiceNotFoundException("User not found with ID: " + userId);
-                });
+    UserEntity user = userDataUtil.getUserEntity();
 
     logger.debug("Found user: {}", user.getUserId());
 
@@ -449,8 +426,7 @@ public class EndpointService {
       }
 
       // SAVE IN HISTORY
-      UserEntity user =
-          userRepository.getReferenceById(90); // TEST USER FOR FE. REPLACE WITH ACTUAL USER LATER
+      UserEntity user = userDataUtil.getUserEntity();
       historyService.addHistory(
           user,
           endpoint,

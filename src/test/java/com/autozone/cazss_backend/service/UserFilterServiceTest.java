@@ -1,6 +1,7 @@
 package com.autozone.cazss_backend.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 import com.autozone.cazss_backend.DTO.UserFilterDTO;
@@ -17,6 +18,7 @@ import com.autozone.cazss_backend.repository.EndpointsRepository;
 import com.autozone.cazss_backend.repository.ResponsePatternRepository;
 import com.autozone.cazss_backend.repository.UserFilterRepository;
 import com.autozone.cazss_backend.repository.UserRepository;
+import com.autozone.cazss_backend.util.UserDataUtil;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,7 @@ class UserFilterServiceTest {
   @Mock private ResponsePatternRepository responsePatternRepository;
   @Mock private UserRepository userRepository;
   @Mock private EndpointsRepository endpointsRepository;
+  @Mock private UserDataUtil userDataUtil;
 
   @InjectMocks private UserFilterService userFilterService;
 
@@ -76,6 +79,7 @@ class UserFilterServiceTest {
   @Transactional
   @Test
   void getUserFiltersByServiceId_Success() {
+    given(userDataUtil.getUserEntity()).willReturn(mockUser);
     when(userFilterRepository.findByUser_UserIdAndResponsePattern_Response_Endpoint_EndpointId(
             90, 1))
         .thenReturn(List.of(mockUserFilter));
@@ -145,6 +149,7 @@ class UserFilterServiceTest {
   @Transactional
   @Test
   void createUserFilters_AllAlreadyExist() {
+    given(userDataUtil.getUserEntity()).willReturn(mockUser);
     List<Integer> patternIds = List.of(1);
 
     when(userRepository.findById(90)).thenReturn(Optional.of(mockUser));
@@ -163,6 +168,7 @@ class UserFilterServiceTest {
   @Transactional
   @Test
   void createUserFilters_PatternNotFound() {
+    given(userDataUtil.getUserEntity()).willReturn(mockUser);
     List<Integer> patternIds = List.of(99);
 
     when(userRepository.findById(90)).thenReturn(Optional.of(mockUser));
@@ -181,7 +187,7 @@ class UserFilterServiceTest {
   @Test
   void createUserFilters_UserNotFound() {
     List<Integer> patternIds = List.of(1);
-
+    given(userDataUtil.getUserEntity()).willReturn(mockUser);
     when(userRepository.findById(90)).thenReturn(Optional.empty());
 
     assertThrows(
@@ -192,7 +198,7 @@ class UserFilterServiceTest {
   @Test
   void createUserFilters_ServiceNotFound() {
     List<Integer> patternIds = List.of(1);
-
+    given(userDataUtil.getUserEntity()).willReturn(mockUser);
     when(userRepository.findById(90)).thenReturn(Optional.of(mockUser));
     when(endpointsRepository.findById(1)).thenReturn(Optional.empty());
 
